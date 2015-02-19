@@ -1,0 +1,90 @@
+jeden tick wird eine bestimmte zahl an schiffen&shots aktualisiert, bspw. 1000:
+dabei sind alle, bei denen sich zielpunkt, existenz geändert haben und entsprechend weitere von beiden fraktionen,
+bis alle durchgegangen sind. dann beginnt der kreislauf von vorne. 
+Damit bekommt man bei 30packeten/sek. ca 30.000 - naja, mit gänderten mind. 10.000 schiffe aktuell - und so kleine zeitverzögerungen sollten ok sein
+eventuell ist also eine max. anzahl von schiffen sinvoll - im array gespeichert ist auch ein zugriff per ID extrem fix.
+
+dazu kommen noch entsprechend viele schüsse - bei denen funktioniert es gleich, 
+aber es geht nur um existenzänderung. ob existierende schüsse ab und zu nochmal naxchgesendet/abgeglichen werden sollen,
+ist fraglich, da sie eh nur 1-2sek bestehen.
+shots sollten aber besser in einer list gespeichert werden, wobei der server eben nur die neuen an die clients sendet,
+und die anderen nur intern behält.
+
+#+#+#
+Unsafe Packets
+  Zwischendurch gesendet:
+    Bei Änderung:
+      Schiffe, Schüsse
+    Immer:
+      Geldmenge, Planeten 
+  2x pro Sekunde:
+    Alle Planeten, Schiffe
+Safe Packets
+  Bei Bedarf: 
+    Sieg, Niederlage, Ende, Pausiert (evtl wegen Disconnect)
+    Textnachrichten
+ ------
+ Änderungspacket
+  Typ-ID
+  GeldP1,GeldP2
+  Amount Planets,SchiffeP1,SchiffeP2,SchüsseP1,SchüsseP2
+  Data Planets,SchiffeP1,SchiffeP2,SchüsseP1,SchüsseP2
+  DELETED?
+ Gesamtpackete
+  Genau wie Änderungspackete nur andere Typ-ID
+ SafePackets
+  Typ-ID
+  Cmd-ID (Pause,Textnachricht, Sieg/Niederlage,Quit)
+#+#+#
+
+Game
+ 4  Synchronisierte Spielzeit
+Player
+ 4  Money     int
+Planet
+ 1  ID        byte
+ 8  X,Y       int
+ 3  LevelABC  bytes   Economy, Resistance, Production
+ 4  ShipQueue int     Bauliste
+ 8  LastShip  time    double
+ 8  tarX,tarY int     Sammelpunkt
+ 2  Health    byte    leben und power
+ 1  Party 
+Schiff  33
+ 1  Health      byte
+ 8  LastShot  time double
+ 8  X,Y,      float
+ 8  dX, dY    float
+ 8  tarX,tarY int
+Shot    24
+ 8  X,Y,      float
+ 8  dX, dY    float
+ 8  spawnTime double
+ ---
+ 10.000 ships - 310.000B
+ 20.000 shots - 480.000B
+ 
+Schuesse werden nur einmal versendet und nicht geupdatet.
+Schiffe werden geupdated
+
+Beim Versenden wird die (synchronisierte) Spielzeit mitgeliefert und das delta genutzt, um alle Schiffe und Schuesse etwas zu in die Zukunft zu bewegen.
+ 
+IDs zerstoerter Schiffe kommen Serverseitig in eine Liste, aus denen neue IDs genommen werden. Die IDs werden auch an den Client gesendet, um die Schiffe dort zu loeschen. 
+
+
+########## Client to Server
+SchiffID, NeuePosition
+
+
+########## Speichern der Daten lokal
+Maxanzahl Schiffe pro Spieler
+Maxanzahl Schuesse pro Spieler
+Schuesse in Ringspeicher. Neue werden spaeter eingefuegt, es muss genug platz sein, dass alle SChuesse sterben, wenn maxSChiffe feuern.
+maxShips * 1 / feuerrate - 1/maxAlter * maxShots > 0
+
+
+##### performance
+## using SSE http://ds9a.nl/gcc-simd/example.html
+Union coords: x y
+Union delta: dx dy
+SSE Add coords, delta

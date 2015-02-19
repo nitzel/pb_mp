@@ -1,0 +1,68 @@
+#Development
+  Erstmal Server schreiben, bei Parameter mit Screenanzeige, steuerbar mit linker/rechter Maustaste?
+  Dann Netzwerkfähig, dann clients
+  
+  Client = Server ? Dann wird kein dedicated benötigt, sollte aber möglich sein
+
+
+
+#Kollisionsüberprüfung
+Objekte eines Teams können nicht miteinander kollidieren,
+hier ist eine Kollisionsüberprüfung überflüssig. Schiffe können auch übereinander gelagert fliegen etc. 
+Schüsse von Team A können mit Schiffen und Planeten von Team B kollidieren, dort verursachen sie Schaden,
+sodass die Schiffe evtl. zerstört, die Planeten erobert werden.
+
+#Planet-Upgrading
+  Economy		Der Planet erwirtschaftet pro Zeiteinheit mehr Geld.
+      Wird bei Übernahme nicht zurückgesetzt.
+  Resistance           	Die Verteidigungsanlagen werden aufgerüstet,
+      bis der Planet übernommen wird, werden deutlich mehr Schüsse benötigt.
+      Hier ist Balancing wichtig (Kosten steigen exponentiell ? -> verhinderung der Entstehung von "Super-Planeten" zu Beginn)
+      Wird bei Übernahme auf 1/2 zurückgesetzt. 
+  Processing	Verkürzt die Zeit, die Schiffe zur Produktion benötigen.
+      Wird bei Übernahme auf 2/3 zurückgesetzt.
+  Bauliste
+      Wird bei Uebernahme verringert, aber der Eroberer muss nichts draufzahlen. Die Schiffsteile sind quasi 
+      vom Vorbesitzer bestellt worden und werden nun von jmd andres genutzt. Nur ein paar sind kaputt gegangen.
+
+#Map-Laden
+  Die Maps werden nicht vom Client von seiner HD geladen, 
+  sondern der Server sendet sie den Clients zu. ( Sind ja nicht besonders viele Informationen )
+  -> Map-Zertifizierung / Synchronisierung überflüssig
+
+#Game Information
+  Schiff,Planeten Größe, Geschwindigkeit, Schusskraft, Leben, Regeneration variabel? Muss am Anfang mitübersendet werden
+  -> server.cfg für diese Informationen, auch Geldproduktion von Planeten und Upgrade-Kosten variabel
+
+#Map-Save-Format
+uchar TYP
+uint X,Y
+uchar FACTION
+uchar lvl_ECO, lvl_RES, lvl_PRC (Economy, Resistance, Processing)
+Ship: TYP X Y FACTION 
+Planet TYP X Y lvl_ECO lvl_RES lvl_PRC (->Faction?)
+
+#Formationen
+  Kreis	Alle Schiffe sind in einem Kreis angeordnet, gleichmäßig auf die Kreis-Kante verteilt.
+    Verteilung nicht Zufällig, Schiff sind im Kreis nach ID sortiert, bei veränderung der Kreisgröße ist kein Chaos zu erwarten.
+    Der Radius des Kreises entspricht der Entfernung der Maus beim Loslassen zum Klickpunkt.
+  Quadrat	Breite = SQRT(Anzahl)*SQRT(Anzahl)<Anzahl ? SQRT(ANZAHL)+1 : SQRT(ANZAHL); 
+    Schiffe werden Zeilenweise nach ID einsortiert, nach Abschluss einer Zeile wird in die nächste übergegangen. 
+    Anstelle von XX entsteht nun	XXX  (wegen der if-Abfrage)
+          XX	              	XXX
+          XX                       	X
+          X
+    Entweder ist die obere linke Ecke dort, wo die Maus hinklickte, oder aber der Mausklick ist genau die Mitte des Quadrats.
+  Halbkreis	Wie Kreis, nur im 180° Segment. Die Richtung der Maus beim Ziehen der Kreisgröße gibt den 45° Winkel vor.
+  Defensiv	Ab ca. 40 Schiffen. Es werden zwei Kreise gebildet. Die Schiffe sind nach Leben sortiert, 
+    die ersten 2 Drittel verteilen sich auf den äußeren, das letzte Drittel auf den inneren Kreis.
+    Kompliziert aber strategisch interessant: Die Defensivringe aktualisieren sich selbstständig: sind äussere Schiffe schwächer als Innere, so tauschen Sie die position.
+    Fallen äussere Schiffe aus, werden Sie durch Innere ersetzt oder die Kreise kleiner gezogen.
+
+
+#Reconnect
+	Wenn ein Client ausfällt pausiert das Spiel. Per Abstimmung oder mit einem Passwort 
+	kann sich der ausgefallene Spieler (oder ein ersatzmann) wieder einklinken und es geht weiter
+
+#Lobby
+  Jeder/Bestimmte können Einstellungen per Chat ändern (Anzeige der server.cfg)
