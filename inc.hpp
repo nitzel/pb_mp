@@ -11,6 +11,8 @@
 #define STBI_NO_HDR
 #include "include/stb_image.h"
 
+#define SCREENW 1366
+#define SCREENH  700
 
 #define UPGRADE_MAX_LVL  10     // max level for upgrades
 #define POWER_MAX       100     // maximum power storable
@@ -19,12 +21,12 @@
 #define HEALTH_MAX      100     // health maximum for planets
 #define HEALTH_REGEN      1.f   // health regeneration
 #define MONEY_GEN         1.0f  // money per planet per level per second
-#define SHIP_PROD_TIME   4.0f  // after this time a ship is produced
-#define SEND_SHIP_RAND_RADIUS 50; // new ships go in this radius around planet.txy 
+#define SHIP_PROD_TIME   0.0f  // after this time a ship is produced
+#define SEND_SHIP_RAND_RADIUS 50 // new ships go in this radius around planet.txy 
 
 #define SHIP_HEALTH_MAX  10
 #define SHIP_SHOOT_DELAY  4.0f
-#define SHIP_TELEPORT_DIST 2   // if the ship is closer than that, teleport
+#define SHIP_TELEPORT_DIST 3   // if the ship is closer than that, teleport
 #define SHIP_SPEED       160    // ship-speed, pixel per second
 enum Party{PA,PB,PN};
 enum Upgrades{ECONOMY,DEFENSE,PRODUCTION};
@@ -104,7 +106,8 @@ void drawString(const char* str, unsigned int strlen, float strX, float strY, fl
 void drawString(const char* str, unsigned int strlen, float strX, float strY, float stretchXY=1);
 ///////////////////
 // random numbers
-float rand(int min, int max);
+float randf();
+int rand(int min, int max);
 unsigned int rand(unsigned int max);
 unsigned long xorshf96(void); //period 2^96-1// Marsaglia's rand
 ////////////////////

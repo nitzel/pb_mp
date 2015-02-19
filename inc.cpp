@@ -52,8 +52,8 @@ void drawShips(const saShip * sShips, const float dX, const float dY){
   glBindTexture(GL_TEXTURE_2D, info.textures[TEX_SHIP].id);
   glBegin(GL_QUADS);
     //const int & z = 1; // zoom
-    const int & w = 5; //info.textures[TEX_SHIP].w*z/2 ;
-    const int & h = 5; //info.textures[TEX_SHIP].h*z/2;
+    const int & w = 8; //info.textures[TEX_SHIP].w*z/2 ;
+    const int & h = 8; //info.textures[TEX_SHIP].h*z/2;
     for(unsigned int party=0; party<PN; party++) {
       //glColor3ub(party*255,255-party*255,0);
       sShip * ships = sShips[party].ships;
@@ -157,9 +157,13 @@ void drawString(const char* str, unsigned int strlen, float strX, float strY, fl
 //////////////////////////////
 //// random number generation
 /////////////////////////////
-float rand(int min, int max){
-  return (rand(max-min)+min)/(float)(min+max);
+float randf(){ // within -1 and 1
+  return ((signed int)rand(-1000000000 ,1000000000))/(float)(2000000000);
 }
+int rand(int min, int max){
+  return ((signed int)rand(max-min)+min);
+}
+
 unsigned int rand(unsigned int max){
   return xorshf96()%max;
 }

@@ -1,11 +1,15 @@
 #include "inc.hpp"
 
-float mouseX=0, mouseY=0;
+float mouseRX=0, mouseRY=0; // real position
+float mouseVX=0, mouseVY=0; // virtual position 
 float viewX=0, viewY=0;
 float money[2] = {0,0};
 static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
-  mouseX=(float)xpos;
-  mouseY=(float)ypos;
+  mouseRX=(float)xpos;
+  mouseRY=(float)ypos;
+  mouseVX=mouseRX + viewX;
+  mouseVY=mouseRY + viewY;
+  
 }
 
 
@@ -17,6 +21,11 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt);
 void processShips(saShip * sShips, double dt);
 
 int main(int argc, char ** argv){  
+  for(int i=0; i<100; i++)
+    printf("%i\n",rand(-50, 50));
+  for(int i=0; i<100; i++)
+    printf("%.4f\n",randf());
+  
   ////////////////
   // GAME VARS
   ////////////////
@@ -24,10 +33,10 @@ int main(int argc, char ** argv){
   saShot shots[2];
   saShip ships[2];
   initPlanets(planets, 4);
-  initShots(shots[PA], 1000);
-  initShots(shots[PB], 1000);
-  initShips(ships[PA],  5);
-  initShips(ships[PB],  5);
+  initShots(shots[PA],  10000);
+  initShots(shots[PB],  10000);
+  initShips(ships[PA],  5000);
+  initShips(ships[PB],  5000);
   //////////
   // ENET
   /////////
@@ -99,7 +108,7 @@ int main(int argc, char ** argv){
   glfwSetErrorCallback(cb_error);
   struct sInfo & info = *getInfo();
   
-  info.window = glfwCreateWindow(640,480,"PBENET",NULL,NULL);
+  info.window = glfwCreateWindow(SCREENW,SCREENH,"PBENET",NULL,NULL);
   if(!info.window){
     exit("Failed at glfwCreateWindow()",EXIT_FAILURE);
   }
@@ -107,11 +116,11 @@ int main(int argc, char ** argv){
   glfwSetCursorPosCallback(info.window, cursor_pos_callback);
   
   glfwMakeContextCurrent(info.window);
-  glViewport(0, 0, (GLsizei)640, (GLsizei)480);
+  glViewport(0, 0, (GLsizei)SCREENW, (GLsizei)SCREENH);
   // change to projection matrix, reset the matrix and set upt orthogonal view
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(0, 640, 480, 0, 0, 1);// parameters: left, right, bottom, top, near, far
+  glOrtho(0, SCREENW, SCREENH, 0, 0, 1);// parameters: left, right, bottom, top, near, far
 
   // ---- OpenGL settings
   glfwSwapInterval(1); // lock to vertical sync of monitor (normally 60Hz/)
@@ -147,16 +156,16 @@ int main(int argc, char ** argv){
     // update timer
     dt = glfwGetTime() - time;
     time = glfwGetTime();
-    fps = (fps*500 + 1/dt)/501;
+    fps = (fps*500 + 10/dt)/510;
     // move view
-    if(mouseX<40) viewX--;
-    if(mouseY<40) viewY--;
-    if(mouseX>600) viewX++;
-    if(mouseY>440) viewY++;
+    if(mouseRX<40) viewX--;
+    if(mouseRY<40) viewY--;
+    if(mouseRX>SCREENW-40) viewX++;
+    if(mouseRY>SCREENH-40) viewY++;
     if(viewX<0) viewX = 0;
     if(viewY<0) viewY = 0;    
-    if(viewX>200) viewX = 200;
-    if(viewY>200) viewY = 200;
+    if(viewX>10000) viewX = 10000;
+    if(viewY>10000) viewY = 10000;
     // process game content
     processPlanets(planets, ships, dt);
     processShips(ships, dt);
@@ -210,7 +219,7 @@ bool addShip(saShip & ships, float x, float y, float tarX, float  tarY){
   ship.y = y;
   flyToTarget(ship,tarX,tarY);
   
-  printf("ship created xy(%i,%i) txy(%i,%i) dxy(%.2f,%.2f) H%i\n", (int)ship.x, (int)ship.y, (int)ship.tx, (int)ship.ty, ship.dx, ship.dy, (int)ship.health);
+  //printf("ship created xy(%i,%i) txy(%i,%i) dxy(%.2f,%.2f) H%i\n", (int)ship.x, (int)ship.y, (int)ship.tx, (int)ship.ty, ship.dx, ship.dy, (int)ship.health);
   
   ships.freePop = (ships.freePop+1)%ships.size;// increment free index counter
   return true;
@@ -218,6 +227,9 @@ bool addShip(saShip & ships, float x, float y, float tarX, float  tarY){
 void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
   sPlanet * planets = (sPlanet*)(const char*)sPlanets.planets;
   for(unsigned int i=0; i<sPlanets.size; i++){
+    planets[i].tx = mouseVX; // todo remove
+    planets[i].ty = mouseVY;
+    
     if(planets[i].party!=PN){ // not neutral
       // generate money for the player
       money[planets[i].party] += (planets[i].level[ECONOMY]+1) * MONEY_GEN * dt; 
@@ -226,8 +238,14 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
         planets[i].timeToBuild -= dt;      // subtract time
         if(planets[i].timeToBuild < 0) { // send a new ship out
           // create new ship 
+          // put ship in a random circle around tx/ty
+          float dx = rand(-50,50), dy = rand(-50,50);
+          float len = sqrt(dx*dx + dy*dy);
+          dx = dx*SEND_SHIP_RAND_RADIUS/len;
+          dy = dy*SEND_SHIP_RAND_RADIUS/len;
+          // add it
           planets[i].shipQueue --;
-          if(!addShip(sShips[planets[i].party], planets[i].x+dt,planets[i].y,planets[i].tx,planets[i].ty)) {
+          if(!addShip(sShips[planets[i].party], planets[i].x+dt,planets[i].y,planets[i].tx+dx,planets[i].ty+dy)) {
             printf("ship insert failed\n"); // todo restore money if list full/fails
           }
           // still building - reset time
@@ -258,6 +276,14 @@ void processShips(saShip * sShips, double dt){
       sShip * ships = sShips[party].ships;
       for(unsigned int i=0; i<sShips[party].size; i++){
         if(ships[i].health){ // ship alive, handle it
+          
+          /*float dx = rand(-3000,3000), dy = rand(-3000,3000);
+          float len = sqrt(dx*dx + dy*dy);
+          dx = dx*SEND_SHIP_RAND_RADIUS/len;
+          dy = dy*SEND_SHIP_RAND_RADIUS/len;
+          flyToTarget(ships[i], mouseVX + dx, mouseVY + dy);
+          /**/
+        
           // if moving, move :)
           if(ships[i].dx || ships[i].dy) {
             // move
@@ -289,10 +315,10 @@ void initPlanets(saPlanet & planets, unsigned int size){
   planets.planets = new sPlanet[planets.size];
   memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,100,100,150,120,0,0,0,PA,2,100,50,true};
-  planets.planets[1] = sPlanet{0,0,270,170,160,130,3,5,3,PB,3,20,50,true};
-  planets.planets[2] = sPlanet{0,0,140,280,130,110,0,0,0,PN,1,33,50,false};
-  planets.planets[3] = sPlanet{0,0,250,300,250,310,0,10,0,PA,9,150,50,true};
+  planets.planets[0] = sPlanet{0,0,100,100,700,600,0,0,0,PA,5000,100,50,true};
+  planets.planets[1] = sPlanet{0,0,270,170,700,600,3,5,3,PB,5000,20,50,true};
+  planets.planets[2] = sPlanet{0,0,140,280,700,600,0,0,0,PB,5000,33,50,false};
+  planets.planets[3] = sPlanet{0,0,250,300,700,600,0,9,0,PA,5000,150,50,true};
 }
 void initShots(saShot & shots, unsigned int size){
   shots.size = size;
