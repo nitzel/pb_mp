@@ -21,6 +21,8 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt);
 void processShips(saShip * sShips, double dt);
 void processShots(saShot * sShots, saShip * sShips, saPlanet & sPlanets, double dt);
 
+void shoot(saShip * sShips, saPlanet & sPlanets, double dt);
+
 int main(int argc, char ** argv){  
   for(int i=0; i<100; i++)
     printf("%i\n",rand(-50, 50));
@@ -192,22 +194,45 @@ int main(int argc, char ** argv){
   return 0;
 }
 
-void flyToTarget(sShip & ship, float tarX, float tarY){
-  ship.tx = tarX;
-  ship.ty = tarY;
-  ship.dx = ship.tx-ship.x;
-  ship.dy = ship.ty-ship.y;
-  float vecLen = sqrt(ship.dx*ship.dx + ship.dy*ship.dy);
-  ship.dx = SHIP_SPEED*ship.dx/vecLen;
-  ship.dy = SHIP_SPEED*ship.dy/vecLen;
-  
+
+/// set dx, dy relative to vector (xy)->(tx,ty)
+inline void delta(const float x, const float y, const float tx, const float ty, float & dx, float & dy){
+  dx = tx-x;
+  dy = ty-y;
 }
-void deleteShip(saShip & ships, unsigned int id){
+inline void normalize(float & x, float & y, const float LEN){
+  float vecLen = sqrt(x*x + y*y);
+  x = LEN*x/vecLen;
+  y = LEN*y/vecLen;
+}
+void flyToTarget(sShot & shot, const float tx, const float ty){
+  delta(shot.x, shot.y, tx, ty, shot.dx, shot.dy);
+  normalize(shot.dx, shot.dy, SHOT_SPEED);
+}
+void flyToTarget(sShip & ship, const float tx, const float ty){
+  ship.tx = tx;
+  ship.ty = ty;
+  delta(ship.x, ship.y, ship.tx, ship.ty, ship.dx, ship.dy);
+  normalize(ship.dx, ship.dy, SHIP_SPEED);
+}
+void deleteShip(saShip & ships, const unsigned int id){
   ships.ships[id].health = 0;  // mark ship as dead 
   ships.free[ships.freePush] = id; // insert index to freeIndices list
   ships.freePush = (ships.freePush+1)%ships.size;           // increment insert pointer
 }
-bool addShip(saShip & ships, float x, float y, float tarX, float  tarY){
+
+bool addShot(saShot & shots, const float x, const float y, const float ty, const float tx) {
+  sShot & shot = shots.shots[shots.insertPos];
+  shot.timeToLive = SHOT_LIFETIME;
+  shot.x = x;
+  shot.y = y;
+  
+  flyToTarget(shot, tx, ty);
+  shots.insertPos = (shots.insertPos+1)%shots.size; // increase insertpointer
+  return true;
+}
+
+bool addShip(saShip & ships, const float x, const float y, const float tx, const float  ty){
   if(ships.freePop==ships.freePush){ // ships may be either empty or full
     if(ships.ships[ships.free[ships.freePop]].health){ // shiplimit reached
       return false;
@@ -218,7 +243,7 @@ bool addShip(saShip & ships, float x, float y, float tarX, float  tarY){
   ship.timeToShoot = 0;
   ship.x = x;
   ship.y = y;
-  flyToTarget(ship,tarX,tarY);
+  flyToTarget(ship,tx,ty);
   
   //printf("ship created xy(%i,%i) txy(%i,%i) dxy(%.2f,%.2f) H%i\n", (int)ship.x, (int)ship.y, (int)ship.tx, (int)ship.ty, ship.dx, ship.dy, (int)ship.health);
   
