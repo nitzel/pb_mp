@@ -11,9 +11,6 @@
 #define STBI_NO_HDR
 #include "include/stb_image.h"
 
-#define SCREENW 1366
-#define SCREENH  700
-
 #define UPGRADE_MAX_LVL  10     // max level for upgrades
 #define POWER_MAX       100     // maximum power storable
 #define POWER_REGEN       1.f   // power regeneration if shield is inactive

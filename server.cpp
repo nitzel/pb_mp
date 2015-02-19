@@ -22,6 +22,15 @@ void shoot(saShip * sShips, saPlanet & sPlanets, double dt);
 
 int main(int argc, char ** argv){  
   ////////////////
+  // VARS
+  ////////////////
+  screen = {1366,700};
+  view = {0,0};
+  map = {2000,2000};
+  mouseR = {0,0};
+  mouseV = {0,0};
+  
+  ////////////////
   // GAME VARS
   ////////////////
   saPlanet planets;
@@ -106,7 +115,7 @@ int main(int argc, char ** argv){
   glfwSetErrorCallback(cb_error);
   //struct sInfo & info = *getInfo(); // todo decide if necessary
   
-  info.window = glfwCreateWindow(SCREENW,SCREENH,"PBENET",NULL,NULL);
+  info.window = glfwCreateWindow(screen.w,screen.h,"PBENET",NULL,NULL);
   if(!info.window){
     exit("Failed at glfwCreateWindow()",EXIT_FAILURE);
   }
@@ -114,11 +123,11 @@ int main(int argc, char ** argv){
   glfwSetCursorPosCallback(info.window, cursor_pos_callback);
   
   glfwMakeContextCurrent(info.window);
-  glViewport(0, 0, (GLsizei)SCREENW, (GLsizei)SCREENH);
+  glViewport(0, 0, (GLsizei)screen.w, (GLsizei)screen.h);
   // change to projection matrix, reset the matrix and set upt orthogonal view
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(0, SCREENW, SCREENH, 0, 0, 1);// parameters: left, right, bottom, top, near, far
+  glOrtho(0, screen.w, screen.h, 0, 0, 1);// parameters: left, right, bottom, top, near, far
 
   // ---- OpenGL settings
   glfwSwapInterval(1); // lock to vertical sync of monitor (normally 60Hz/)
@@ -160,10 +169,10 @@ int main(int argc, char ** argv){
     if(mouseR.y<40) view.y--;
     if(mouseR.x>screen.w-40) view.x++;
     if(mouseR.y>screen.h-40) view.y++;
-    if(view.y<0) view.x = 0;
+    if(view.x<0) view.x = 0;
     if(view.y<0) view.y = 0;    
-    if(view.x>map.w) view.x = 10000;
-    if(view.y>map.w) view.y = 10000;
+    if(view.x>map.w-screen.w) view.x = map.w-screen.w;
+    if(view.y>map.h-screen.h) view.y = map.h-screen.h;
     // process game content
     processPlanets(planets, ships, dt);
     processShips(ships, dt);
@@ -172,12 +181,12 @@ int main(int argc, char ** argv){
     glMatrixMode(GL_MODELVIEW); // reset the matrix
     glLoadIdentity();
     // draw gamecontent
-    drawPlanets(planets, -view.x, -view.x);
+    drawPlanets(planets, -view.x, -view.y);
     drawShips(ships, -view.x, -view.y);
     drawShots(shots, -view.x, -view.y);
 
     char s[100];
-    sprintf(s,"FPS=%4.0f Money A=%5i B=%5i",fps, (int)money[PA],(int)money[PB]);
+    sprintf(s,"FPS=%4.0f t=%.1fs Money A=%5i B=%5i MR%i/%i MV%i/%i View%i/%i",fps, time, (int)money[PA],(int)money[PB], (int)mouseR.x, (int)mouseR.y, (int)mouseV.x, (int)mouseV.y, (int)view.x, (int)view.y);
     drawString(s,strlen(s),10,10);
     
     glfwSwapBuffers(info.window);
@@ -191,7 +200,7 @@ int main(int argc, char ** argv){
 
 
 void shoot(saShip * sShips, saPlanet & sPlanets, double dt){
-  
+  // todo :)
   
 }
 
@@ -233,22 +242,20 @@ bool addShot(saShot & shots, const float x, const float y, const float ty, const
 }
 
 bool addShip(saShip & ships, const float x, const float y, const float tx, const float  ty){
-  if(ships.freePop==ships.freePush){ // ships may be either empty or full
-    if(ships.ships[ships.free[ships.freePop]].health){ // shiplimit reached
+  // Check if the shiplist is full (no elements between freepop and freepush and the ship they are pointing to is alive)
+  if(ships.freePop==ships.freePush && ships.ships[ships.free[ships.freePop]].health){
       return false;
-    }
+  } else {  
+    sShip & ship = ships.ships[ships.free[ships.freePop]];
+    ship.health = SHIP_HEALTH_MAX;
+    ship.timeToShoot = 0;
+    ship.x = x;
+    ship.y = y;
+    flyToTarget(ship,tx,ty);
+    
+    ships.freePop = (ships.freePop+1)%ships.size;// increment free index counter
+    return true;
   }
-  sShip & ship = ships.ships[ships.free[ships.freePop]];
-  ship.health = SHIP_HEALTH_MAX;
-  ship.timeToShoot = 0;
-  ship.x = x;
-  ship.y = y;
-  flyToTarget(ship,tx,ty);
-  
-  //printf("ship created xy(%i,%i) txy(%i,%i) dxy(%.2f,%.2f) H%i\n", (int)ship.x, (int)ship.y, (int)ship.tx, (int)ship.ty, ship.dx, ship.dy, (int)ship.health);
-  
-  ships.freePop = (ships.freePop+1)%ships.size;// increment free index counter
-  return true;
 }
 void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
   sPlanet * planets = (sPlanet*)(const char*)sPlanets.planets;
