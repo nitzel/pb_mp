@@ -1,14 +1,11 @@
 #include "inc.hpp"
 
-float mouseRX=0, mouseRY=0; // real position
-float mouseVX=0, mouseVY=0; // virtual position 
-float viewX=0, viewY=0;
 float money[2] = {0,0};
 static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
-  mouseRX=(float)xpos;
-  mouseRY=(float)ypos;
-  mouseVX=mouseRX + viewX;
-  mouseVY=mouseRY + viewY;
+  mouseR.x=(float)xpos;
+  mouseR.y=(float)ypos;
+  mouseV.x=mouseR.x + view.x;
+  mouseV.y=mouseR.y + view.y;
   
 }
 
@@ -24,11 +21,6 @@ void processShots(saShot * sShots, saShip * sShips, saPlanet & sPlanets, double 
 void shoot(saShip * sShips, saPlanet & sPlanets, double dt);
 
 int main(int argc, char ** argv){  
-  for(int i=0; i<100; i++)
-    printf("%i\n",rand(-50, 50));
-  for(int i=0; i<100; i++)
-    printf("%.4f\n",randf());
-  
   ////////////////
   // GAME VARS
   ////////////////
@@ -40,6 +32,9 @@ int main(int argc, char ** argv){
   initShots(shots[PB],  10000);
   initShips(ships[PA],  5000);
   initShips(ships[PB],  5000);
+  map.w = 2000;
+  map.h = 2000;
+  
   //////////
   // ENET
   /////////
@@ -109,7 +104,7 @@ int main(int argc, char ** argv){
     exit("Failed at glfwInit()\n",EXIT_FAILURE);
   atexit(glfwTerminate);
   glfwSetErrorCallback(cb_error);
-  struct sInfo & info = *getInfo();
+  //struct sInfo & info = *getInfo(); // todo decide if necessary
   
   info.window = glfwCreateWindow(SCREENW,SCREENH,"PBENET",NULL,NULL);
   if(!info.window){
@@ -161,14 +156,14 @@ int main(int argc, char ** argv){
     time = glfwGetTime();
     fps = (fps*500 + 10/dt)/510;
     // move view
-    if(mouseRX<40) viewX--;
-    if(mouseRY<40) viewY--;
-    if(mouseRX>SCREENW-40) viewX++;
-    if(mouseRY>SCREENH-40) viewY++;
-    if(viewX<0) viewX = 0;
-    if(viewY<0) viewY = 0;    
-    if(viewX>10000) viewX = 10000;
-    if(viewY>10000) viewY = 10000;
+    if(mouseR.x<40) view.x--;
+    if(mouseR.y<40) view.y--;
+    if(mouseR.x>screen.w-40) view.x++;
+    if(mouseR.y>screen.h-40) view.y++;
+    if(view.y<0) view.x = 0;
+    if(view.y<0) view.y = 0;    
+    if(view.x>map.w) view.x = 10000;
+    if(view.y>map.w) view.y = 10000;
     // process game content
     processPlanets(planets, ships, dt);
     processShips(ships, dt);
@@ -177,11 +172,10 @@ int main(int argc, char ** argv){
     glMatrixMode(GL_MODELVIEW); // reset the matrix
     glLoadIdentity();
     // draw gamecontent
-    drawPlanets(planets, -viewX, -viewY);
-    drawShips(ships, -viewX, -viewY);
-    drawShots(shots, -viewX, -viewY);
+    drawPlanets(planets, -view.x, -view.x);
+    drawShips(ships, -view.x, -view.y);
+    drawShots(shots, -view.x, -view.y);
 
-    
     char s[100];
     sprintf(s,"FPS=%4.0f Money A=%5i B=%5i",fps, (int)money[PA],(int)money[PB]);
     drawString(s,strlen(s),10,10);
@@ -194,6 +188,12 @@ int main(int argc, char ** argv){
   return 0;
 }
 
+
+
+void shoot(saShip * sShips, saPlanet & sPlanets, double dt){
+  
+  
+}
 
 /// set dx, dy relative to vector (xy)->(tx,ty)
 inline void delta(const float x, const float y, const float tx, const float ty, float & dx, float & dy){
@@ -253,8 +253,8 @@ bool addShip(saShip & ships, const float x, const float y, const float tx, const
 void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
   sPlanet * planets = (sPlanet*)(const char*)sPlanets.planets;
   for(unsigned int i=0; i<sPlanets.size; i++){
-    planets[i].tx = mouseVX; // todo remove
-    planets[i].ty = mouseVY;
+    planets[i].tx = mouseV.x; // todo remove
+    planets[i].ty = mouseV.y;
     
     if(planets[i].party!=PN){ // not neutral
       // generate money for the player

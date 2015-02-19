@@ -1,5 +1,6 @@
 #include "inc.hpp"
 struct sInfo info;
+struct vec2 map, screen, view, mouseR, mouseV;
 const char * textureNames[] = {"mFont.tga","planet.tga","ship.png"};
 
 

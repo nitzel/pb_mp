@@ -47,6 +47,12 @@ struct sInfo {
 };
 extern struct sInfo info;
 
+struct vec2 { // for rectangles and coordinates etc
+  union {float x, w;};
+  union {float y, h;};
+};
+extern struct vec2 map, screen, view, mouseR, mouseV;
+
 struct sShip {
   double timeToShoot;      // when we can fire the next
   float x,y;   // position
