@@ -14,11 +14,12 @@ static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
 
 
 void initPlanets(saPlanet & planets, unsigned int size);
-void initShots(saShot & shots, unsigned int size);
 void initShips(saShip & ships, unsigned int size);
+void initShots(saShot & shots, unsigned int size);
 
 void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt);
 void processShips(saShip * sShips, double dt);
+void processShots(saShot * sShots, saShip * sShips, saPlanet & sPlanets, double dt);
 
 int main(int argc, char ** argv){  
   for(int i=0; i<100; i++)
@@ -244,10 +245,15 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
           dx = dx*SEND_SHIP_RAND_RADIUS/len;
           dy = dy*SEND_SHIP_RAND_RADIUS/len;
           // add it
-          planets[i].shipQueue --;
           if(!addShip(sShips[planets[i].party], planets[i].x+dt,planets[i].y,planets[i].tx+dx,planets[i].ty+dy)) {
-            printf("ship insert failed\n"); // todo restore money if list full/fails
+            printf("ship insert failed\n"); // todo think of sth better than restoring money
+            // restore money to player
+            money[planets[i].party] += SHIP_COSTS * planets[i].shipQueue;
+            planets[i].shipQueue = 0; 
+          } else {
+            planets[i].shipQueue --; // decrement build list
           }
+          
           // still building - reset time
           if(planets[i].shipQueue)  
             planets[i].timeToBuild += SHIP_PROD_TIME*(1-(planets[i].level[PRODUCTION]+1)/UPGRADE_MAX_LVL);
@@ -271,6 +277,22 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
       planets[i].health = HEALTH_MAX;
   }
 }
+
+void processShots(saShot * sShots, saShip * sShips, saPlanet & sPlanets, double dt){
+  for(unsigned int party=0; party<PN; party++) {
+    sShot * shots = sShots[party].shots;
+    for(unsigned int i=0; i<sShots[party].size; i++){
+      if(shots[i].timeToLive>0){ // shot exists
+        // move shot
+        shots[i].x += shots[i].dx * SHOT_SPEED;
+        shots[i].y += shots[i].dy * SHOT_SPEED;
+        // check for collision todo
+        
+      }
+    }
+  }
+}
+
 void processShips(saShip * sShips, double dt){
     for(unsigned int party=0; party<PN; party++) {
       sShip * ships = sShips[party].ships;

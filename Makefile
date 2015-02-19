@@ -1,6 +1,7 @@
 EXECLIENT=game
 EXESERVER=server
-CFLAGS=-c -Wall -std=c++11 
+# -Wno-comment // or /* within a comment
+CFLAGS=-c -Wall -std=c++11 -Wno-comment
 #for optimization add -D__NO_INLINE_HYPOTF__
 LDFLAGS=-lglfw3  -lenet
 # -s for strip symbols from binaries -> smaller
