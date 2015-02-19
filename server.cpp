@@ -185,8 +185,12 @@ int main(int argc, char ** argv){
 void flyToTarget(sShip & ship, float tarX, float tarY){
   ship.tx = tarX;
   ship.ty = tarY;
-  ship.dx = 0;
-  ship.dy = 0;
+  ship.dx = ship.tx-ship.x;
+  ship.dy = ship.ty-ship.y;
+  float vecLen = sqrt(ship.dx*ship.dx + ship.dy*ship.dy);
+  ship.dx = SHIP_SPEED*ship.dx/vecLen;
+  ship.dy = SHIP_SPEED*ship.dy/vecLen;
+  
 }
 void deleteShip(saShip & ships, unsigned int id){
   ships.ships[id].health = 0;  // mark ship as dead 
@@ -254,8 +258,24 @@ void processShips(saShip * sShips, double dt){
       sShip * ships = sShips[party].ships;
       for(unsigned int i=0; i<sShips[party].size; i++){
         if(ships[i].health){ // ship alive, handle it
-          // move
-          // if near target, stop move-motion
+          // if moving, move :)
+          if(ships[i].dx || ships[i].dy) {
+            // move
+            ships[i].x += ships[i].dx *dt;
+            ships[i].y += ships[i].dy *dt;
+            // if near target, stop move-motion and teleport to target
+            float dx = ships[i].x - ships[i].tx;
+            if(dx > -SHIP_TELEPORT_DIST && dx < SHIP_TELEPORT_DIST) {
+              ships[i].dx = 0;
+              ships[i].x = ships[i].tx;
+            }
+            float dy = ships[i].y - ships[i].ty;
+            if(dy > -SHIP_TELEPORT_DIST && dy < SHIP_TELEPORT_DIST) {
+              ships[i].dy = 0;
+              ships[i].y = ships[i].ty;
+            }
+          }
+          
           // shoot todo, better separate to use with planets
           
         }

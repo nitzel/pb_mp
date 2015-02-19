@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <string>
-#include <math.h>
+#include <cmath>
 #include <forward_list>
 #include <GLFW/glfw3.h>
 #include <enet/enet.h>
@@ -20,11 +20,12 @@
 #define HEALTH_REGEN      1.f   // health regeneration
 #define MONEY_GEN         1.0f  // money per planet per level per second
 #define SHIP_PROD_TIME   4.0f  // after this time a ship is produced
+#define SEND_SHIP_RAND_RADIUS 50; // new ships go in this radius around planet.txy 
 
-#define SHIP_HEALTH_MAX  10;
-#define SHIP_SHOOT_DELAY  4.0f;
-
-
+#define SHIP_HEALTH_MAX  10
+#define SHIP_SHOOT_DELAY  4.0f
+#define SHIP_TELEPORT_DIST 2   // if the ship is closer than that, teleport
+#define SHIP_SPEED       160    // ship-speed, pixel per second
 enum Party{PA,PB,PN};
 enum Upgrades{ECONOMY,DEFENSE,PRODUCTION};
 enum TextureID{TEX_FONT=0,TEX_PLANET,TEX_SHIP,TEX_AMOUNT};
@@ -90,14 +91,24 @@ struct saShot {
   unsigned int size;
 };
 
+///////////
+// draw game content
 void drawPlanets(const saPlanet & sPlanets, const float dX, const float dY);
 void drawShips(const saShip * ships, const float dX, const float dY);
 void drawShots(const saShot * shots, const float dX, const float dY);
-
+/////////
+// draw text/numbers/strings
 void drawInt(int i, float strX, float strY, float stretchX, float stretchY);
 void drawInt(int i, float strX, float strY, float stretchXY=1);
 void drawString(const char* str, unsigned int strlen, float strX, float strY, float stretchX, float stretchY);
 void drawString(const char* str, unsigned int strlen, float strX, float strY, float stretchXY=1);
+///////////////////
+// random numbers
+float rand(int min, int max);
+unsigned int rand(unsigned int max);
+unsigned long xorshf96(void); //period 2^96-1// Marsaglia's rand
+////////////////////
+//  other stuff
 void loadTextures();
 struct sTexture loadTexture(const char * file);
 struct sInfo * getInfo();
