@@ -13,6 +13,7 @@ Run `make` to compile and run `./server` or `./client` to play!
   - Write the client
   - Attempt to make the code look clean
     - fail :broken_heart:
+    
 # Credits
 
   - Inspiration: [Planet Battle 3](http://forums.purebasic.com/german/viewtopic.php?f=12&t=18101&sid=6ac3cca19644aa677b6a1aae8b797853 "Planet Battle 3 - by kswb73")
