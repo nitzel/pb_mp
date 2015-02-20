@@ -18,7 +18,7 @@
 #define HEALTH_MAX           100    // health maximum for planets
 #define HEALTH_REGEN           1.f  // health regeneration
 #define MONEY_GEN              1.0f // money per planet per level per second
-#define SHIP_PROD_TIME         1.0f // time to produce a ship
+#define SHIP_PROD_TIME         .0f // time to produce a ship
 #define SEND_SHIP_RAND_RADIUS 50    // new ships go in this radius around planet.txy 
 #define SHIP_COSTS            10    // credits to pay per ship
 
@@ -30,7 +30,7 @@
 #define SHIP_AIM_RANGE_SQ SHIP_AIM_RANGE*SHIP_AIM_RANGE    // aiming range squared
 
 #define SHOT_SPEED           640    // shot-speed pixel per second
-#define SHOT_LIFETIME          10.5    // timeToLive of a shot, in sec
+#define SHOT_LIFETIME          1.5    // timeToLive of a shot, in sec
 
 #define GRID_SIZE            500    //
 enum Party{PA=0,PB,PN};

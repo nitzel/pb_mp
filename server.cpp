@@ -38,8 +38,8 @@ int main(int argc, char ** argv){
   saShot shots[2];
   saShip ships[2];
   initPlanets(planets, 4);
-  initShots(shots[PA],  10000);
-  initShots(shots[PB],  10000);
+  initShots(shots[PA],  16000);
+  initShots(shots[PB],  16000);
   initShips(ships[PA],  10000);
   initShips(ships[PB],  10000);
   map.w = 2000;
@@ -237,7 +237,7 @@ void deleteShip(saShip & ships, const unsigned int id){
   ships.freePush = (ships.freePush+1)%ships.size;           // increment insert pointer
 }
 
-bool addShot(saShot & shots, const float x, const float y, const float ty, const float tx) {
+bool addShot(saShot & shots, const float x, const float y, const float tx, const float ty) {
   sShot & shot = shots.shots[shots.insertPos];
   shot.timeToLive = SHOT_LIFETIME;
   shot.x = x;
@@ -314,6 +314,7 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
   // Here it is used for going through the grid, using closer grid
   // parts first to find a good-enough shootable ship (optimal would take too much time, we take the first we can find in reach, which is roughly the closest. the really closest may be about sqrt(GRID_size) closer, which is acceptable)
   const unsigned int MAX_GRIDS = (2*SHIP_AIM_RANGE/GRID_SIZE+1)*(2*SHIP_AIM_RANGE/GRID_SIZE+1); // at max we need to check this many grids
+  int countShots = 0; // todo delete
   for(unsigned int party=PA; party<PN; party++){
     sShip * ships = sShips[party].ships;
     unsigned int rival = !party; // opponents party ID :)
@@ -357,6 +358,7 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
               // okey we found someone to shoot
               // todo shoot!
               targetFound = true;
+              countShots ++; // todo delete
               addShot(sShots[party], ship.x, ship.y, target->x, target->y);
               ship.timeToShoot += SHIP_SHOOT_DELAY;
               //printf("shot %i to %i/%i",i,(int)target->x,(int)target->y);
@@ -379,6 +381,8 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
       }
     }
   }
+  if(countShots)
+    printf("shots %i\n",countShots);
   
   
   
@@ -512,10 +516,10 @@ void initPlanets(saPlanet & planets, unsigned int size){
   planets.planets = new sPlanet[planets.size];
   memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,100,100,700,600,0,0,0,PA,5,100,50,true};
-  planets.planets[1] = sPlanet{0,0,270,170,700,600,3,5,3,PB,5,20,50,true};
-  planets.planets[2] = sPlanet{0,0,140,280,700,600,0,0,0,PB,5,33,50,false};
-  planets.planets[3] = sPlanet{0,0,250,300,700,600,0,9,0,PA,5,150,50,true};
+  planets.planets[0] = sPlanet{0,0,100,100,700,600,0,0,0,PA,5000,100,50,true};
+  planets.planets[1] = sPlanet{0,0,270,170,700,600,3,5,3,PB,5000,20,50,true};
+  planets.planets[2] = sPlanet{0,0,140,280,700,600,0,0,0,PB,5000,33,50,false};
+  planets.planets[3] = sPlanet{0,0,250,300,700,600,0,9,0,PA,5000,150,50,true};
 }
 void initShots(saShot & shots, unsigned int size){
   shots.size = size;
