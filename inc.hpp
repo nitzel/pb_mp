@@ -26,7 +26,7 @@
 #define SHIP_SHOOT_DELAY       1.0f // time between shots/reload
 #define SHIP_TELEPORT_DIST     3    // if the ship is closer than that, teleport
 #define SHIP_SPEED           160    // ship-speed, pixel per second
-#define SHIP_AIM_RANGe       500    // aiming range of ships. within they can target other ships
+#define SHIP_AIM_RANGE       500    // aiming range of ships. within they can target other ships
 
 #define SHOT_SPEED           640    // shot-speed pixel per second
 #define SHOT_LIFETIME          1    // timeToLive of a shot, in sec
@@ -101,9 +101,15 @@ struct saShot {
   unsigned int insertPos;
   unsigned int size;
 };
-
+// to partition the map
+struct sSquare {
+  unsigned int size;
+  std::forward_list<sShip*> shiplist; 
+};
+void drawTree(sSquare* tree, const float dX, const float dY);
 ///////////
 // draw game content
+
 void drawPlanets(const saPlanet & sPlanets, const float dX, const float dY);
 void drawShips(const saShip * ships, const float dX, const float dY);
 void drawShots(const saShot * shots, const float dX, const float dY);

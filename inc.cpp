@@ -4,6 +4,39 @@ struct vec2 map, screen, view, mouseR, mouseV;
 const char * textureNames[] = {"mFont.tga","planet.tga","ship.png"};
 
 
+
+void drawTree(sSquare* tree, const float dX, const float dY){
+  // draw lines
+  const unsigned int W=map.w/SHIP_AIM_RANGE;
+  const unsigned int H=map.h/SHIP_AIM_RANGE;
+  const unsigned int WH=W*H;
+  
+  glBegin(GL_LINES);
+  glColor3ub(255,255,0);
+  for(unsigned int x=0; x<W; x++){
+    for(unsigned int y=0; y<H; y++){
+        // vertical
+        glVertex2i(dX+x*SHIP_AIM_RANGE,   dY+y*SHIP_AIM_RANGE);
+        glVertex2i(dX+x*SHIP_AIM_RANGE,   dY+(y+1)*SHIP_AIM_RANGE);
+        // horizontal
+        glVertex2i(dX+x*SHIP_AIM_RANGE,    dY+y*SHIP_AIM_RANGE);
+        glVertex2i(dX+(x+1)*SHIP_AIM_RANGE,dY+y*SHIP_AIM_RANGE);
+      
+    }
+  }
+  glEnd();
+  // data
+  
+  for(unsigned int party=PA; party<PN; party++){
+    for(unsigned int x=0; x<W; x++){
+      for(unsigned int y=0; y<H; y++){
+        glColor3ub(party*255,255-party*255,0);
+        drawInt(tree[party*WH+x*H+y].size,dX+x*SHIP_AIM_RANGE,   dY+y*SHIP_AIM_RANGE+party*15);
+      }
+    }
+  }
+  
+}
 void drawPlanets(const saPlanet & sPlanets, const float dX, const float dY){  
   sPlanet * planets = (sPlanet*)(const char*)sPlanets.planets;
   // draw Planet Texture
@@ -56,11 +89,11 @@ void drawShips(const saShip * sShips, const float dX, const float dY){
     const int & w = 8; //info.textures[TEX_SHIP].w*z/2 ;
     const int & h = 8; //info.textures[TEX_SHIP].h*z/2;
     for(unsigned int party=0; party<PN; party++) {
-      //glColor3ub(party*255,255-party*255,0);
+      glColor3ub(party*255,255-party*255,0);
       sShip * ships = sShips[party].ships;
       for(unsigned int i=0; i<sShips[party].size; i++){
         if(ships[i].health){
-          glColor3ub(25*ships[i].health,255,255);
+          //glColor3ub(25*ships[i].health,255,255);
           glTexCoord2f(0.0,0.0); glVertex2i(dX+ships[i].x-w,dY+ships[i].y-h);
           glTexCoord2f(1.0,0.0); glVertex2i(dX+ships[i].x+w,dY+ships[i].y-h);
           glTexCoord2f(1.0,1.0); glVertex2i(dX+ships[i].x+w,dY+ships[i].y+h);

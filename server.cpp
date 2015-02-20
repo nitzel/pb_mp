@@ -184,6 +184,7 @@ int main(int argc, char ** argv){
     drawPlanets(planets, -view.x, -view.y);
     drawShips(ships, -view.x, -view.y);
     drawShots(shots, -view.x, -view.y);
+    shoot(ships, planets, dt);
 
     char s[100];
     sprintf(s,"FPS=%4.0f t=%.1fs Money A=%5i B=%5i MR%i/%i MV%i/%i View%i/%i",fps, time, (int)money[PA],(int)money[PB], (int)mouseR.x, (int)mouseR.y, (int)mouseV.x, (int)mouseV.y, (int)view.x, (int)view.y);
@@ -210,9 +211,29 @@ void shoot(saShip * sShips, saPlanet & sPlanets, double dt){
   /// Only the ones on aim-range will be tested
   
   // todo :)
-  struct sSquare {
-    
+  
+  const unsigned int W = map.w/SHIP_AIM_RANGE;
+  const unsigned int H = map.h/SHIP_AIM_RANGE;
+  
+  
+  sSquare tree[2][W][H];
+  // init size of tree with zero
+  for(unsigned int party=PA; party<PN; party++)
+    for(unsigned int x=0; x<W; x++)
+      for(unsigned int y=0; y<H; y++)
+        tree[party][x][y].size = 0;
+  
+  for(unsigned int party=PA; party<PN; party++){
+    sShip * ships = sShips[party].ships;
+    for(unsigned int i=0; i<sShips[party].size; i++){
+      if(ships[i].health){
+        tree[party][(int)(ships[i].x)/SHIP_AIM_RANGE][(int)(ships[i].y)/SHIP_AIM_RANGE].size++;
+        tree[party][(int)(ships[i].x)/SHIP_AIM_RANGE][(int)(ships[i].y)/SHIP_AIM_RANGE].shiplist.push_front(&ships[i]);
+      }
+    }
   }
+  
+  drawTree((sSquare*)tree, -view.x, -view.y);
 }
 
 /// set dx, dy relative to vector (xy)->(tx,ty)
@@ -230,8 +251,10 @@ void flyToTarget(sShot & shot, const float tx, const float ty){
   normalize(shot.dx, shot.dy, SHOT_SPEED);
 }
 void flyToTarget(sShip & ship, const float tx, const float ty){
-  ship.tx = tx;
-  ship.ty = ty;
+  // dont let them go out map
+  ship.tx = (tx<0)?0:(tx>=map.w?map.w-5:tx); // todo define macro or so to make nicer ...
+  ship.ty = (ty<0)?0:(ty>=map.h?map.h-5:ty); // todo why -5 ?? 
+
   delta(ship.x, ship.y, ship.tx, ship.ty, ship.dx, ship.dy);
   normalize(ship.dx, ship.dy, SHIP_SPEED);
 }
@@ -320,7 +343,9 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
       planets[i].health = HEALTH_MAX;
   }
 }
-
+// todo maybe check for ships and shots leaving the map area.
+// maybe not necessary, since shots will die either way and ships can only be sent
+// to valid positions ... so it would computationtime not to test it
 void processShots(saShot * sShots, saShip * sShips, saPlanet & sPlanets, double dt){
   for(unsigned int party=0; party<PN; party++) {
     sShot * shots = sShots[party].shots;
