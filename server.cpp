@@ -19,8 +19,9 @@ void processShips(saShip * sShips, double dt);
 void processShots(saShot * sShots, saShip * sShips, saPlanet & sPlanets, double dt);
 
 void shoot(saShip * sShips, saPlanet & sPlanets, double dt);
-
 int main(int argc, char ** argv){  
+  freopen("stderr.txt","w",stderr);
+  fprintf(stderr, "\nSTART\n");
   ////////////////
   // VARS
   ////////////////
@@ -211,7 +212,6 @@ void shoot(saShip * sShips, saPlanet & sPlanets, double dt){
   /// Only the ones on aim-range will be tested
   
   // todo :)
-  
   const unsigned int W = map.w/SHIP_AIM_RANGE;
   const unsigned int H = map.h/SHIP_AIM_RANGE;
   
@@ -223,11 +223,12 @@ void shoot(saShip * sShips, saPlanet & sPlanets, double dt){
       for(unsigned int y=0; y<H; y++)
         tree[party][x][y].size = 0;
   
+  // todo try to optimize, takes 100fps away
   for(unsigned int party=PA; party<PN; party++){
     sShip * ships = sShips[party].ships;
     for(unsigned int i=0; i<sShips[party].size; i++){
       if(ships[i].health){
-        tree[party][(int)(ships[i].x)/SHIP_AIM_RANGE][(int)(ships[i].y)/SHIP_AIM_RANGE].size++;
+        tree[party][(unsigned int)(ships[i].x)/SHIP_AIM_RANGE][(unsigned int)(ships[i].y)/SHIP_AIM_RANGE].size++;
         tree[party][(int)(ships[i].x)/SHIP_AIM_RANGE][(int)(ships[i].y)/SHIP_AIM_RANGE].shiplist.push_front(&ships[i]);
       }
     }
@@ -243,8 +244,13 @@ inline void delta(const float x, const float y, const float tx, const float ty, 
 }
 inline void normalize(float & x, float & y, const float LEN){
   float vecLen = sqrt(x*x + y*y);
-  x = LEN*x/vecLen;
-  y = LEN*y/vecLen;
+  if(vecLen==0) {
+    x=0; 
+    y=0; 
+  } else {
+    x = LEN*x/vecLen;
+    y = LEN*y/vecLen;
+  }
 }
 void flyToTarget(sShot & shot, const float tx, const float ty){
   delta(shot.x, shot.y, tx, ty, shot.dx, shot.dy);
@@ -367,11 +373,9 @@ void processShips(saShip * sShips, double dt){
       for(unsigned int i=0; i<sShips[party].size; i++){
         if(ships[i].health){ // ship alive, handle it
           
-          /*float dx = rand(-3000,3000), dy = rand(-3000,3000);
-          float len = sqrt(dx*dx + dy*dy);
-          dx = dx*SEND_SHIP_RAND_RADIUS/len;
-          dy = dy*SEND_SHIP_RAND_RADIUS/len;
-          flyToTarget(ships[i], mouseVX + dx, mouseVY + dy);
+          float dx = rand(-3000,3000), dy = rand(-3000,3000);
+          normalize(dx,dy,SEND_SHIP_RAND_RADIUS);
+          flyToTarget(ships[i], mouseV.x + dx, mouseV.y + dy);
           /**/
         
           // if moving, move :)
@@ -392,6 +396,9 @@ void processShips(saShip * sShips, double dt){
             }
           }
           
+          //if(ships[i].x<0) {ships[i].x=0;ships[i].dx=0;}
+          //ships[i].x = (ships[i].x<0)?0:(ships[i].x>map.w?map.w:ships[i].x); // todo define macro or so o make nicer ...
+          //ships[i].y = (ships[i].y<0)?0:(ships[i].y>map.h?map.h:ships[i].y); // todo why -5 ?? 
           // shoot todo, better separate to use with planets
           
         }

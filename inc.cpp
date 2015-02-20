@@ -26,12 +26,13 @@ void drawTree(sSquare* tree, const float dX, const float dY){
   }
   glEnd();
   // data
-  
+  int dx = (int)dX;
+  int dy = (int)dY;
   for(unsigned int party=PA; party<PN; party++){
     for(unsigned int x=0; x<W; x++){
       for(unsigned int y=0; y<H; y++){
         glColor3ub(party*255,255-party*255,0);
-        drawInt(tree[party*WH+x*H+y].size,dX+x*SHIP_AIM_RANGE,   dY+y*SHIP_AIM_RANGE+party*15);
+        drawInt(tree[party*WH+x*H+y].size,dx+x*SHIP_AIM_RANGE,   dy+y*SHIP_AIM_RANGE+party*15);
       }
     }
   }
