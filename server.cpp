@@ -40,8 +40,8 @@ int main(int argc, char ** argv){
   initPlanets(planets, 4);
   initShots(shots[PA],  10000);
   initShots(shots[PB],  10000);
-  initShips(ships[PA],  5000);
-  initShips(ships[PB],  5000);
+  initShips(ships[PA],  10000);
+  initShips(ships[PB],  10000);
   map.w = 2000;
   map.h = 2000;
   
@@ -212,8 +212,8 @@ void shoot(saShip * sShips, saPlanet & sPlanets, double dt){
   /// Only the ones on aim-range will be tested
   
   // todo :)
-  const unsigned int W = map.w/SHIP_AIM_RANGE;
-  const unsigned int H = map.h/SHIP_AIM_RANGE;
+  const unsigned int W = map.w/GRID_SIZE;
+  const unsigned int H = map.h/GRID_SIZE;
   
   
   sSquare tree[2][W][H];
@@ -228,8 +228,8 @@ void shoot(saShip * sShips, saPlanet & sPlanets, double dt){
     sShip * ships = sShips[party].ships;
     for(unsigned int i=0; i<sShips[party].size; i++){
       if(ships[i].health){
-        tree[party][(unsigned int)(ships[i].x)/SHIP_AIM_RANGE][(unsigned int)(ships[i].y)/SHIP_AIM_RANGE].size++;
-        tree[party][(int)(ships[i].x)/SHIP_AIM_RANGE][(int)(ships[i].y)/SHIP_AIM_RANGE].shiplist.push_front(&ships[i]);
+        tree[party][(unsigned int)(ships[i].x)/GRID_SIZE][(unsigned int)(ships[i].y)/GRID_SIZE].size++;
+        tree[party][(int)(ships[i].x)/GRID_SIZE][(int)(ships[i].y)/GRID_SIZE].shiplist.push_front(&ships[i]);
       }
     }
   }
@@ -318,7 +318,7 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
           dy = dy*SEND_SHIP_RAND_RADIUS/len;
           // add it
           if(!addShip(sShips[planets[i].party], planets[i].x+dt,planets[i].y,planets[i].tx+dx,planets[i].ty+dy)) {
-            printf("ship insert failed\n"); // todo think of sth better than restoring money
+            fprintf(stderr, "ship insert failed\n"); // todo think of sth better than restoring money
             // restore money to player
             money[planets[i].party] += SHIP_COSTS * planets[i].shipQueue;
             planets[i].shipQueue = 0; 
@@ -396,13 +396,14 @@ void processShips(saShip * sShips, double dt){
             }
           }
           
+          // check if ships are within map todo leave out? necessary? only if game stutters. could leave it out with checking if the ship is "overshooting" the target xy.
           //if(ships[i].x<0) {ships[i].x=0;ships[i].dx=0;}
           //ships[i].x = (ships[i].x<0)?0:(ships[i].x>map.w?map.w:ships[i].x); // todo define macro or so o make nicer ...
           //ships[i].y = (ships[i].y<0)?0:(ships[i].y>map.h?map.h:ships[i].y); // todo why -5 ?? 
           // shoot todo, better separate to use with planets
           
         }
-        //printf("%i:%i health %i \n",party, i,ships[i].health);
+        //fprintf(stderr, "%i:%i health %i \n",party, i,ships[i].health);
       }
     }
 }

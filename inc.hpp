@@ -31,6 +31,7 @@
 #define SHOT_SPEED           640    // shot-speed pixel per second
 #define SHOT_LIFETIME          1    // timeToLive of a shot, in sec
 
+#define GRID_SIZE            100    //
 enum Party{PA=0,PB,PN};
 enum Upgrades{ECONOMY=0,DEFENSE,PRODUCTION};
 enum TextureID{TEX_FONT=0,TEX_PLANET,TEX_SHIP,TEX_AMOUNT};

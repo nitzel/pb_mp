@@ -7,8 +7,8 @@ const char * textureNames[] = {"mFont.tga","planet.tga","ship.png"};
 
 void drawTree(sSquare* tree, const float dX, const float dY){
   // draw lines
-  const unsigned int W=map.w/SHIP_AIM_RANGE;
-  const unsigned int H=map.h/SHIP_AIM_RANGE;
+  const unsigned int W=map.w/GRID_SIZE;
+  const unsigned int H=map.h/GRID_SIZE;
   const unsigned int WH=W*H;
   
   glBegin(GL_LINES);
@@ -16,11 +16,11 @@ void drawTree(sSquare* tree, const float dX, const float dY){
   for(unsigned int x=0; x<W; x++){
     for(unsigned int y=0; y<H; y++){
         // vertical
-        glVertex2i(dX+x*SHIP_AIM_RANGE,   dY+y*SHIP_AIM_RANGE);
-        glVertex2i(dX+x*SHIP_AIM_RANGE,   dY+(y+1)*SHIP_AIM_RANGE);
+        glVertex2i(dX+x*GRID_SIZE,   dY+y*GRID_SIZE);
+        glVertex2i(dX+x*GRID_SIZE,   dY+(y+1)*GRID_SIZE);
         // horizontal
-        glVertex2i(dX+x*SHIP_AIM_RANGE,    dY+y*SHIP_AIM_RANGE);
-        glVertex2i(dX+(x+1)*SHIP_AIM_RANGE,dY+y*SHIP_AIM_RANGE);
+        glVertex2i(dX+x*GRID_SIZE,    dY+y*GRID_SIZE);
+        glVertex2i(dX+(x+1)*GRID_SIZE,dY+y*GRID_SIZE);
       
     }
   }
@@ -32,7 +32,7 @@ void drawTree(sSquare* tree, const float dX, const float dY){
     for(unsigned int x=0; x<W; x++){
       for(unsigned int y=0; y<H; y++){
         glColor3ub(party*255,255-party*255,0);
-        drawInt(tree[party*WH+x*H+y].size,dx+x*SHIP_AIM_RANGE,   dy+y*SHIP_AIM_RANGE+party*15);
+        drawInt(tree[party*WH+x*H+y].size,dx+x*GRID_SIZE,   dy+y*GRID_SIZE+party*15);
       }
     }
   }
