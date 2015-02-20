@@ -16,16 +16,16 @@ void initShots(saShot & shots, unsigned int size);
 
 void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt);
 void processShips(saShip * sShips, double dt);
-void processShots(saShot * sShots, saShip * sShips, saPlanet & sPlanets, double dt);
+void processShots(saShot * sShots, double dt);
 
-void shoot(saShip * sShips, saPlanet & sPlanets, double dt);
+void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt);
 int main(int argc, char ** argv){  
   freopen("stderr.txt","w",stderr);
   fprintf(stderr, "\nSTART\n");
   ////////////////
   // VARS
   ////////////////
-  screen = {1366,700};
+  screen = {640, 480};//{1366,700};
   view = {0,0};
   map = {2000,2000};
   mouseR = {0,0};
@@ -177,6 +177,7 @@ int main(int argc, char ** argv){
     // process game content
     processPlanets(planets, ships, dt);
     processShips(ships, dt);
+    processShots(shots, dt);
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW); // reset the matrix
@@ -185,7 +186,7 @@ int main(int argc, char ** argv){
     drawPlanets(planets, -view.x, -view.y);
     drawShips(ships, -view.x, -view.y);
     drawShots(shots, -view.x, -view.y);
-    shoot(ships, planets, dt);
+    shoot(ships, planets, shots, dt);
 
     char s[100];
     sprintf(s,"FPS=%4.0f t=%.1fs Money A=%5i B=%5i MR%i/%i MV%i/%i View%i/%i",fps, time, (int)money[PA],(int)money[PB], (int)mouseR.x, (int)mouseR.y, (int)mouseV.x, (int)mouseV.y, (int)view.x, (int)view.y);
@@ -199,43 +200,6 @@ int main(int argc, char ** argv){
   return 0;
 }
 
-
-// todo the built structure here is very useful for collision detection!
-void shoot(saShip * sShips, saPlanet & sPlanets, double dt){
-  /// The idea is to split the playground into squares lying next to 
-  /// each other, each the size of the aiming-range of the ships.
-  /// By coordinates you can directly calculated in which square a ship is
-  /// It then has only to check against the 9 squares around.
-  ///
-  /// If there are :alot: of ships in a square it is further divided 
-  /// into smaller ones, until they contain a reasonable amount. 
-  /// Only the ones on aim-range will be tested
-  
-  // todo :)
-  const unsigned int W = map.w/GRID_SIZE;
-  const unsigned int H = map.h/GRID_SIZE;
-  
-  
-  sSquare tree[2][W][H];
-  // init size of tree with zero
-  for(unsigned int party=PA; party<PN; party++)
-    for(unsigned int x=0; x<W; x++)
-      for(unsigned int y=0; y<H; y++)
-        tree[party][x][y].size = 0;
-  
-  // todo try to optimize, takes 100fps away
-  for(unsigned int party=PA; party<PN; party++){
-    sShip * ships = sShips[party].ships;
-    for(unsigned int i=0; i<sShips[party].size; i++){
-      if(ships[i].health){
-        tree[party][(unsigned int)(ships[i].x)/GRID_SIZE][(unsigned int)(ships[i].y)/GRID_SIZE].size++;
-        tree[party][(int)(ships[i].x)/GRID_SIZE][(int)(ships[i].y)/GRID_SIZE].shiplist.push_front(&ships[i]);
-      }
-    }
-  }
-  
-  drawTree((sSquare*)tree, -view.x, -view.y);
-}
 
 /// set dx, dy relative to vector (xy)->(tx,ty)
 inline void delta(const float x, const float y, const float tx, const float ty, float & dx, float & dy){
@@ -251,6 +215,9 @@ inline void normalize(float & x, float & y, const float LEN){
     x = LEN*x/vecLen;
     y = LEN*y/vecLen;
   }
+}
+inline unsigned int distanceSQ(const float x, const float y, const float x2, const float y2) {
+  return (x-x2)*(x-x2)+(y-y2)*(y-y2);
 }
 void flyToTarget(sShot & shot, const float tx, const float ty){
   delta(shot.x, shot.y, tx, ty, shot.dx, shot.dy);
@@ -297,6 +264,132 @@ bool addShip(saShip & ships, const float x, const float y, const float tx, const
     return true;
   }
 }
+
+// todo the built structure here is very useful for collision detection!
+void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
+  /// The idea is to split the playground into squares lying next to 
+  /// each other, each the size of the aiming-range of the ships.
+  /// By coordinates you can directly calculated in which square a ship is
+  /// It then has only to check against the 9 squares around.
+  ///
+  /// If there are :alot: of ships in a square it is further divided 
+  /// into smaller ones, until they contain a reasonable amount. 
+  /// Only the ones on aim-range will be tested
+  
+  const unsigned int W = map.w/GRID_SIZE;
+  const unsigned int H = map.h/GRID_SIZE;
+  
+  /////////////////
+  // Set up Structure
+  ////////////////
+  sSquare tree[2][W][H];
+  // init size of tree with zero
+  for(unsigned int party=PA; party<PN; party++)
+    for(unsigned int x=0; x<W; x++)
+      for(unsigned int y=0; y<H; y++)
+        tree[party][x][y].size = 0;
+  
+  /////////////////
+  // Fill space partitioning structure with ships
+  ////////////////
+  // todo try to optimize, takes 100fps away
+  for(unsigned int party=PA; party<PN; party++){
+    sShip * ships = sShips[party].ships;
+    for(unsigned int i=0; i<sShips[party].size; i++){
+      if(ships[i].health){
+        tree[party][(unsigned int)(ships[i].x)/GRID_SIZE][(unsigned int)(ships[i].y)/GRID_SIZE].size++;
+        tree[party][(unsigned int)(ships[i].x)/GRID_SIZE][(unsigned int)(ships[i].y)/GRID_SIZE].shiplist.push_front(&ships[i]);
+      }
+    }
+  }
+  
+  /////////////////
+  // RangeTesting and shooting
+  //////////////// 
+  // hint: im using a cool algorithm i invented on my own xD
+  // commenting might be a bit odd, since it was to let the ships
+  // go in a squared without counting how many ships there are
+  // therefore we start in the center of the square and going outwards
+  // in a spiral way
+  // Here it is used for going through the grid, using closer grid
+  // parts first to find a good-enough shootable ship (optimal would take too much time, we take the first we can find in reach, which is roughly the closest. the really closest may be about sqrt(GRID_size) closer, which is acceptable)
+  const unsigned int MAX_GRIDS = (2*SHIP_AIM_RANGE/GRID_SIZE+1)*(2*SHIP_AIM_RANGE/GRID_SIZE+1); // at max we need to check this many grids
+  for(unsigned int party=PA; party<PN; party++){
+    sShip * ships = sShips[party].ships;
+    unsigned int rival = !party; // opponents party ID :)
+    for(unsigned int i=0; i<sShips[party].size; i++){
+      sShip & ship = ships[i];
+      if(ship.timeToShoot>0) {// pls wait for cooldown
+        continue;
+      }
+      
+      int dir = 0; // direction we're inserting the next lines in the rectangle
+      // location to insert ships (+1 because first dir is up(-1))
+      int lx = (int)ship.x/GRID_SIZE;
+      int ly = (int)ship.y/GRID_SIZE+1; 
+      int stepsPerLevel = 1; // how many ships to draw per line (will be counted down)
+      int level = 0; // how many ships per level
+      int repeat = 1; // how many lines to draw before level++  (will be counted down)
+      
+      bool targetFound = false; // will be true when found ;)
+      for(unsigned int j=0; j<MAX_GRIDS && !targetFound; j++) {
+        switch(dir){ // get location for next insertion
+        case 0:
+                ly --;
+                break; // up
+        case 1:
+                lx ++;
+                break; // right
+        case 2:
+                ly ++;
+                break; // down
+        case 3:
+                lx --;
+                break; //left
+        }
+        // use coordinates here
+        
+        if(ly >= 0 && ly < H && lx >= 0 && lx < W  // valid lxy
+           && tree[rival][lx][ly].size) {           // not empty 
+          // do collision checking with ships in this here :)
+          for(sShip * target : tree[rival][lx][ly].shiplist){
+            if(distanceSQ(ship.x, ship.y, target->x, target->y) < SHIP_AIM_RANGE_SQ) {
+              // okey we found someone to shoot
+              // todo shoot!
+              targetFound = true;
+              addShot(sShots[party], ship.x, ship.y, target->x, target->y);
+              ship.timeToShoot += SHIP_SHOOT_DELAY;
+              //printf("shot %i to %i/%i",i,(int)target->x,(int)target->y);
+              break;
+            }
+          }
+        }
+        
+        // further calculations for spiral stuff
+        stepsPerLevel--;
+        if(stepsPerLevel <= 0){
+            dir = (dir + 1) % 4;
+            repeat--;
+            if(repeat <= 0){
+                level++;
+                repeat = 2;
+            }
+            stepsPerLevel = level;
+        }
+      }
+    }
+  }
+  
+  
+  
+  /////////////////
+  // CollisionTesting
+  ////////////////
+  
+  // draw it todo remove or make key dependent. should not be called here...
+  drawTree((sSquare*)tree, -view.x, -view.y);
+}
+
 void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
   sPlanet * planets = (sPlanet*)(const char*)sPlanets.planets;
   for(unsigned int i=0; i<sPlanets.size; i++){
@@ -352,14 +445,16 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
 // todo maybe check for ships and shots leaving the map area.
 // maybe not necessary, since shots will die either way and ships can only be sent
 // to valid positions ... so it would computationtime not to test it
-void processShots(saShot * sShots, saShip * sShips, saPlanet & sPlanets, double dt){
+void processShots(saShot * sShots, double dt){
   for(unsigned int party=0; party<PN; party++) {
     sShot * shots = sShots[party].shots;
     for(unsigned int i=0; i<sShots[party].size; i++){
       if(shots[i].timeToLive>0){ // shot exists
+        // decrease lifetime
+        shots[i].timeToLive -= dt;
         // move shot
-        shots[i].x += shots[i].dx * SHOT_SPEED;
-        shots[i].y += shots[i].dy * SHOT_SPEED;
+        shots[i].x += shots[i].dx * dt;
+        shots[i].y += shots[i].dy * dt;
         // check for collision todo
         
       }
@@ -373,9 +468,11 @@ void processShips(saShip * sShips, double dt){
       for(unsigned int i=0; i<sShips[party].size; i++){
         if(ships[i].health){ // ship alive, handle it
           
-          float dx = rand(-3000,3000), dy = rand(-3000,3000);
-          normalize(dx,dy,SEND_SHIP_RAND_RADIUS);
-          flyToTarget(ships[i], mouseV.x + dx, mouseV.y + dy);
+          if(party==PA){
+            float dx = rand(-3000,3000), dy = rand(-3000,3000);
+            normalize(dx,dy,SEND_SHIP_RAND_RADIUS);
+            flyToTarget(ships[i], mouseV.x + dx, mouseV.y + dy);
+          }
           /**/
         
           // if moving, move :)
@@ -395,6 +492,8 @@ void processShips(saShip * sShips, double dt){
               ships[i].y = ships[i].ty;
             }
           }
+          // reduce shooting time
+          ships[i].timeToShoot -= dt;
           
           // check if ships are within map todo leave out? necessary? only if game stutters. could leave it out with checking if the ship is "overshooting" the target xy.
           //if(ships[i].x<0) {ships[i].x=0;ships[i].dx=0;}
@@ -413,10 +512,10 @@ void initPlanets(saPlanet & planets, unsigned int size){
   planets.planets = new sPlanet[planets.size];
   memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,100,100,700,600,0,0,0,PA,5000,100,50,true};
-  planets.planets[1] = sPlanet{0,0,270,170,700,600,3,5,3,PB,5000,20,50,true};
-  planets.planets[2] = sPlanet{0,0,140,280,700,600,0,0,0,PB,5000,33,50,false};
-  planets.planets[3] = sPlanet{0,0,250,300,700,600,0,9,0,PA,5000,150,50,true};
+  planets.planets[0] = sPlanet{0,0,100,100,700,600,0,0,0,PA,5,100,50,true};
+  planets.planets[1] = sPlanet{0,0,270,170,700,600,3,5,3,PB,5,20,50,true};
+  planets.planets[2] = sPlanet{0,0,140,280,700,600,0,0,0,PB,5,33,50,false};
+  planets.planets[3] = sPlanet{0,0,250,300,700,600,0,9,0,PA,5,150,50,true};
 }
 void initShots(saShot & shots, unsigned int size){
   shots.size = size;

@@ -113,7 +113,7 @@ void drawShots(const saShot * sShots, const float dX, const float dY){
       for(unsigned int i=0; i<sShots[party].size; i++){
         if(shots[i].timeToLive>0) {
           glVertex2i(dX+shots[i].x,dY+shots[i].y);
-          glVertex2i(dX+shots[i].x+shots[i].dx,dY+shots[i].y+shots[i].dy);
+          glVertex2i(dX+shots[i].x+shots[i].dx/10,dY+shots[i].y+shots[i].dy/10);
         }
       }
     }
