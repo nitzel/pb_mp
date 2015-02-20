@@ -198,10 +198,21 @@ int main(int argc, char ** argv){
 }
 
 
-
+// todo the built structure here is very useful for collision detection!
 void shoot(saShip * sShips, saPlanet & sPlanets, double dt){
-  // todo :)
+  /// The idea is to split the playground into squares lying next to 
+  /// each other, each the size of the aiming-range of the ships.
+  /// By coordinates you can directly calculated in which square a ship is
+  /// It then has only to check against the 9 squares around.
+  ///
+  /// If there are :alot: of ships in a square it is further divided 
+  /// into smaller ones, until they contain a reasonable amount. 
+  /// Only the ones on aim-range will be tested
   
+  // todo :)
+  struct sSquare {
+    
+  }
 }
 
 /// set dx, dy relative to vector (xy)->(tx,ty)

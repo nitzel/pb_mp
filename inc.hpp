@@ -11,26 +11,28 @@
 #define STBI_NO_HDR
 #include "include/stb_image.h"
 
-#define UPGRADE_MAX_LVL  10     // max level for upgrades
-#define POWER_MAX       100     // maximum power storable
-#define POWER_REGEN       1.f   // power regeneration if shield is inactive
-#define POWER_DRAIN      10.f   // power drain if shield is active
-#define HEALTH_MAX      100     // health maximum for planets
-#define HEALTH_REGEN      1.f   // health regeneration
-#define MONEY_GEN         1.0f  // money per planet per level per second
-#define SHIP_PROD_TIME   0.1f  // after this time a ship is produced
-#define SEND_SHIP_RAND_RADIUS 50 // new ships go in this radius around planet.txy 
-#define SHIP_COSTS      10    // credits per ship
+#define UPGRADE_MAX_LVL       10    // max level for upgrades
+#define POWER_MAX            100    // maximum power storable
+#define POWER_REGEN            1.f  // power regeneration if shield is inactive
+#define POWER_DRAIN           10.f  // power drain if shield is active
+#define HEALTH_MAX           100    // health maximum for planets
+#define HEALTH_REGEN           1.f  // health regeneration
+#define MONEY_GEN              1.0f // money per planet per level per second
+#define SHIP_PROD_TIME         0.1f // time to produce a ship
+#define SEND_SHIP_RAND_RADIUS 50    // new ships go in this radius around planet.txy 
+#define SHIP_COSTS            10    // credits to pay per ship
 
-#define SHIP_HEALTH_MAX  10
-#define SHIP_SHOOT_DELAY  4.0f
-#define SHIP_TELEPORT_DIST 3   // if the ship is closer than that, teleport
-#define SHIP_SPEED       160    // ship-speed, pixel per second
+#define SHIP_HEALTH_MAX       10    // Maximum health of a ship
+#define SHIP_SHOOT_DELAY       1.0f // time between shots/reload
+#define SHIP_TELEPORT_DIST     3    // if the ship is closer than that, teleport
+#define SHIP_SPEED           160    // ship-speed, pixel per second
+#define SHIP_AIM_RANGe       500    // aiming range of ships. within they can target other ships
 
-#define SHOT_SPEED        640 // shot-speed pixel per second
-#define SHOT_LIFETIME       1
-enum Party{PA,PB,PN};
-enum Upgrades{ECONOMY,DEFENSE,PRODUCTION};
+#define SHOT_SPEED           640    // shot-speed pixel per second
+#define SHOT_LIFETIME          1    // timeToLive of a shot, in sec
+
+enum Party{PA=0,PB,PN};
+enum Upgrades{ECONOMY=0,DEFENSE,PRODUCTION};
 enum TextureID{TEX_FONT=0,TEX_PLANET,TEX_SHIP,TEX_AMOUNT};
 extern const char * textureNames[];
 
