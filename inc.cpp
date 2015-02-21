@@ -109,7 +109,7 @@ void drawShots(const saShot * sShots, const float dX, const float dY){
         if(shots[i].timeToLive>0) {
           glVertex2i(dX+shots[i].x,dY+shots[i].y);
           glVertex2i(dX+shots[i].x+shots[i].dx*SHOT_LENGTH/SHOT_SPEED,dY+shots[i].y+shots[i].dy*SHOT_LENGTH/SHOT_SPEED);
-          //glVertex2i(dX+shots[i].x-shots[i].dx/30,dY+shots[i].y-shots[i].dy/30);
+          //drawInt(i, shots[i].x, shots[i].y); // draw ID instead, glEnd needed!
         }
       }
     }

@@ -25,7 +25,7 @@
 
 
 #define SHIP_HEALTH_MAX       10    // Maximum health of a ship
-#define SHIP_SHOOT_DELAY       2.0f // time between shots/reload
+#define SHIP_SHOOT_DELAY       1.0f // time between shots/reload
 
 #define SHIP_SPEED           160    // ship-speed, pixel per second
 #define SHIP_AIM_RANGE       500    // aiming range of ships. within they can target other ships
@@ -33,7 +33,7 @@
 #define SHIP_RADIUS            8
 
 #define SHOT_SPEED           640    // shot-speed pixel per second
-#define SHOT_LIFETIME          1.5    // timeToLive of a shot, in sec
+#define SHOT_LIFETIME          1.    // timeToLive of a shot, in sec
 #define SHOT_LENGTH           16
 
 #define GRID_SIZE            100    //

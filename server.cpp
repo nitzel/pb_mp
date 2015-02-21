@@ -346,7 +346,7 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
     unsigned int rival = !party; // opponents party ID :)
     for(unsigned int i=0; i<sShips[party].size; i++){
       sShip & ship = ships[i];
-      if(ship.timeToShoot>0) {// pls wait for cooldown
+      if(!ship.health || ship.timeToShoot>0) {// dead or weapon not ready
         continue;
       }
       // todo test if useful
@@ -585,20 +585,18 @@ void initPlanets(saPlanet & planets, unsigned int size){
   planets.planets = new sPlanet[planets.size];
   memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0,PA,0,80,50,false};
-  planets.planets[1] = sPlanet{0,0,120,230,120,230,0,9,0,PA,0,80,50,false};
-  planets.planets[2] = sPlanet{0,0,240,420,240,420,0,9,0,PA,1,80,50,false};
-  planets.planets[3] = sPlanet{0,0,500,110,500,110,3,5,3,PB,0,80,50,false};
-  planets.planets[4] = sPlanet{0,0,420,280,420,280,0,0,0,PB,0,80,50,false};
-  planets.planets[5] = sPlanet{0,0,630,380,630,380,0,0,0,PB,0,80,50,false};
+  planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0,PA,100,80,50,false};
+  planets.planets[1] = sPlanet{0,0,120,230,120,230,0,9,0,PA,100,80,50,false};
+  planets.planets[2] = sPlanet{0,0,240,420,240,420,0,9,0,PA,100,80,50,false};
+  planets.planets[3] = sPlanet{0,0,500,110,500,110,3,5,3,PB,100,80,50,false};
+  planets.planets[4] = sPlanet{0,0,420,280,420,280,0,0,0,PB,100,80,50,false};
+  planets.planets[5] = sPlanet{0,0,630,380,630,380,0,0,0,PB,100,80,50,false};
 }
 void initShots(saShot & shots, unsigned int size){
   shots.size = size;
   shots.insertPos = 0;
   shots.shots = new sShot[shots.size];
   memset(shots.shots, 0, sizeof(sShot)*size); // clear data
-  for(unsigned int i=0; i<shots.size; i++)
-    shots.shots[i].timeToLive = -1; // double(0) != 0x00000000, so must be set manually :(
 }
 void initShips(saShip & ships, unsigned int size){
   ships.size = size;
