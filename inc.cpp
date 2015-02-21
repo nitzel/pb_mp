@@ -44,16 +44,14 @@ void drawPlanets(const saPlanet & sPlanets, const float dX, const float dY){
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, info.textures[TEX_PLANET].id);
   glBegin(GL_QUADS);
-    const int & z = 2; // zoom
-    const int & w = info.textures[TEX_PLANET].w*z/2 ;
-    const int & h = info.textures[TEX_PLANET].h*z/2;
+    const int R = PLANET_RADIUS; // radius
     
     for(unsigned int i=0; i<sPlanets.size; i++){
       glColor3ub(100+planets[i].party*155,255-planets[i].party*155,100);
-      glTexCoord2f(0.0,0.0); glVertex2i(dX+planets[i].x-w,dY+planets[i].y-h);
-      glTexCoord2f(1.0,0.0); glVertex2i(dX+planets[i].x+w,dY+planets[i].y-h);
-      glTexCoord2f(1.0,1.0); glVertex2i(dX+planets[i].x+w,dY+planets[i].y+h);
-      glTexCoord2f(0.0,1.0); glVertex2i(dX+planets[i].x-w,dY+planets[i].y+h);
+      glTexCoord2f(0.0,0.0); glVertex2i(dX+planets[i].x-R,dY+planets[i].y-R);
+      glTexCoord2f(1.0,0.0); glVertex2i(dX+planets[i].x+R,dY+planets[i].y-R);
+      glTexCoord2f(1.0,1.0); glVertex2i(dX+planets[i].x+R,dY+planets[i].y+R);
+      glTexCoord2f(0.0,1.0); glVertex2i(dX+planets[i].x-R,dY+planets[i].y+R);
     }
   glEnd();
   glDisable(GL_TEXTURE_2D);
@@ -68,18 +66,18 @@ void drawPlanets(const saPlanet & sPlanets, const float dX, const float dY){
   // draw Health and other numbers onto planet
   for(unsigned int i=0; i<sPlanets.size; i++){
     glColor3ub(250,250,25);
-    drawInt(planets[i].party,     dX+planets[i].x,      dY+planets[i].y-h, 1);
-    drawInt(planets[i].level[0],  dX+planets[i].x-w+20, dY+planets[i].y-h/2, 1);
-    drawInt(planets[i].level[1],  dX+planets[i].x-w+30, dY+planets[i].y-h/2, 1);
-    drawInt(planets[i].level[2],  dX+planets[i].x-w+40, dY+planets[i].y-h/2, 1);
-    glColor3ub(0,200,0);     
-    drawInt(planets[i].health,    dX+planets[i].x-w+10, dY+planets[i].y, 1);
+    drawInt(planets[i].party,     dX+planets[i].x,      dY+planets[i].y-R, 1);
+    drawInt(planets[i].level[0],  dX+planets[i].x-R+20, dY+planets[i].y-R/2, 1);
+    drawInt(planets[i].level[1],  dX+planets[i].x-R+30, dY+planets[i].y-R/2, 1);
+    drawInt(planets[i].level[2],  dX+planets[i].x-R+40, dY+planets[i].y-R/2, 1);
+    glColor3ub(0,200,0);                          
+    drawInt(planets[i].health,    dX+planets[i].x-R+10, dY+planets[i].y, 1);
     glColor3ub(0,0,200);    
     drawInt(planets[i].power,     dX+planets[i].x,      dY+planets[i].y, 1);
     glColor3ub(100,0,200);
-    drawString(planets[i].shieldActive?"(O)":" O ",3,   dX+planets[i].x, dY+planets[i].y+h/2, 1);
+    drawString(planets[i].shieldActive?"(O)":" O ",3,   dX+planets[i].x, dY+planets[i].y+R/2, 1);
     glColor3ub(200,255,200);    
-    drawInt(planets[i].shipQueue, dX+planets[i].x-w/2,  dY+planets[i].y+h/2, 1);
+    drawInt(planets[i].shipQueue, dX+planets[i].x-R/2,  dY+planets[i].y+R/2, 1);
   }
 }
 void drawShips(const saShip * sShips, const float dX, const float dY){

@@ -38,10 +38,10 @@ int main(int argc, char ** argv){
   saShot shots[2];
   saShip ships[2];
   initPlanets(planets, 6);
-  initShots(shots[PA],  11000);
-  initShots(shots[PB],  11000);
-  initShips(ships[PA],  5000);
-  initShips(ships[PB],  5000);
+  initShots(shots[PA],  21000);
+  initShots(shots[PB],  21000);
+  initShips(ships[PA],  10000);
+  initShips(ships[PB],  10000);
   map.w = 2000;
   map.h = 2000;
   
@@ -270,8 +270,21 @@ void takeDamage(sShip & ship){
     ship.health = -1; // mark for deletion
   }
 }
-void takeDamage(sPlanet & planet){
+void takeDamage(sPlanet & planet, int party){
   // todo
+  if(planet.party == PN){ // neutral planet
+    planet.health -= party*2-1; // Add one for PA, take one for PB. Remember, neutral planets are full health at 0 and overtaken at +-100.
+    if(planet.health <= HEALTH_MAX || planet.health >= HEALTH_MAX){ // overtake
+      planet.party = party;
+      planet.health = 1; // set to positive
+    }
+  } else { // belongs to the enemy party! 
+    planet.health --; // take life away!
+    if(planet.health <= 0) { // make neutral!
+      planet.party = PN;
+      planet.health = 0; // set health to 100% (remember, neutral full health is 0 ... ;) confusing, huh? But this way we can store it in one var)
+    }
+  }
 }
 // todo the built structure here is very useful for collision detection!
 void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
@@ -290,6 +303,10 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
   /////////////////
   // Set up Structure
   ////////////////
+  // todo improve with several layers, experiment
+  // 1st: SHIP_AIM_RANGE^2, containing the amount in the whole Rectangle AND a list of layer2 nodes that are not empty
+  // 2nd: Smaller
+  // we dont need THE nearest enemy, just a close one!
   sSquare tree[2][W][H];
   // init size of tree with zero
   for(unsigned int party=PA; party<PN; party++)
@@ -369,9 +386,8 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
                 lx --;
                 break; //left
         }
-        // use coordinates here
-        
         if(ly >= 0 && (unsigned int)ly < H && lx >= 0 && (unsigned int)lx < W && tree[rival][lx][ly].size) {           // valid lxy and not empty 
+          // todo check if square is in range
           // range checking in here :)
           for(sShip * target : tree[rival][lx][ly].shiplist){
             if(distanceSQ(ship.x, ship.y, target->x, target->y) < SHIP_AIM_RANGE_SQ) {
@@ -409,12 +425,27 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
     sShot * shots = sShots[party].shots;
     for(unsigned int i=0; i<sShots[party].size; i++){
       if(shots[i].timeToLive>0){ // shot exists 
+        /////////////////////
+        // test against ships
         for(sShip * target : tree[rival][(int)shots[i].x/GRID_SIZE][(int)shots[i].y/GRID_SIZE].shiplist){
           if(target->health && distanceSQ(shots[i].x, shots[i].y, target->x, target->y) < SHIP_RADIUS*SHIP_RADIUS) {
             // collision!!!
             shots[i].timeToLive = -1;
             takeDamage(*target);
             break;
+          }
+        }
+        ///////////////////////
+        // test against planets
+        if(shots[i].timeToLive>0) { // shot did not hit a ship, still alive
+          sPlanet * planets = sPlanets.planets;
+          for(unsigned int j=0; j<sPlanets.size; j++){ // take the FIRST planet you can find that is not in our party
+            if(planets[j].party != party && distanceSQ(shots[i].x, shots[i].y, planets[j].x, planets[j].y) < PLANET_RADIUS*PLANET_RADIUS) {
+              // collision!!!
+              shots[i].timeToLive = -1;
+              takeDamage(planets[j], party);
+              break;
+            }
           }
         }
       }
@@ -473,9 +504,23 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
       }
     }
     // restore health
-    planets[i].health += HEALTH_REGEN * dt;
-    if(planets[i].health > HEALTH_MAX)
-      planets[i].health = HEALTH_MAX;
+    if(planets[i].party == PN) {                // neutral planets are special, 0=full health. The sign tells us who is trying to take it over
+      if(planets[i].health < 0) {               // PA is trying to take it
+        planets[i].health += HEALTH_REGEN * dt; // regenerate
+        if(planets[i].health > 0) {
+          planets[i].health = 0;                // set to full health
+        }     
+      } else if (planets[i].health > 0) {       // PB is trying to take it
+        planets[i].health -= HEALTH_REGEN * dt; // regenerate
+        if(planets[i].health < 0) {
+          planets[i].health = 0;                // set to full health
+        }
+      }
+    } else {                                    // Planet owned by a party, they act normal xD
+      planets[i].health += HEALTH_REGEN * dt;   // regenerate
+      if(planets[i].health > HEALTH_MAX)
+        planets[i].health = HEALTH_MAX;         // set to full health
+    }
   }
 }
 // todo maybe check for ships and shots leaving the map area.
@@ -510,9 +555,9 @@ void processShips(saShip * sShips, double dt){
           continue;
         }
         if(party==PA){
-          float dx = rand(-3000,3000), dy = rand(-3000,3000);
-          normalize(dx,dy,SEND_SHIP_RAND_RADIUS);
-          flyToTarget(ships[i], mouseV.x + dx, mouseV.y + dy);
+          //float dx = rand(-3000,3000), dy = rand(-3000,3000);
+          //normalize(dx,dy,SEND_SHIP_RAND_RADIUS);
+          //flyToTarget(ships[i], mouseV.x + dx, mouseV.y + dy);
         }
         /**/
       
@@ -540,18 +585,20 @@ void initPlanets(saPlanet & planets, unsigned int size){
   planets.planets = new sPlanet[planets.size];
   memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0,PA,1000,100,50,true};
-  planets.planets[1] = sPlanet{0,0,120,230,120,230,0,9,0,PA,1000,150,50,true};
-  planets.planets[2] = sPlanet{0,0,240,420,240,420,0,9,0,PA,1000,150,50,true};
-  planets.planets[3] = sPlanet{0,0,500,110,500,110,3,5,3,PB,1000,20,50,true};
-  planets.planets[4] = sPlanet{0,0,420,280,420,280,0,0,0,PB,1000,33,50,false};
-  planets.planets[5] = sPlanet{0,0,630,380,630,380,0,0,0,PB,1000,33,50,false};
+  planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0,PA,0,80,50,false};
+  planets.planets[1] = sPlanet{0,0,120,230,120,230,0,9,0,PA,0,80,50,false};
+  planets.planets[2] = sPlanet{0,0,240,420,240,420,0,9,0,PA,1,80,50,false};
+  planets.planets[3] = sPlanet{0,0,500,110,500,110,3,5,3,PB,0,80,50,false};
+  planets.planets[4] = sPlanet{0,0,420,280,420,280,0,0,0,PB,0,80,50,false};
+  planets.planets[5] = sPlanet{0,0,630,380,630,380,0,0,0,PB,0,80,50,false};
 }
 void initShots(saShot & shots, unsigned int size){
   shots.size = size;
   shots.insertPos = 0;
   shots.shots = new sShot[shots.size];
-  memset(shots.shots, 0, sizeof(sShot)*size); // clear
+  memset(shots.shots, 0, sizeof(sShot)*size); // clear data
+  for(unsigned int i=0; i<shots.size; i++)
+    shots.shots[i].timeToLive = -1; // double(0) != 0x00000000, so must be set manually :(
 }
 void initShips(saShip & ships, unsigned int size){
   ships.size = size;
