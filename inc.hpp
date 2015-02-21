@@ -32,6 +32,7 @@
 
 #define SHOT_SPEED           640    // shot-speed pixel per second
 #define SHOT_LIFETIME          1.5    // timeToLive of a shot, in sec
+#define SHOT_LENGTH           16
 
 #define GRID_SIZE            100    //
 enum Party{PA=0,PB,PN};

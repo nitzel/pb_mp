@@ -110,7 +110,8 @@ void drawShots(const saShot * sShots, const float dX, const float dY){
       for(unsigned int i=0; i<sShots[party].size; i++){
         if(shots[i].timeToLive>0) {
           glVertex2i(dX+shots[i].x,dY+shots[i].y);
-          glVertex2i(dX+shots[i].x+shots[i].dx/30,dY+shots[i].y+shots[i].dy/30);
+          glVertex2i(dX+shots[i].x+shots[i].dx*SHOT_LENGTH/SHOT_SPEED,dY+shots[i].y+shots[i].dy*SHOT_LENGTH/SHOT_SPEED);
+          //glVertex2i(dX+shots[i].x-shots[i].dx/30,dY+shots[i].y-shots[i].dy/30);
         }
       }
     }

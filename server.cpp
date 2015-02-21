@@ -207,13 +207,13 @@ inline void delta(const float x, const float y, const float tx, const float ty, 
   dy = ty-y;
 }
 inline void normalize(float & x, float & y, const float LEN){
-  float vecLen = sqrt(x*x + y*y);
-  if(vecLen==0) {
+  const float normFac = LEN/sqrt(x*x + y*y);
+  if(std::isnan(normFac)) {
     x=0; 
     y=0; 
   } else {
-    x = LEN*x/vecLen;
-    y = LEN*y/vecLen;
+    x = normFac*x;
+    y = normFac*y;
   }
 }
 inline unsigned int distanceSQ(const float x, const float y, const float x2, const float y2) {
@@ -324,8 +324,8 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
   const unsigned int MAX_GRIDS = (2*SHIP_AIM_RANGE/GRID_SIZE+1)*(2*SHIP_AIM_RANGE/GRID_SIZE+1); // at max we need to check this many grids
   for(unsigned int party=PA; party<PN; party++){
     sShip * ships = sShips[party].ships;
-    sShip * lastTarget = nullptr;
-    float lastTargetDistanceSQ = 0;
+    //sShip * lastTarget = nullptr;
+    //float lastTargetDistanceSQ = 0;
     unsigned int rival = !party; // opponents party ID :)
     for(unsigned int i=0; i<sShips[party].size; i++){
       sShip & ship = ships[i];
@@ -371,7 +371,7 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
         }
         // use coordinates here
         
-        if(ly >= 0 && ly < H && lx >= 0 && lx < W && tree[rival][lx][ly].size) {           // valid lxy and not empty 
+        if(ly >= 0 && (unsigned int)ly < H && lx >= 0 && (unsigned int)lx < W && tree[rival][lx][ly].size) {           // valid lxy and not empty 
           // range checking in here :)
           for(sShip * target : tree[rival][lx][ly].shiplist){
             if(distanceSQ(ship.x, ship.y, target->x, target->y) < SHIP_AIM_RANGE_SQ) {
@@ -379,7 +379,7 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
               targetFound = true;
               addShot(sShots[party], ship.x, ship.y, target->x, target->y);
               ship.timeToShoot += SHIP_SHOOT_DELAY;
-              lastTarget = target;
+              //lastTarget = target;
               //printf("shot %i to %i/%i",i,(int)target->x,(int)target->y);
               break;
             }
@@ -429,8 +429,8 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
 void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
   sPlanet * planets = (sPlanet*)(const char*)sPlanets.planets;
   for(unsigned int i=0; i<sPlanets.size; i++){
-    planets[i].tx = mouseV.x; // todo remove
-    planets[i].ty = mouseV.y;
+    //planets[i].tx = mouseV.x; // todo remove
+    //planets[i].ty = mouseV.y;
     
     if(planets[i].party!=PN){ // not neutral
       // generate money for the player
@@ -492,7 +492,7 @@ void processShots(saShot * sShots, double dt){
         shots[i].x += shots[i].dx * dt;
         shots[i].y += shots[i].dy * dt;
         // shots outside screen will be deleted
-        if(shots[i].x<0 || shots[i].x>screen.w || shots[i].y<0 || shots[i].y>screen.h) {
+        if(shots[i].x<0 || shots[i].x>map.w || shots[i].y<0 || shots[i].y>map.h) {
           shots[i].timeToLive = -1;
         }
       }
@@ -540,12 +540,12 @@ void initPlanets(saPlanet & planets, unsigned int size){
   planets.planets = new sPlanet[planets.size];
   memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,180,100,700,600,0,0,0,PA,1000,100,50,true};
-  planets.planets[1] = sPlanet{0,0,120,230,700,600,0,9,0,PA,1000,150,50,true};
-  planets.planets[2] = sPlanet{0,0,240,420,700,600,0,9,0,PA,1000,150,50,true};
-  planets.planets[3] = sPlanet{0,0,500,110,700,600,3,5,3,PB,1000,20,50,true};
-  planets.planets[4] = sPlanet{0,0,420,280,700,600,0,0,0,PB,1000,33,50,false};
-  planets.planets[5] = sPlanet{0,0,630,380,700,600,0,0,0,PB,1000,33,50,false};
+  planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0,PA,1000,100,50,true};
+  planets.planets[1] = sPlanet{0,0,120,230,120,230,0,9,0,PA,1000,150,50,true};
+  planets.planets[2] = sPlanet{0,0,240,420,240,420,0,9,0,PA,1000,150,50,true};
+  planets.planets[3] = sPlanet{0,0,500,110,500,110,3,5,3,PB,1000,20,50,true};
+  planets.planets[4] = sPlanet{0,0,420,280,420,280,0,0,0,PB,1000,33,50,false};
+  planets.planets[5] = sPlanet{0,0,630,380,630,380,0,0,0,PB,1000,33,50,false};
 }
 void initShots(saShot & shots, unsigned int size){
   shots.size = size;
