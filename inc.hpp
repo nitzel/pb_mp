@@ -23,16 +23,17 @@
 #define SHIP_COSTS            10    // credits to pay per ship
 
 #define SHIP_HEALTH_MAX       10    // Maximum health of a ship
-#define SHIP_SHOOT_DELAY       1.0f // time between shots/reload
-#define SHIP_TELEPORT_DIST     3    // if the ship is closer than that, teleport
+#define SHIP_SHOOT_DELAY       2.0f // time between shots/reload
+
 #define SHIP_SPEED           160    // ship-speed, pixel per second
 #define SHIP_AIM_RANGE       500    // aiming range of ships. within they can target other ships
 #define SHIP_AIM_RANGE_SQ SHIP_AIM_RANGE*SHIP_AIM_RANGE    // aiming range squared
+#define SHIP_RADIUS            8
 
 #define SHOT_SPEED           640    // shot-speed pixel per second
 #define SHOT_LIFETIME          1.5    // timeToLive of a shot, in sec
 
-#define GRID_SIZE            500    //
+#define GRID_SIZE            100    //
 enum Party{PA=0,PB,PN};
 enum Upgrades{ECONOMY=0,DEFENSE,PRODUCTION};
 enum TextureID{TEX_FONT=0,TEX_PLANET,TEX_SHIP,TEX_AMOUNT};
@@ -59,7 +60,7 @@ struct sShip {
   float x,y;   // position
   float dx, dy;  // deltaXY to get to target
   float tx, ty;// target coordinate
-  unsigned char health; // health, zero is dead
+  signed char health; // health, zero is dead, below zero is marked for deletion
 };
 
 struct sShot {              

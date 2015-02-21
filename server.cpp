@@ -25,7 +25,7 @@ int main(int argc, char ** argv){
   ////////////////
   // VARS
   ////////////////
-  screen = {640, 480};//{1366,700};
+  screen = {1366,700}; // {640, 480};//
   view = {0,0};
   map = {2000,2000};
   mouseR = {0,0};
@@ -37,11 +37,11 @@ int main(int argc, char ** argv){
   saPlanet planets;
   saShot shots[2];
   saShip ships[2];
-  initPlanets(planets, 4);
-  initShots(shots[PA],  16000);
-  initShots(shots[PB],  16000);
-  initShips(ships[PA],  10000);
-  initShips(ships[PB],  10000);
+  initPlanets(planets, 6);
+  initShots(shots[PA],  11000);
+  initShots(shots[PB],  11000);
+  initShips(ships[PA],  5000);
+  initShips(ships[PB],  5000);
   map.w = 2000;
   map.h = 2000;
   
@@ -264,7 +264,15 @@ bool addShip(saShip & ships, const float x, const float y, const float tx, const
     return true;
   }
 }
-
+void takeDamage(sShip & ship){
+  ship.health--;
+  if(ship.health<=0){
+    ship.health = -1; // mark for deletion
+  }
+}
+void takeDamage(sPlanet & planet){
+  // todo
+}
 // todo the built structure here is very useful for collision detection!
 void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
   /// The idea is to split the playground into squares lying next to 
@@ -314,15 +322,28 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
   // Here it is used for going through the grid, using closer grid
   // parts first to find a good-enough shootable ship (optimal would take too much time, we take the first we can find in reach, which is roughly the closest. the really closest may be about sqrt(GRID_size) closer, which is acceptable)
   const unsigned int MAX_GRIDS = (2*SHIP_AIM_RANGE/GRID_SIZE+1)*(2*SHIP_AIM_RANGE/GRID_SIZE+1); // at max we need to check this many grids
-  int countShots = 0; // todo delete
   for(unsigned int party=PA; party<PN; party++){
     sShip * ships = sShips[party].ships;
+    sShip * lastTarget = nullptr;
+    float lastTargetDistanceSQ = 0;
     unsigned int rival = !party; // opponents party ID :)
     for(unsigned int i=0; i<sShips[party].size; i++){
       sShip & ship = ships[i];
       if(ship.timeToShoot>0) {// pls wait for cooldown
         continue;
       }
+      // todo test if useful
+      // kinda optimization: ships in the same quarter
+      // tend to shoot the same enemy if it's closer:
+      // less to compute, more effective
+      /*if(lastTarget){
+        float dist = distanceSQ(ship.x, ship.y, lastTarget->x, lastTarget->y);
+        if(dist < SHIP_AIM_RANGE_SQ) {
+          addShot(sShots[party], ship.x, ship.y, lastTarget->x, lastTarget->y);
+          ship.timeToShoot += SHIP_SHOOT_DELAY;
+          continue;
+        }
+      }/**/
       
       int dir = 0; // direction we're inserting the next lines in the rectangle
       // location to insert ships (+1 because first dir is up(-1))
@@ -350,17 +371,15 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
         }
         // use coordinates here
         
-        if(ly >= 0 && ly < H && lx >= 0 && lx < W  // valid lxy
-           && tree[rival][lx][ly].size) {           // not empty 
-          // do collision checking with ships in this here :)
+        if(ly >= 0 && ly < H && lx >= 0 && lx < W && tree[rival][lx][ly].size) {           // valid lxy and not empty 
+          // range checking in here :)
           for(sShip * target : tree[rival][lx][ly].shiplist){
             if(distanceSQ(ship.x, ship.y, target->x, target->y) < SHIP_AIM_RANGE_SQ) {
               // okey we found someone to shoot
-              // todo shoot!
               targetFound = true;
-              countShots ++; // todo delete
               addShot(sShots[party], ship.x, ship.y, target->x, target->y);
               ship.timeToShoot += SHIP_SHOOT_DELAY;
+              lastTarget = target;
               //printf("shot %i to %i/%i",i,(int)target->x,(int)target->y);
               break;
             }
@@ -380,17 +399,30 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
         }
       }
     }
-  }
-  if(countShots)
-    printf("shots %i\n",countShots);
-  
-  
+  }  
   
   /////////////////
   // CollisionTesting
   ////////////////
+  for(unsigned int party=0; party<PN; party++) {
+    unsigned int rival = !party; // opponents party ID :)
+    sShot * shots = sShots[party].shots;
+    for(unsigned int i=0; i<sShots[party].size; i++){
+      if(shots[i].timeToLive>0){ // shot exists 
+        for(sShip * target : tree[rival][(int)shots[i].x/GRID_SIZE][(int)shots[i].y/GRID_SIZE].shiplist){
+          if(target->health && distanceSQ(shots[i].x, shots[i].y, target->x, target->y) < SHIP_RADIUS*SHIP_RADIUS) {
+            // collision!!!
+            shots[i].timeToLive = -1;
+            takeDamage(*target);
+            break;
+          }
+        }
+      }
+    }
+  }
   
-  // draw it todo remove or make key dependent. should not be called here...
+  
+  // draw space partition tree todo remove or make key dependent. should not be called here...
   drawTree((sSquare*)tree, -view.x, -view.y);
 }
 
@@ -459,56 +491,48 @@ void processShots(saShot * sShots, double dt){
         // move shot
         shots[i].x += shots[i].dx * dt;
         shots[i].y += shots[i].dy * dt;
-        // check for collision todo
-        
+        // shots outside screen will be deleted
+        if(shots[i].x<0 || shots[i].x>screen.w || shots[i].y<0 || shots[i].y>screen.h) {
+          shots[i].timeToLive = -1;
+        }
       }
     }
   }
 }
 
 void processShips(saShip * sShips, double dt){
-    for(unsigned int party=0; party<PN; party++) {
-      sShip * ships = sShips[party].ships;
-      for(unsigned int i=0; i<sShips[party].size; i++){
-        if(ships[i].health){ // ship alive, handle it
-          
-          if(party==PA){
-            float dx = rand(-3000,3000), dy = rand(-3000,3000);
-            normalize(dx,dy,SEND_SHIP_RAND_RADIUS);
-            flyToTarget(ships[i], mouseV.x + dx, mouseV.y + dy);
-          }
-          /**/
-        
-          // if moving, move :)
-          if(ships[i].dx || ships[i].dy) {
-            // move
-            ships[i].x += ships[i].dx *dt;
-            ships[i].y += ships[i].dy *dt;
-            // if near target, stop move-motion and teleport to target
-            float dx = ships[i].x - ships[i].tx;
-            if(dx > -SHIP_TELEPORT_DIST && dx < SHIP_TELEPORT_DIST) {
-              ships[i].dx = 0;
-              ships[i].x = ships[i].tx;
-            }
-            float dy = ships[i].y - ships[i].ty;
-            if(dy > -SHIP_TELEPORT_DIST && dy < SHIP_TELEPORT_DIST) {
-              ships[i].dy = 0;
-              ships[i].y = ships[i].ty;
-            }
-          }
-          // reduce shooting time
-          ships[i].timeToShoot -= dt;
-          
-          // check if ships are within map todo leave out? necessary? only if game stutters. could leave it out with checking if the ship is "overshooting" the target xy.
-          //if(ships[i].x<0) {ships[i].x=0;ships[i].dx=0;}
-          //ships[i].x = (ships[i].x<0)?0:(ships[i].x>map.w?map.w:ships[i].x); // todo define macro or so o make nicer ...
-          //ships[i].y = (ships[i].y<0)?0:(ships[i].y>map.h?map.h:ships[i].y); // todo why -5 ?? 
-          // shoot todo, better separate to use with planets
+  for(unsigned int party=0; party<PN; party++) {
+    sShip * ships = sShips[party].ships;
+    for(unsigned int i=0; i<sShips[party].size; i++){
+      if(ships[i].health){ // ship alive, handle it
+        if(ships[i].health < 0){
+          deleteShip(sShips[party], i);
+          continue;
+        }
+        if(party==PA){
+          float dx = rand(-3000,3000), dy = rand(-3000,3000);
+          normalize(dx,dy,SEND_SHIP_RAND_RADIUS);
+          flyToTarget(ships[i], mouseV.x + dx, mouseV.y + dy);
+        }
+        /**/
+      
+        // if moving, move :)
+        if(ships[i].dx || ships[i].dy) {
+          // move
+          ships[i].x += ships[i].dx *dt;
+          ships[i].y += ships[i].dy *dt;
+          // if overshooting target, teleport to target
+          float dx = ships[i].tx - ships[i].x;
+          float dy = ships[i].ty - ships[i].y;
+          if((dx>0 && ships[i].dx<0)||(dx<0 && ships[i].dx>0)) {ships[i].x=ships[i].tx; ships[i].dx=0;}
+          if((dy>0 && ships[i].dy<0)||(dy<0 && ships[i].dy>0)) {ships[i].y=ships[i].ty; ships[i].dy=0;}
           
         }
-        //fprintf(stderr, "%i:%i health %i \n",party, i,ships[i].health);
+        // reduce shooting time
+        ships[i].timeToShoot -= dt;         
       }
     }
+  }
 }
 
 void initPlanets(saPlanet & planets, unsigned int size){
@@ -516,10 +540,12 @@ void initPlanets(saPlanet & planets, unsigned int size){
   planets.planets = new sPlanet[planets.size];
   memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,100,100,700,600,0,0,0,PA,5000,100,50,true};
-  planets.planets[1] = sPlanet{0,0,270,170,700,600,3,5,3,PB,5000,20,50,true};
-  planets.planets[2] = sPlanet{0,0,140,280,700,600,0,0,0,PB,5000,33,50,false};
-  planets.planets[3] = sPlanet{0,0,250,300,700,600,0,9,0,PA,5000,150,50,true};
+  planets.planets[0] = sPlanet{0,0,180,100,700,600,0,0,0,PA,1000,100,50,true};
+  planets.planets[1] = sPlanet{0,0,120,230,700,600,0,9,0,PA,1000,150,50,true};
+  planets.planets[2] = sPlanet{0,0,240,420,700,600,0,9,0,PA,1000,150,50,true};
+  planets.planets[3] = sPlanet{0,0,500,110,700,600,3,5,3,PB,1000,20,50,true};
+  planets.planets[4] = sPlanet{0,0,420,280,700,600,0,0,0,PB,1000,33,50,false};
+  planets.planets[5] = sPlanet{0,0,630,380,700,600,0,0,0,PB,1000,33,50,false};
 }
 void initShots(saShot & shots, unsigned int size){
   shots.size = size;

@@ -86,19 +86,16 @@ void drawShips(const saShip * sShips, const float dX, const float dY){
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, info.textures[TEX_SHIP].id);
   glBegin(GL_QUADS);
-    //const int & z = 1; // zoom
-    const int & w = 8; //info.textures[TEX_SHIP].w*z/2 ;
-    const int & h = 8; //info.textures[TEX_SHIP].h*z/2;
     for(unsigned int party=0; party<PN; party++) {
       glColor3ub(party*255,255-party*255,0);
       sShip * ships = sShips[party].ships;
       for(unsigned int i=0; i<sShips[party].size; i++){
-        if(ships[i].health){
-          //glColor3ub(25*ships[i].health,255,255);
-          glTexCoord2f(0.0,0.0); glVertex2i(dX+ships[i].x-w,dY+ships[i].y-h);
-          glTexCoord2f(1.0,0.0); glVertex2i(dX+ships[i].x+w,dY+ships[i].y-h);
-          glTexCoord2f(1.0,1.0); glVertex2i(dX+ships[i].x+w,dY+ships[i].y+h);
-          glTexCoord2f(0.0,1.0); glVertex2i(dX+ships[i].x-w,dY+ships[i].y+h);
+        if(ships[i].health>0){
+          glColor3ub(party * 255, (10 - ships[i].health * 25), (1 - party) * 255);
+          glTexCoord2f(0.0,0.0); glVertex2i(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
+          glTexCoord2f(1.0,0.0); glVertex2i(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
+          glTexCoord2f(1.0,1.0); glVertex2i(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
+          glTexCoord2f(0.0,1.0); glVertex2i(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
         }
       }
     }
@@ -113,7 +110,7 @@ void drawShots(const saShot * sShots, const float dX, const float dY){
       for(unsigned int i=0; i<sShots[party].size; i++){
         if(shots[i].timeToLive>0) {
           glVertex2i(dX+shots[i].x,dY+shots[i].y);
-          glVertex2i(dX+shots[i].x+shots[i].dx/10,dY+shots[i].y+shots[i].dy/10);
+          glVertex2i(dX+shots[i].x+shots[i].dx/30,dY+shots[i].y+shots[i].dy/30);
         }
       }
     }
