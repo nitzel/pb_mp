@@ -106,11 +106,11 @@ void drawShots(const saShot * sShots, const float dX, const float dY){
       glColor3ub(party*255,255-party*255,0);
       sShot * shots = sShots[party].shots;
       for(unsigned int i=0; i<sShots[party].size; i++){
-        if(shots[i].timeToLive>0) {
+        //if(shots[i].timeToLive>0) {
           glVertex2i(dX+shots[i].x,dY+shots[i].y);
           glVertex2i(dX+shots[i].x+shots[i].dx*SHOT_LENGTH/SHOT_SPEED,dY+shots[i].y+shots[i].dy*SHOT_LENGTH/SHOT_SPEED);
           //drawInt(i, shots[i].x, shots[i].y); // draw ID instead, glEnd needed!
-        }
+        //}
       }
     }
   glEnd();

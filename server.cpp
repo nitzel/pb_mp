@@ -1,5 +1,11 @@
 #include "inc.hpp"
 
+//todo next 
+//  colorization der planeten, 
+//  planeten schiessen lassen
+// funktionen fuer upgrades vllt, 
+// und dann multiplayer! :)
+
 float money[2] = {0,0};
 static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
   mouseR.x=(float)xpos;
@@ -38,10 +44,10 @@ int main(int argc, char ** argv){
   saShot shots[2];
   saShip ships[2];
   initPlanets(planets, 6);
-  initShots(shots[PA],  21000);
-  initShots(shots[PB],  21000);
-  initShips(ships[PA],  10000);
-  initShips(ships[PB],  10000);
+  initShots(shots[PA],  1100);
+  initShots(shots[PB],  1100);
+  initShips(ships[PA],  5000);
+  initShips(ships[PB],  5000);
   map.w = 2000;
   map.h = 2000;
   
@@ -270,13 +276,17 @@ void takeDamage(sShip & ship){
     ship.health = -1; // mark for deletion
   }
 }
+/**
+planet - planet to take damage/ that was shot
+party - party dealing the damage
+*/
 void takeDamage(sPlanet & planet, int party){
   // todo
   if(planet.party == PN){ // neutral planet
     planet.health -= party*2-1; // Add one for PA, take one for PB. Remember, neutral planets are full health at 0 and overtaken at +-100.
-    if(planet.health <= HEALTH_MAX || planet.health >= HEALTH_MAX){ // overtake
+    if(planet.health <= -HEALTH_MAX || planet.health >= HEALTH_MAX){ // overtake
       planet.party = party;
-      planet.health = 1; // set to positive
+      planet.health = HEALTH_MAX; // set to 100%
     }
   } else { // belongs to the enemy party! 
     planet.health --; // take life away!
@@ -286,6 +296,75 @@ void takeDamage(sPlanet & planet, int party){
     }
   }
 }
+/**
+ship/planet - ship/planet to check for closest enemy and shoot
+sPlanets - list of planets
+shots - list of shots from the same party as ships
+rivalTree - spacepartioning tree with the rival-partys ships
+W,H - Size of rivalTree
+*/
+bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const unsigned int W, const unsigned int H){
+    const unsigned int MAX_GRIDS = (2*SHIP_AIM_RANGE/GRID_SIZE+1)*(2*SHIP_AIM_RANGE/GRID_SIZE+1); // at max we need to check this many grids
+  
+  int dir = 0; // direction we're inserting the next lines in the rectangle
+  // location to insert ships (+1 because first dir is up(-1))
+  int lx = (int)ship.x/GRID_SIZE;
+  int ly = (int)ship.y/GRID_SIZE+1; 
+  int stepsPerLevel = 1; // how many ships to draw per line (will be counted down)
+  int level = 0; // how many ships per level
+  int repeat = 1; // how many lines to draw before level++  (will be counted down)
+  
+  bool targetFound = false; // will be true when found ;)
+  for(unsigned int j=0; j<MAX_GRIDS && !targetFound; j++) {
+    switch(dir){ // get location for next insertion
+    case 0:
+            ly --;
+            break; // up
+    case 1:
+            lx ++;
+            break; // right
+    case 2:
+            ly ++;
+            break; // down
+    case 3:
+            lx --;
+            break; //left
+    }
+    if(ly >= 0 && (unsigned int)ly < H && lx >= 0 && (unsigned int)lx < W && rivalTree[lx*W+ly].size) {           // valid lxy and not empty 
+      // todo check if square is in range
+      // range checking in here :)
+      for(sShip * target : rivalTree[lx*W+ly].shiplist){
+        if(distanceSQ(ship.x, ship.y, target->x, target->y) < SHIP_AIM_RANGE_SQ) {
+          // okey we found someone to shoot
+          targetFound = true;
+          addShot(shots, ship.x, ship.y, target->x, target->y);
+          ship.timeToShoot += SHIP_SHOOT_DELAY;
+          //lastTarget = target;
+          //printf("shot %i to %i/%i",i,(int)target->x,(int)target->y);
+          return true;
+        }
+      }
+    }
+    
+    // further calculations for spiral stuff
+    stepsPerLevel--;
+    if(stepsPerLevel <= 0){
+        dir = (dir + 1) % 4;
+        repeat--;
+        if(repeat <= 0){
+            level++;
+            repeat = 2;
+        }
+        stepsPerLevel = level;
+    }
+  }
+  
+  return true; // todo
+}
+bool shoot(sPlanet & planet, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const unsigned int W, const unsigned int H){
+  return shoot(*(sShip*)(((double*)&planet)+1), sPlanets, shots, rivalTree, W, H);
+}
+
 // todo the built structure here is very useful for collision detection!
 void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
   /// The idea is to split the playground into squares lying next to 
@@ -338,82 +417,25 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
   // in a spiral way
   // Here it is used for going through the grid, using closer grid
   // parts first to find a good-enough shootable ship (optimal would take too much time, we take the first we can find in reach, which is roughly the closest. the really closest may be about sqrt(GRID_size) closer, which is acceptable)
-  const unsigned int MAX_GRIDS = (2*SHIP_AIM_RANGE/GRID_SIZE+1)*(2*SHIP_AIM_RANGE/GRID_SIZE+1); // at max we need to check this many grids
   for(unsigned int party=PA; party<PN; party++){
-    sShip * ships = sShips[party].ships;
     //sShip * lastTarget = nullptr;
     //float lastTargetDistanceSQ = 0;
     unsigned int rival = !party; // opponents party ID :)
+    // let ships shoot
     for(unsigned int i=0; i<sShips[party].size; i++){
-      sShip & ship = ships[i];
+      sShip & ship = sShips[party].ships[i];
       if(!ship.health || ship.timeToShoot>0) {// dead or weapon not ready
         continue;
       }
-      // todo test if useful
-      // kinda optimization: ships in the same quarter
-      // tend to shoot the same enemy if it's closer:
-      // less to compute, more effective
-      /*if(lastTarget){
-        float dist = distanceSQ(ship.x, ship.y, lastTarget->x, lastTarget->y);
-        if(dist < SHIP_AIM_RANGE_SQ) {
-          addShot(sShots[party], ship.x, ship.y, lastTarget->x, lastTarget->y);
-          ship.timeToShoot += SHIP_SHOOT_DELAY;
-          continue;
-        }
-      }/**/
-      
-      int dir = 0; // direction we're inserting the next lines in the rectangle
-      // location to insert ships (+1 because first dir is up(-1))
-      int lx = (int)ship.x/GRID_SIZE;
-      int ly = (int)ship.y/GRID_SIZE+1; 
-      int stepsPerLevel = 1; // how many ships to draw per line (will be counted down)
-      int level = 0; // how many ships per level
-      int repeat = 1; // how many lines to draw before level++  (will be counted down)
-      
-      bool targetFound = false; // will be true when found ;)
-      for(unsigned int j=0; j<MAX_GRIDS && !targetFound; j++) {
-        switch(dir){ // get location for next insertion
-        case 0:
-                ly --;
-                break; // up
-        case 1:
-                lx ++;
-                break; // right
-        case 2:
-                ly ++;
-                break; // down
-        case 3:
-                lx --;
-                break; //left
-        }
-        if(ly >= 0 && (unsigned int)ly < H && lx >= 0 && (unsigned int)lx < W && tree[rival][lx][ly].size) {           // valid lxy and not empty 
-          // todo check if square is in range
-          // range checking in here :)
-          for(sShip * target : tree[rival][lx][ly].shiplist){
-            if(distanceSQ(ship.x, ship.y, target->x, target->y) < SHIP_AIM_RANGE_SQ) {
-              // okey we found someone to shoot
-              targetFound = true;
-              addShot(sShots[party], ship.x, ship.y, target->x, target->y);
-              ship.timeToShoot += SHIP_SHOOT_DELAY;
-              //lastTarget = target;
-              //printf("shot %i to %i/%i",i,(int)target->x,(int)target->y);
-              break;
-            }
-          }
-        }
-        
-        // further calculations for spiral stuff
-        stepsPerLevel--;
-        if(stepsPerLevel <= 0){
-            dir = (dir + 1) % 4;
-            repeat--;
-            if(repeat <= 0){
-                level++;
-                repeat = 2;
-            }
-            stepsPerLevel = level;
-        }
+      shoot(ship, sPlanets, sShots[party],(sSquare*)tree[rival],  W, H);
+    }
+    // let planets shoot
+    for(unsigned int i=0; i<sPlanets.size; i++){
+      sPlanet & planet = sPlanets.planets[i];      
+      if(planet.party == PN || planet.timeToShoot>0) {// dead or weapon not ready
+        continue;
       }
+      shoot(planet, sPlanets, sShots[planet.party],(sSquare*)tree[!planet.party],  W, H);
     }
   }  
   
@@ -491,7 +513,6 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
             planets[i].timeToBuild += SHIP_PROD_TIME*(1-(planets[i].level[PRODUCTION]+1)/UPGRADE_MAX_LVL);
         }
       }
-      // shoot if applicable todo
       // use power if shield if active
       if(planets[i].shieldActive) {
         planets[i].power -= (double)POWER_DRAIN/(planets[i].level[DEFENSE]+1)*dt;
@@ -516,11 +537,13 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
           planets[i].health = 0;                // set to full health
         }
       }
-    } else {                                    // Planet owned by a party, they act normal xD
+    } else  {                                    // Planet owned by a party, they act normal xD
       planets[i].health += HEALTH_REGEN * dt;   // regenerate
       if(planets[i].health > HEALTH_MAX)
         planets[i].health = HEALTH_MAX;         // set to full health
-    }
+    } /**/
+    // reload weapons
+    planets[i].timeToShoot -= dt * (1+(float)planets[i].level[DEFENSE]/4);
   }
 }
 // todo maybe check for ships and shots leaving the map area.
@@ -585,12 +608,12 @@ void initPlanets(saPlanet & planets, unsigned int size){
   planets.planets = new sPlanet[planets.size];
   memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0,PA,100,80,50,false};
-  planets.planets[1] = sPlanet{0,0,120,230,120,230,0,9,0,PA,100,80,50,false};
-  planets.planets[2] = sPlanet{0,0,240,420,240,420,0,9,0,PA,100,80,50,false};
-  planets.planets[3] = sPlanet{0,0,500,110,500,110,3,5,3,PB,100,80,50,false};
-  planets.planets[4] = sPlanet{0,0,420,280,420,280,0,0,0,PB,100,80,50,false};
-  planets.planets[5] = sPlanet{0,0,630,380,630,380,0,0,0,PB,100,80,50,false};
+  planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0,PA,0,80,50,false};
+  planets.planets[1] = sPlanet{0,0,120,230,120,230,0,1,0,PA,0,80,50,false};
+  planets.planets[2] = sPlanet{0,0,240,420,240,420,0,2,0,PA,0,80,50,false};
+  planets.planets[3] = sPlanet{0,0,500,110,500,110,3,5,3,PB,0,80,50,false};
+  planets.planets[4] = sPlanet{0,0,420,280,420,280,0,10,0,PB,0,80,50,false};
+  planets.planets[5] = sPlanet{0,0,630,380,630,380,0,20,0,PB,0,80,50,false};
 }
 void initShots(saShot & shots, unsigned int size){
   shots.size = size;
