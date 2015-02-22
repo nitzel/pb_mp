@@ -4,8 +4,7 @@
 //  colorize planets,             DONE / was already ...
 //  let planets shoot             DONE
 //  target planets for shooting   DONE
-//  planets loose levels on death 
-//  evtl funktions for upgrades   
+//  planets loose levels on death DONE
 //  and then multiplayer :)         
 
 float money[2] = {0,0};
@@ -113,7 +112,6 @@ int main(int argc, char ** argv){
         }
     }
   }
-  enet_host_destroy(host);
   
   ///////////////////////////////
   // GLFW
@@ -168,6 +166,7 @@ int main(int argc, char ** argv){
   double time = glfwGetTime();
   double dt = 0;
   double fps = 0;
+  bool paused = true;
   while(!glfwWindowShouldClose(info.window)){ 
     // update timer
     dt = glfwGetTime() - time;
@@ -182,19 +181,23 @@ int main(int argc, char ** argv){
     if(view.y<0) view.y = 0;    
     if(view.x>map.w-screen.w) view.x = map.w-screen.w;
     if(view.y>map.h-screen.h) view.y = map.h-screen.h;
+    
     // process game content
-    processPlanets(planets, ships, dt);
-    processShips(ships, dt);
-    processShots(shots, dt);
+    if(!paused) {
+      processPlanets(planets, ships, dt);
+      processShips(ships, dt);
+      processShots(shots, dt);
+      shoot(ships, planets, shots, dt);
+    }
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW); // reset the matrix
     glLoadIdentity();
+    
     // draw gamecontent
     drawPlanets(planets, -view.x, -view.y);
     drawShips(ships, -view.x, -view.y);
     drawShots(shots, -view.x, -view.y);
-    shoot(ships, planets, shots, dt);
 
     char s[100];
     sprintf(s,"FPS=%4.0f t=%.1fs Money A=%5i B=%5i MR%i/%i MV%i/%i View%i/%i",fps, time, (int)money[PA],(int)money[PB], (int)mouseR.x, (int)mouseR.y, (int)mouseV.x, (int)mouseV.y, (int)view.x, (int)view.y);
@@ -205,6 +208,9 @@ int main(int argc, char ** argv){
   }
   
   glfwDestroyWindow(info.window);
+  
+  
+  enet_host_destroy(host);
   return 0;
 }
 
@@ -272,9 +278,36 @@ bool addShip(saShip & ships, const float x, const float y, const float tx, const
     return true;
   }
 }
+
+bool upgradePlanet(sPlanet & planet, Upgrade upgrade) {
+  if(planet.level[upgrade] < UPGRADE_MAX_LVL){
+    unsigned int costs = UPGRADE_COSTS; // const upgrade costs
+    if(money[planet.party] >= costs) {
+      money[planet.party] -= costs;
+      planet.level[upgrade]++;
+    }
+  }
+  return false;
+}
+
+void capturePlanet(sPlanet & planet, const unsigned int newParty){
+  // When a planet gets neutral, it looses a lot of it's infrastructure
+  // ECONOMY is a little bit affected
+  planet.level[ECONOMY] = std::max(0, planet.level[ECONOMY]-1);
+  // More than half of the DEFENSE is destroyed. 10 -> 5 -> 2 -> 1 -> 0
+  planet.level[DEFENSE] = planet.level[DEFENSE]/2;
+  // PRODUCTION is a little bit affected
+  planet.level[PRODUCTION] = std::max(0, planet.level[ECONOMY]-1);
+  
+  // SET new party and reset health
+  planet.party = newParty;
+  // set health to 100% (remember, neutral full health is 0 ... ;) confusing, huh? But this way we can store it in one var)
+  planet.health = newParty==PN?0:HEALTH_MAX; 
+}
+
 void takeDamage(sShip & ship){
   ship.health--;
-  if(ship.health<=0){
+  if(ship.health<=0){ // ship dead
     ship.health = -1; // mark for deletion
   }
 }
@@ -282,19 +315,17 @@ void takeDamage(sShip & ship){
 planet - planet to take damage/ that was shot
 party - party dealing the damage
 */
-void takeDamage(sPlanet & planet, int party){
+void takeDamage(sPlanet & planet, const unsigned int party){
   // todo
   if(planet.party == PN){ // neutral planet
     planet.health -= party*2-1; // Add one for PA, take one for PB. Remember, neutral planets are full health at 0 and overtaken at +-100.
     if(planet.health <= -HEALTH_MAX || planet.health >= HEALTH_MAX){ // overtake
-      planet.party = party;
-      planet.health = HEALTH_MAX; // set to 100%
+      capturePlanet(planet, party);
     }
   } else { // belongs to the enemy party! 
     planet.health --; // take life away!
     if(planet.health <= 0) { // make neutral!
-      planet.party = PN;
-      planet.health = 0; // set health to 100% (remember, neutral full health is 0 ... ;) confusing, huh? But this way we can store it in one var)
+      capturePlanet(planet, PN);
     }
   }
 }
@@ -625,12 +656,12 @@ void initPlanets(saPlanet & planets, unsigned int size){
   planets.planets = new sPlanet[planets.size];
   memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0,PA,0,80,50,false};
-  planets.planets[1] = sPlanet{0,0,120,230,120,230,0,1,0,PA,0,80,50,false};
-  planets.planets[2] = sPlanet{0,0,240,420,240,420,0,2,0,PA,0,80,50,false};
-  planets.planets[3] = sPlanet{0,0,500,110,500,110,3,5,3,PB,0,80,50,false};
-  planets.planets[4] = sPlanet{0,0,420,280,420,280,0,10,0,PB,0,80,50,false};
-  planets.planets[5] = sPlanet{0,0,630,380,630,380,0,20,0,PB,0,80,50,false};
+  planets.planets[0] = sPlanet{0,0,180,100,180,100,9,0,5, PA,1000,80,50,false};
+  planets.planets[1] = sPlanet{0,0,120,230,120,230,3,1,5, PA,1000,80,50,false};
+  planets.planets[2] = sPlanet{0,0,240,420,240,420,10,2,5,PA,1000,80,50,false};
+  planets.planets[3] = sPlanet{0,0,500,110,500,110,3,5,0, PB,1000,80,50,false};
+  planets.planets[4] = sPlanet{0,0,420,280,420,280,4,5,0, PB,1000,80,50,false};
+  planets.planets[5] = sPlanet{0,0,630,380,630,380,7,5,0, PB,1000,80,50,false};
 }
 void initShots(saShot & shots, unsigned int size){
   shots.size = size;

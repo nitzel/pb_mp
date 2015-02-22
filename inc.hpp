@@ -12,11 +12,12 @@
 #include "include/stb_image.h"
 
 #define UPGRADE_MAX_LVL       10    // max level for upgrades
+#define UPGRADE_COSTS         50    // cost per upgrade lvl
 #define POWER_MAX            100    // maximum power storable
 #define POWER_REGEN            1.f  // power regeneration if shield is inactive
 #define POWER_DRAIN           10.f  // power drain if shield is active
 #define HEALTH_MAX           100    // health maximum for planets
-#define HEALTH_REGEN          1.f  // health regeneration
+#define HEALTH_REGEN           1.f  // health regeneration
 #define MONEY_GEN              1.0f // money per planet per level per second
 #define SHIP_PROD_TIME         1.0f // time to produce a ship
 #define PLANET_RADIUS         64    // planet's radius
@@ -38,7 +39,7 @@
 
 #define GRID_SIZE            100    //
 enum Party{PA=0,PB,PN};
-enum Upgrades{ECONOMY=0,DEFENSE,PRODUCTION};
+enum Upgrade{ECONOMY=0,DEFENSE,PRODUCTION};
 enum TextureID{TEX_FONT=0,TEX_PLANET,TEX_SHIP,TEX_AMOUNT};
 extern const char * textureNames[];
 
@@ -77,7 +78,7 @@ struct sPlanet {
   double timeToShoot;
   float x,y;
   float tx,ty;   // pos to send new shipsProduction
-  unsigned char level[3]; // level Economy, Resistance, 
+  signed char level[3]; // level Economy, Resistance, 
   unsigned char party;    // PlayerA/B/Neutral
   unsigned short shipQueue; // number of ships in queue
   float health;
