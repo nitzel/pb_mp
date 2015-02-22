@@ -1,10 +1,12 @@
 #include "inc.hpp"
 
 //todo next 
-//  colorization der planeten, 
-//  planeten schiessen lassen
-// funktionen fuer upgrades vllt, 
-// und dann multiplayer! :)
+//  colorize planets,             DONE / was already ...
+//  let planets shoot             DONE
+//  target planets for shooting   DONE
+//  planets loose levels on death 
+//  evtl funktions for upgrades   
+//  and then multiplayer :)         
 
 float money[2] = {0,0};
 static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -303,7 +305,7 @@ shots - list of shots from the same party as ships
 rivalTree - spacepartioning tree with the rival-partys ships
 W,H - Size of rivalTree
 */
-bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const unsigned int W, const unsigned int H){
+bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const unsigned int W, const unsigned int H, const unsigned int PARTY){
     const unsigned int MAX_GRIDS = (2*SHIP_AIM_RANGE/GRID_SIZE+1)*(2*SHIP_AIM_RANGE/GRID_SIZE+1); // at max we need to check this many grids
   
   int dir = 0; // direction we're inserting the next lines in the rectangle
@@ -339,8 +341,6 @@ bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTre
           targetFound = true;
           addShot(shots, ship.x, ship.y, target->x, target->y);
           ship.timeToShoot += SHIP_SHOOT_DELAY;
-          //lastTarget = target;
-          //printf("shot %i to %i/%i",i,(int)target->x,(int)target->y);
           return true;
         }
       }
@@ -358,11 +358,28 @@ bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTre
         stepsPerLevel = level;
     }
   }
+  // aim for planets
+  if(!targetFound) {
+    for(unsigned int i=0; i<sPlanets.size; i++){
+      sPlanet & target = sPlanets.planets[i];      
+      if(target.party == PARTY) { // planet from same party
+        continue;
+      }
+      if(distanceSQ(ship.x, ship.y, target.x, target.y) < SHIP_AIM_RANGE_SQ) {
+        // okey we found someone to shoot
+        targetFound = true;
+        addShot(shots, ship.x, ship.y, target.x, target.y);
+        ship.timeToShoot += SHIP_SHOOT_DELAY;
+        return true;
+      }
+    }
+  }
+  
   
   return true; // todo
 }
 bool shoot(sPlanet & planet, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const unsigned int W, const unsigned int H){
-  return shoot(*(sShip*)(((double*)&planet)+1), sPlanets, shots, rivalTree, W, H);
+  return shoot(*(sShip*)(((double*)&planet)+1), sPlanets, shots, rivalTree, W, H, planet.party);
 }
 
 // todo the built structure here is very useful for collision detection!
@@ -427,7 +444,7 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
       if(!ship.health || ship.timeToShoot>0) {// dead or weapon not ready
         continue;
       }
-      shoot(ship, sPlanets, sShots[party],(sSquare*)tree[rival],  W, H);
+      shoot(ship, sPlanets, sShots[party],(sSquare*)tree[rival],  W, H, party);
     }
     // let planets shoot
     for(unsigned int i=0; i<sPlanets.size; i++){
