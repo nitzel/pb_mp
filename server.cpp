@@ -5,7 +5,10 @@
 //  let planets shoot             DONE
 //  target planets for shooting   DONE
 //  planets loose levels on death DONE
-//  and then multiplayer :)         
+//  and then multiplayer :)      
+
+//  check for game over
+//  make shields usable!   
 
 float money[2] = {0,0};
 static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -32,7 +35,7 @@ int main(int argc, char ** argv){
   ////////////////
   // VARS
   ////////////////
-  screen = {1366,700}; // {640, 480};//
+  screen = {800,600}; // {640, 480};//
   view = {0,0};
   map = {2000,2000};
   mouseR = {0,0};
@@ -45,10 +48,10 @@ int main(int argc, char ** argv){
   saShot shots[2];
   saShip ships[2];
   initPlanets(planets, 6);
-  initShots(shots[PA],  1100);
-  initShots(shots[PB],  1100);
-  initShips(ships[PA],  5000);
-  initShips(ships[PB],  5000);
+  initShots(shots[PA],  10000);
+  initShots(shots[PB],  10000);
+  initShips(ships[PA],  10000);
+  initShips(ships[PB],  10000);
   map.w = 2000;
   map.h = 2000;
   
@@ -140,8 +143,8 @@ int main(int argc, char ** argv){
   glfwSwapInterval(1); // lock to vertical sync of monitor (normally 60Hz/)
   glEnable(GL_SMOOTH); // enable (gouraud) shading
   glDisable(GL_DEPTH_TEST); // disable depth testing
-  glEnable(GL_BLEND); // enable blending (used for alpha) and blending function to use
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND); // enable blending (used for alpha)
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // set blending mode
   
   // -------- load images to info
   loadTextures();
@@ -166,7 +169,7 @@ int main(int argc, char ** argv){
   double time = glfwGetTime();
   double dt = 0;
   double fps = 0;
-  bool paused = true;
+  bool paused = false;
   while(!glfwWindowShouldClose(info.window)){ 
     // update timer
     dt = glfwGetTime() - time;
@@ -182,6 +185,11 @@ int main(int argc, char ** argv){
     if(view.x>map.w-screen.w) view.x = map.w-screen.w;
     if(view.y>map.h-screen.h) view.y = map.h-screen.h;
     
+    // clear screen
+    glClear(GL_COLOR_BUFFER_BIT);
+    glMatrixMode(GL_MODELVIEW); // reset the matrix
+    glLoadIdentity();
+    
     // process game content
     if(!paused) {
       processPlanets(planets, ships, dt);
@@ -189,18 +197,15 @@ int main(int argc, char ** argv){
       processShots(shots, dt);
       shoot(ships, planets, shots, dt);
     }
-    // clear screen
-    glClear(GL_COLOR_BUFFER_BIT);
-    glMatrixMode(GL_MODELVIEW); // reset the matrix
-    glLoadIdentity();
     
     // draw gamecontent
     drawPlanets(planets, -view.x, -view.y);
     drawShips(ships, -view.x, -view.y);
     drawShots(shots, -view.x, -view.y);
-
+    
     char s[100];
     sprintf(s,"FPS=%4.0f t=%.1fs Money A=%5i B=%5i MR%i/%i MV%i/%i View%i/%i",fps, time, (int)money[PA],(int)money[PB], (int)mouseR.x, (int)mouseR.y, (int)mouseV.x, (int)mouseV.y, (int)view.x, (int)view.y);
+    glColor3ub(255,255,255);
     drawString(s,strlen(s),10,10);
     
     glfwSwapBuffers(info.window);
@@ -316,16 +321,17 @@ planet - planet to take damage/ that was shot
 party - party dealing the damage
 */
 void takeDamage(sPlanet & planet, const unsigned int party){
-  // todo
   if(planet.party == PN){ // neutral planet
     planet.health -= party*2-1; // Add one for PA, take one for PB. Remember, neutral planets are full health at 0 and overtaken at +-100.
     if(planet.health <= -HEALTH_MAX || planet.health >= HEALTH_MAX){ // overtake
       capturePlanet(planet, party);
     }
   } else { // belongs to the enemy party! 
-    planet.health --; // take life away!
-    if(planet.health <= 0) { // make neutral!
-      capturePlanet(planet, PN);
+    if (!planet.shieldActive) {
+      planet.health --; // take life away!
+      if(planet.health <= 0) { // make neutral!
+        capturePlanet(planet, PN);
+      }
     }
   }
 }
@@ -656,12 +662,12 @@ void initPlanets(saPlanet & planets, unsigned int size){
   planets.planets = new sPlanet[planets.size];
   memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,180,100,180,100,9,0,5, PA,1000,80,50,false};
-  planets.planets[1] = sPlanet{0,0,120,230,120,230,3,1,5, PA,1000,80,50,false};
-  planets.planets[2] = sPlanet{0,0,240,420,240,420,10,2,5,PA,1000,80,50,false};
-  planets.planets[3] = sPlanet{0,0,500,110,500,110,3,5,0, PB,1000,80,50,false};
-  planets.planets[4] = sPlanet{0,0,420,280,420,280,4,5,0, PB,1000,80,50,false};
-  planets.planets[5] = sPlanet{0,0,630,380,630,380,7,5,0, PB,1000,80,50,false};
+  planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0, PA,3000,80,50,false};
+  planets.planets[1] = sPlanet{0,0,120,230,120,230,0,0,0, PA,3000,80,50,false};
+  planets.planets[2] = sPlanet{0,0,240,420,240,420,0,0,0,PA,3000,80,50,false};
+  planets.planets[3] = sPlanet{0,0,800,110,500,110,0,0,0, PB,3000,80,50,false};
+  planets.planets[4] = sPlanet{0,0,920,280,420,280,0,0,0, PB,3000,80,50,false};
+  planets.planets[5] = sPlanet{0,0,730,380,630,380,0,0,0, PB,3000,80,50,false};
 }
 void initShots(saShot & shots, unsigned int size){
   shots.size = size;
