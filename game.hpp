@@ -11,6 +11,7 @@
 extern float money[]; // money of PA and PB
 
 /// init list of game objects
+void initGame(saPlanet & planets, saShip * ships, saShot * shots, const unsigned int MAX_SHIPS);
 void initPlanets(saPlanet & planets, unsigned int size);
 void initShips(saShip & ships, unsigned int size);
 void initShots(saShot & shots, unsigned int size);

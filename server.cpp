@@ -13,40 +13,11 @@
 //  check for game over                 todo later
 //  make shields usable!          DONE
 
-static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
-  mouseR.x=(float)xpos;
-  mouseR.y=(float)ypos;
-  mouseV.x=mouseR.x + view.x;
-  mouseV.y=mouseR.y + view.y;
-}
-
+static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
 
 int main(int argc, char ** argv){  
   freopen("stderr.txt","w",stderr);
-  fprintf(stderr, "\nSTART\n");
-  ////////////////
-  // VARS
-  ////////////////
-  screen = {800,600}; // {640, 480};//
-  view = {0,0};
-  map = {2000,2000};
-  mouseR = {0,0};
-  mouseV = {0,0};
-  
-  ////////////////
-  // GAME VARS
-  ////////////////
-  saPlanet planets;
-  saShot shots[2];
-  saShip ships[2];
-  initPlanets(planets, 6);
-  initShots(shots[PA],  10000);
-  initShots(shots[PB],  10000);
-  initShips(ships[PA],  10000);
-  initShips(ships[PB],  10000);
-  map.w = 2000;
-  map.h = 2000;
-  
+  fprintf(stderr, "Started\n");
   //////////
   // ENET
   /////////
@@ -108,19 +79,39 @@ int main(int argc, char ** argv){
     }
   }
   
+  ////////////////
+  // VARS
+  ////////////////
+  double time = glfwGetTime();
+  double dt = 0;
+  double fps = 0;
+  bool paused = false;
+  
+  mouseR = {0,0};
+  mouseV = {0,0};
+  screen = {800,600}; // {640, 480};//
+  view   = {0,0};
+  ////////////////
+  // GAME VARS
+  ////////////////
+  map = {2000,2000};
+  
+  saPlanet planets;
+  saShot shots[2];
+  saShip ships[2];
+  
   ///////////////////////////////
-  // GLFW
+  // init GLFW
   /////////////////////////////////s
   initGlfw("PB-MP", screen.x, screen.y);
   initGfx();
   // add input listeners
   glfwSetCursorPosCallback(info.window, cursor_pos_callback);
+ 
+  
   
   // GAME LOOP
-  double time = glfwGetTime();
-  double dt = 0;
-  double fps = 0;
-  bool paused = false;
+  initGame(planets, ships, shots, 10000);
   while(!glfwWindowShouldClose(info.window)){ 
     // update timer
     dt = glfwGetTime() - time;
@@ -171,4 +162,9 @@ int main(int argc, char ** argv){
   return 0;
 }
 
-
+static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
+  mouseR.x=(float)xpos;
+  mouseR.y=(float)ypos;
+  mouseV.x=mouseR.x + view.x;
+  mouseV.y=mouseR.y + view.y;
+}

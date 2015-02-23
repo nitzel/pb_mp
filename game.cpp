@@ -435,6 +435,14 @@ void processShips(saShip * sShips, double dt){
   }
 }
 
+void initGame(saPlanet & planets, saShip * ships, saShot * shots, const unsigned int MAX_SHIPS) {
+  initPlanets(planets, 6);
+  const unsigned int MAX_SHOTS = MAX_SHIPS*(float)SHOT_LIFETIME/(float)SHIP_SHOOT_DELAY + 1000; // + 1000 just to be sure
+  initShots(shots[PA],  MAX_SHOTS);
+  initShots(shots[PB],  MAX_SHOTS);
+  initShips(ships[PA],  MAX_SHIPS);
+  initShips(ships[PB],  MAX_SHIPS);
+}
 void initPlanets(saPlanet & planets, unsigned int size){
   planets.size = size;
   planets.planets = new sPlanet[planets.size];
