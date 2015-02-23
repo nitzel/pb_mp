@@ -47,7 +47,11 @@ void drawPlanets(const saPlanet & sPlanets, const float dX, const float dY){
     const int R = PLANET_RADIUS; // radius
     
     for(unsigned int i=0; i<sPlanets.size; i++){
-      glColor3ub(100+planets[i].party*155,255-planets[i].party*155,100);
+      if(planets[i].shieldActive) { // draw a shielded planet!
+        glColor3ub(planets[i].party*150,150-planets[i].party*150,255);
+      } else {
+        glColor3ub(100+planets[i].party*155,255-planets[i].party*155,100);
+      }
       glTexCoord2f(0.0,0.0); glVertex2i(dX+planets[i].x-R,dY+planets[i].y-R);
       glTexCoord2f(1.0,0.0); glVertex2i(dX+planets[i].x+R,dY+planets[i].y-R);
       glTexCoord2f(1.0,1.0); glVertex2i(dX+planets[i].x+R,dY+planets[i].y+R);
