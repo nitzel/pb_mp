@@ -7,8 +7,8 @@
 //  planets loose levels on death DONE
 //  and then multiplayer :)      
 
-//  check for game over
-//  make shields usable!   
+//  check for game over                 todo later
+//  make shields usable!          DONE
 
 float money[2] = {0,0};
 static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -662,12 +662,12 @@ void initPlanets(saPlanet & planets, unsigned int size){
   planets.planets = new sPlanet[planets.size];
   memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0, PA,3000,80,50,false};
-  planets.planets[1] = sPlanet{0,0,120,230,120,230,0,0,0, PA,3000,80,50,false};
-  planets.planets[2] = sPlanet{0,0,240,420,240,420,0,0,0,PA,3000,80,50,false};
-  planets.planets[3] = sPlanet{0,0,800,110,500,110,0,0,0, PB,3000,80,50,false};
-  planets.planets[4] = sPlanet{0,0,920,280,420,280,0,0,0, PB,3000,80,50,false};
-  planets.planets[5] = sPlanet{0,0,730,380,630,380,0,0,0, PB,3000,80,50,false};
+  planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0, PA,3000,80,70,true};
+  planets.planets[1] = sPlanet{0,0,120,230,120,230,0,0,0, PA,3000,80,60,true};
+  planets.planets[2] = sPlanet{0,0,240,420,240,420,0,0,0, PA,3000,80,20,true};
+  planets.planets[3] = sPlanet{0,0,800,110,500,110,0,0,0, PB,3000,80,50,true};
+  planets.planets[4] = sPlanet{0,0,920,280,420,280,0,0,0, PB,3000,80,100,true};
+  planets.planets[5] = sPlanet{0,0,730,380,630,380,0,0,0, PB,3000,80,10,true};
 }
 void initShots(saShot & shots, unsigned int size){
   shots.size = size;
