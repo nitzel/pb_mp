@@ -30,17 +30,23 @@ client: $(EXECLIENT)
 server: $(EXESERVER)
 
 #client
-$(EXECLIENT): client.o inc.o stb_image.o Makefile
-	$(CC) client.o inc.o stb_image.o -o $(EXECLIENT) $(LDFLAGS)
+$(EXECLIENT): client.o inc.o draw.o game.o stb_image.o Makefile
+	$(CC) client.o inc.o draw.o game.o stb_image.o -o $(EXECLIENT) $(LDFLAGS)
 #server
-$(EXESERVER): server.o inc.o stb_image.o Makefile
-	$(CC) server.o inc.o stb_image.o -o $(EXESERVER) $(LDFLAGS)
+$(EXESERVER): server.o inc.o draw.o game.o stb_image.o Makefile
+	$(CC) server.o inc.o draw.o game.o stb_image.o -o $(EXESERVER) $(LDFLAGS)
   
-server.o: server.cpp inc.hpp
+server.o: server.cpp draw.hpp
 	$(CC) $(CFLAGS) $(LDFLAGS) server.cpp
 
-client.o: client.cpp inc.hpp
+client.o: client.cpp draw.hpp
 	$(CC) $(CFLAGS) $(LDFLAGS) client.cpp
+  
+draw.o: draw.cpp draw.hpp
+	$(CC) $(CFLAGS) $(LDFLAGS) draw.cpp
+  
+game.o: game.cpp game.hpp
+	$(CC) $(CFLAGS) $(LDFLAGS) game.cpp
   
 inc.o: inc.cpp inc.hpp
 	$(CC) $(CFLAGS) $(LDFLAGS) inc.cpp

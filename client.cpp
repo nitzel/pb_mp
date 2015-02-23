@@ -1,4 +1,7 @@
-#include "inc.hpp"
+#include "game.hpp"
+#include "draw.hpp"
+
+#include <enet/enet.h>
 
 int main(int argc, char ** argv){
   printf("Client\n");

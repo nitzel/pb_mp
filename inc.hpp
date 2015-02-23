@@ -1,15 +1,7 @@
 #ifndef __INC__
 #define __INC__
 
-#include <stdio.h>
-#include <string>
-#include <cmath>
 #include <forward_list>
-#include <GLFW/glfw3.h>
-#include <enet/enet.h>
-
-#define STBI_NO_HDR
-#include "include/stb_image.h"
 
 #define UPGRADE_MAX_LVL       10    // max level for upgrades
 #define UPGRADE_COSTS         50    // cost per upgrade lvl
@@ -38,20 +30,9 @@
 #define SHOT_LENGTH           16
 
 #define GRID_SIZE            100    //
+
 enum Party{PA=0,PB,PN};
 enum Upgrade{ECONOMY=0,DEFENSE,PRODUCTION};
-enum TextureID{TEX_FONT=0,TEX_PLANET,TEX_SHIP,TEX_AMOUNT};
-extern const char * textureNames[];
-
-struct sTexture{
-  GLuint id;
-  int w,h,n;
-};
-struct sInfo {
-  GLFWwindow * window;
-  sTexture textures[TEX_AMOUNT];
-};
-extern struct sInfo info;
 
 struct vec2 { // for rectangles and coordinates etc
   union {float x, w;};
@@ -113,31 +94,12 @@ struct sSquare {
   unsigned int size;
   std::forward_list<sShip*> shiplist; 
 };
-void drawTree(sSquare* tree, const float dX, const float dY);
-///////////
-// draw game content
 
-void drawPlanets(const saPlanet & sPlanets, const float dX, const float dY);
-void drawShips(const saShip * ships, const float dX, const float dY);
-void drawShots(const saShot * shots, const float dX, const float dY);
-/////////
-// draw text/numbers/strings
-void drawInt(int i, float strX, float strY, float stretchX, float stretchY);
-void drawInt(int i, float strX, float strY, float stretchXY=1);
-void drawString(const char* str, unsigned int strlen, float strX, float strY, float stretchX, float stretchY);
-void drawString(const char* str, unsigned int strlen, float strX, float strY, float stretchXY=1);
-///////////////////
-// random numbers
+/// random numbers
 float randf();
 int rand(int min, int max);
 unsigned int rand(unsigned int max);
-unsigned long xorshf96(void); //period 2^96-1// Marsaglia's rand
-////////////////////
-//  other stuff
-void loadTextures();
-struct sTexture loadTexture(const char * file);
-struct sInfo * getInfo();
-void exit(const char * msg, int status);
-void cb_error(int error, const char * description);
+unsigned long xorshf96(void);
+
 
 #endif // __INC__
