@@ -85,11 +85,10 @@ void drawShips(const saShip * sShips, const float dX, const float dY){
   glBindTexture(GL_TEXTURE_2D, info.textures[TEX_SHIP].id);
   glBegin(GL_QUADS);
     for(unsigned int party=0; party<PN; party++) {
-      glColor3ub(party*255,255-party*255,0);
       sShip * ships = sShips[party].ships;
       for(unsigned int i=0; i<sShips[party].size; i++){
         if(ships[i].health>0){
-          glColor3ub(party * 255, (10 - ships[i].health * 25), (1 - party) * 255);
+          glColor3ub(party * 255, (1 - party) * 255, (10 - ships[i].health) * 25);
           glTexCoord2f(0.0,0.0); glVertex2i(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
           glTexCoord2f(1.0,0.0); glVertex2i(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
           glTexCoord2f(1.0,1.0); glVertex2i(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
@@ -101,19 +100,21 @@ void drawShips(const saShip * sShips, const float dX, const float dY){
   glDisable(GL_TEXTURE_2D); 
 }
 void drawShots(const saShot * sShots, const float dX, const float dY){
+  glDisable(GL_BLEND); // shots are not blended at all
   glBegin(GL_LINES);
     for(unsigned int party=0; party<PN; party++) {
       glColor3ub(party*255,255-party*255,0);
       sShot * shots = sShots[party].shots;
       for(unsigned int i=0; i<sShots[party].size; i++){
-        //if(shots[i].timeToLive>0) {
+        if(shots[i].timeToLive>0) {
           glVertex2i(dX+shots[i].x,dY+shots[i].y);
           glVertex2i(dX+shots[i].x+shots[i].dx*SHOT_LENGTH/SHOT_SPEED,dY+shots[i].y+shots[i].dy*SHOT_LENGTH/SHOT_SPEED);
           //drawInt(i, shots[i].x, shots[i].y); // draw ID instead, glEnd needed!
-        //}
+        }
       }
     }
   glEnd();
+  glEnable(GL_BLEND);
 }
 
 void loadTextures(){
