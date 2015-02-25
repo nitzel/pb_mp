@@ -1,6 +1,150 @@
 #include "game.hpp"
+#define TREE(X,Y,Z)  mTree[(X*treeW+Y)*treeH+Z] // from XYZ to [x][y][z]
+#define TREE1(X)  &mTree[X*treeW*treeH] // from XYZ to [x][y][z]
 
 float money[PN] = {0,0}; // money of PA and PB
+
+Game::Game(const unsigned int MAX_SHIPS, const unsigned int NUM_PLANETS){
+  
+  treeW = map.w/GRID_SIZE;
+  treeH = map.h/GRID_SIZE;
+  
+  const unsigned int MAX_SHOTS = MAX_SHIPS*(float)SHOT_LIFETIME/(float)SHIP_SHOOT_DELAY + 1000; // + 1000 just to be sure
+  initPlanets(mPlanets,  NUM_PLANETS);
+  initShots(mShots[PA],  MAX_SHOTS);
+  initShots(mShots[PB],  MAX_SHOTS);
+  initShips(mShips[PA],  MAX_SHIPS);
+  initShips(mShips[PB],  MAX_SHIPS);
+  
+  /*unsigned int memShips = sizeof(saShip) + sizeof(sShip)*MAX_SHIPS + sizeof(unsigned int) * MAX_SHIPS;
+  
+  unsigned int memShots = sizeof(saShot) + sizeof(sShot)*MAX_SHOTS + sizeof(unsigned int) * MAX_SHIPS;
+  
+  unsigned int memPlanets = sizeof(saPlanet) + sizeof(sPlanet) * NUM_PLANETS;
+  
+  calloc(1, memShips*2 + memShots*2 + memPlanets);*/
+  
+  
+}
+
+void Game::update(const double dt){
+  updatePlanets(mPlanets, mShips, dt);
+  updateShips(mShips, dt);
+  updateShots(mShots, dt);
+  
+  generateTree();
+  letShoot();
+  letCollide();
+}
+
+void Game::generateTree(){
+  /// The idea is to split the playground into squares lying next to 
+  /// each other, each the size of the aiming-range of the ships.
+  /// By coordinates you can directly calculated in which square a ship is
+  /// It then has only to check against the 9 squares around.
+  ///
+  /// If there are :alot: of ships in a square it is further divided 
+  /// into smaller ones, until they contain a reasonable amount. 
+  /// Only the ones on aim-range will be tested
+  
+  
+  
+  // todo improve with several layers, experiment
+  // 1st: SHIP_AIM_RANGE^2, containing the amount in the whole Rectangle AND a list of layer2 nodes that are not empty
+  // 2nd: Smaller
+  // we dont need THE nearest enemy, just a close one!
+  
+  
+  /// Set up Structure
+  //sSquare tree[2][treeW][treeH] = mTree;
+  // init size of tree with zero
+  for(unsigned int party=PA; party<PN; party++)
+    for(unsigned int x=0; x<treeW; x++)
+      for(unsigned int y=0; y<treeH; y++)
+        TREE(party,x,y).size = 0;
+  
+  /// Fill space partitioning structure with ships
+  // todo try to optimize, takes 100fps away
+  for(unsigned int party=PA; party<PN; party++){
+    sShip * ships = mShips[party].ships;
+    for(unsigned int i=0; i<mShips[party].size; i++){
+      if(ships[i].health){
+        TREE(party,(unsigned int)(ships[i].x)/GRID_SIZE,(unsigned int)(ships[i].y)/GRID_SIZE).size++;
+        TREE(party, (unsigned int)(ships[i].x)/GRID_SIZE, (unsigned int)(ships[i].y)/GRID_SIZE).shiplist.push_front(&ships[i]);
+      }
+    }
+  }
+}
+
+void Game::letShoot(){
+/////////////////
+  // RangeTesting and shooting
+  //////////////// 
+  // hint: im using a cool algorithm i invented on my own xD
+  // commenting might be a bit odd, since it was to let the ships
+  // go in a squared without counting how many ships there are
+  // therefore we start in the center of the square and going outwards
+  // in a spiral way
+  // Here it is used for going through the grid, using closer grid
+  // parts first to find a good-enough shootable ship (optimal would take too much time, we take the first we can find in reach, which is roughly the closest. the really closest may be about sqrt(GRID_size) closer, which is acceptable)
+  for(unsigned int party=PA; party<PN; party++){
+    //sShip * lastTarget = nullptr;
+    //float lastTargetDistanceSQ = 0;
+    unsigned int rival = !party; // opponents party ID :)
+    // let ships shoot
+    for(unsigned int i=0; i<mShips[party].size; i++){
+      sShip & ship = mShips[party].ships[i];
+      if(!ship.health || ship.timeToShoot>0) {// dead or weapon not ready
+        continue;
+      }
+      shoot(ship, mPlanets, mShots[party],TREE1(rival),  treeW, treeH, party);
+    }
+  }
+  // let planets shoot
+  for(unsigned int i=0; i<mPlanets.size; i++){
+    sPlanet & planet = mPlanets.planets[i];      
+    if(planet.party == PN || planet.timeToShoot>0) {// dead or weapon not ready
+      continue;
+    }
+    shoot(planet, mPlanets, mShots[planet.party],TREE1(!planet.party),  treeW, treeH);
+  }
+}
+void Game::letCollide(){
+  /////////////////
+  // CollisionTesting
+  ////////////////
+  for(unsigned int party=0; party<PN; party++) {
+    unsigned int rival = !party; // opponents party ID :)
+    sShot * shots = mShots[party].shots;
+    for(unsigned int i=0; i<mShots[party].size; i++){
+      if(shots[i].timeToLive>0){ // shot exists 
+        /////////////////////
+        // test against ships
+        for(sShip * target : TREE(rival,(int)shots[i].x/GRID_SIZE, (int)shots[i].y/GRID_SIZE).shiplist){
+          if(target->health && distanceSQ(shots[i].x, shots[i].y, target->x, target->y) < SHIP_RADIUS*SHIP_RADIUS) {
+            // collision!!!
+            shots[i].timeToLive = -1;
+            takeDamage(*target);
+            break;
+          }
+        }
+        ///////////////////////
+        // test against planets
+        if(shots[i].timeToLive>0) { // shot did not hit a ship, still alive
+          sPlanet * planets = mPlanets.planets;
+          for(unsigned int j=0; j<mPlanets.size; j++){ // take the FIRST planet you can find that is not in our party
+            if(planets[j].party != party && distanceSQ(shots[i].x, shots[i].y, planets[j].x, planets[j].y) < PLANET_RADIUS*PLANET_RADIUS) {
+              // collision!!!
+              shots[i].timeToLive = -1;
+              takeDamage(planets[j], party);
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 /// set dx, dy relative to vector (xy)->(tx,ty)
 inline void delta(const float x, const float y, const float tx, const float ty, float & dx, float & dy){
@@ -89,7 +233,7 @@ void capturePlanet(sPlanet & planet, const unsigned int newParty){
   // SET new party and reset health
   planet.party = newParty;
   // set health to 100% (remember, neutral full health is 0 ... ;) confusing, huh? But this way we can store it in one var)
-  planet.health = newParty==PN?0:HEALTH_MAX; 
+  planet.health = (newParty==PN)?0:HEALTH_MAX; 
 }
 
 void takeDamage(sShip & ship){
@@ -104,9 +248,9 @@ party - party dealing the damage
 */
 void takeDamage(sPlanet & planet, const unsigned int party){
   if(planet.party == PN){ // neutral planet
-    planet.health -= party*2-1; // Add one for PA, take one for PB. Remember, neutral planets are full health at 0 and overtaken at +-100.
+    planet.health -= party*2-1; // take one for PA, add one for PB. Remember, neutral planets are full health at 0 and overtaken at +-100.
     if(planet.health <= -HEALTH_MAX || planet.health >= HEALTH_MAX){ // overtake
-      capturePlanet(planet, party);
+      ;//capturePlanet(planet, party);
     }
   } else { // belongs to the enemy party! 
     if (!planet.shieldActive) {
@@ -264,16 +408,15 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
       }
       shoot(ship, sPlanets, sShots[party],(sSquare*)tree[rival],  W, H, party);
     }
-    // let planets shoot
-    for(unsigned int i=0; i<sPlanets.size; i++){
-      sPlanet & planet = sPlanets.planets[i];      
-      if(planet.party == PN || planet.timeToShoot>0) {// dead or weapon not ready
-        continue;
-      }
-      shoot(planet, sPlanets, sShots[planet.party],(sSquare*)tree[!planet.party],  W, H);
-    }
   }  
-  
+  // let planets shoot
+  for(unsigned int i=0; i<sPlanets.size; i++){
+    sPlanet & planet = sPlanets.planets[i];      
+    if(planet.party == PN || planet.timeToShoot>0) {// dead or weapon not ready
+      continue;
+    }
+    shoot(planet, sPlanets, sShots[planet.party],(sSquare*)tree[!planet.party],  W, H);
+  }
   /////////////////
   // CollisionTesting
   ////////////////
@@ -311,7 +454,7 @@ void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
   
 }
 
-void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
+void updatePlanets(saPlanet & sPlanets, saShip * sShips, const  double dt){
   sPlanet * planets = (sPlanet*)(const char*)sPlanets.planets;
   for(unsigned int i=0; i<sPlanets.size; i++){
     //planets[i].tx = mouseV.x; // todo remove
@@ -347,7 +490,7 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
       }
       // use power if shield if active
       if(planets[i].shieldActive) {
-        planets[i].power -= (double)POWER_DRAIN/(planets[i].level[DEFENSE]+1)*dt;
+        planets[i].power -= dt*(double)POWER_DRAIN/(planets[i].level[DEFENSE]+1);
         if(planets[i].power<0) //  no more power -> turn shield off
           planets[i].shieldActive = false;
       } else { // restore power, shield is off
@@ -378,10 +521,7 @@ void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt){
     planets[i].timeToShoot -= dt * (1+(float)planets[i].level[DEFENSE]/4);
   }
 }
-// todo maybe check for ships and shots leaving the map area.
-// maybe not necessary, since shots will die either way and ships can only be sent
-// to valid positions ... so it would computationtime not to test it
-void processShots(saShot * sShots, double dt){
+void updateShots(saShot * sShots, double dt){
   for(unsigned int party=0; party<PN; party++) {
     sShot * shots = sShots[party].shots;
     for(unsigned int i=0; i<sShots[party].size; i++){
@@ -400,7 +540,7 @@ void processShots(saShot * sShots, double dt){
   }
 }
 
-void processShips(saShip * sShips, double dt){
+void updateShips(saShip * sShips, double dt){
   for(unsigned int party=0; party<PN; party++) {
     sShip * ships = sShips[party].ships;
     for(unsigned int i=0; i<sShips[party].size; i++){
@@ -443,32 +583,32 @@ void initGame(saPlanet & planets, saShip * ships, saShot * shots, const unsigned
   initShips(ships[PA],  MAX_SHIPS);
   initShips(ships[PB],  MAX_SHIPS);
 }
-void initPlanets(saPlanet & planets, unsigned int size){
+void initPlanets(saPlanet & planets, const unsigned int size){
   planets.size = size;
   planets.planets = new sPlanet[planets.size];
-  memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
+  //memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
   planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0, PA,3000,80,70,true};
   planets.planets[1] = sPlanet{0,0,120,230,120,230,0,0,0, PA,3000,80,60,true};
   planets.planets[2] = sPlanet{0,0,240,420,240,420,0,0,0, PA,3000,80,20,true};
   planets.planets[3] = sPlanet{0,0,800,110,500,110,0,0,0, PB,3000,80,50,true};
   planets.planets[4] = sPlanet{0,0,920,280,420,280,0,0,0, PB,3000,80,100,true};
-  planets.planets[5] = sPlanet{0,0,730,380,630,380,0,0,0, PB,3000,80,10,true};
+  planets.planets[5] = sPlanet{0,0,1530,1580,630,380,0,0,0, PN,3000,10,10,false};
 }
-void initShots(saShot & shots, unsigned int size){
+void initShots(saShot & shots, const unsigned int size){
   shots.size = size;
   shots.insertPos = 0;
   shots.shots = new sShot[shots.size];
   memset(shots.shots, 0, sizeof(sShot)*size); // clear data
 }
-void initShips(saShip & ships, unsigned int size){
+void initShips(saShip & ships, const unsigned int size){
   ships.size = size;
   ships.ships = new sShip[ships.size];
   
   memset(ships.ships, 0, sizeof(sShip)*size); // clear
   ships.freePush = 0;
   ships.freePop  = 0;
-  ships.free = new int[ships.size];
+  ships.free = new unsigned int[ships.size];
   for(unsigned int i=0; i<ships.size; i++)
     ships.free[i]=i;
   

@@ -44,48 +44,13 @@ int main(int argc, char ** argv){
     exit(EXIT_FAILURE);
   }
   
-  
-  /* Wait up to 1000 milliseconds for an event. */
-  while(0){
-    while (enet_host_service (host, & event, 1000) > 0)
-    {
-        switch (event.type)
-        {
-        case ENET_EVENT_TYPE_CONNECT:
-            printf ("A new client connected from %x:%u.\n", 
-                    event.peer -> address.host,
-                    event.peer -> address.port);
-            /* Store any relevant client information here. */
-            event.peer -> data = (void*)"Client information";
-            break;
-        case ENET_EVENT_TYPE_RECEIVE:
-            printf ("A packet of length %u containing %s was received from %s on channel %u.\n",
-                    event.packet -> dataLength,
-                    event.packet -> data,
-                    (char*)event.peer -> data,
-                    event.channelID);
-            /* Clean up the packet now that we're done using it. */
-            enet_packet_destroy (event.packet);
-            
-            break;
-           
-        case ENET_EVENT_TYPE_DISCONNECT:
-            printf ("%s disconnected.\n", (char*)event.peer -> data);
-            /* Reset the peer's client information. */
-            event.peer -> data = NULL;
-        case ENET_EVENT_TYPE_NONE:
-        default:;
-        }
-    }
-  }
-  
   ////////////////
   // VARS
   ////////////////
   double time = glfwGetTime();
   double dt = 0;
   double fps = 0;
-  bool paused = false;
+  bool paused = true;
   
   mouseR = {0,0};
   mouseV = {0,0};
@@ -134,9 +99,9 @@ int main(int argc, char ** argv){
     
     // process game content
     if(!paused) {
-      processPlanets(planets, ships, dt);
-      processShips(ships, dt);
-      processShots(shots, dt);
+      updatePlanets(planets, ships, dt);
+      updateShips(ships, dt);
+      updateShots(shots, dt);
       shoot(ships, planets, shots, dt);
     }
     
@@ -153,6 +118,48 @@ int main(int argc, char ** argv){
     
     glfwSwapBuffers(info.window);
     glfwPollEvents();
+      /* Wait up to 1000 milliseconds for an event. */
+    while (enet_host_service (host, & event, 0) > 0)
+    {
+      switch (event.type)
+      {
+      case ENET_EVENT_TYPE_CONNECT:
+          printf ("A new client connected from %x:%u.\n", 
+                  event.peer -> address.host,
+                  event.peer -> address.port);
+          /* Store any relevant client information here. */
+          event.peer -> data = (void*)"Client information";
+          paused = false; // todo remove
+          break;
+      case ENET_EVENT_TYPE_RECEIVE:
+          {
+          printf ("A packet of length %u containing %f was received from %s on channel %u.\n",
+                  event.packet -> dataLength,
+                  *(double*)event.packet -> data,
+                  (char*)event.peer -> data,
+                  event.channelID);
+          
+          double time[2] = {*(double*)event.packet -> data, glfwGetTime()};
+          ENetPacket * packet = enet_packet_create(&time,sizeof(time)*2, ENET_PACKET_FLAG_RELIABLE);
+          // send packet to peer over channel 0
+          enet_peer_send(event.peer, 0, packet);
+          enet_host_flush (host);
+          }
+          
+          /* Clean up the packet now that we're done using it. */
+          enet_packet_destroy (event.packet);
+          break;
+      case ENET_EVENT_TYPE_DISCONNECT:
+          printf ("%s disconnected.\n", (char*)event.peer -> data);
+          /* Reset the peer's client information. */
+          event.peer -> data = NULL;
+          paused = true; // todo remove
+          break;
+      case ENET_EVENT_TYPE_NONE:
+          break;
+      default:;
+      }
+    }
   }
   
   glfwDestroyWindow(info.window);

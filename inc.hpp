@@ -68,6 +68,9 @@ struct sPlanet {
 };
 
 struct saShip {
+  unsigned int freePush;// where to save index in free-array
+  unsigned int freePop; // where to take index in free-array
+  unsigned int size;
   sShip * ships;
   // how it works
   // In the ships array all ships are stored. To know where to
@@ -75,19 +78,16 @@ struct saShip {
   // Taking an indice from the free array at freePop gives you an 
   // unused place in ships, while you can insert indices of unused
   // ships at freePush.
-  int * free; // free positions in the ships array
-  unsigned int freePush;// where to save index in free-array
-  unsigned int freePop; // where to take index in free-array
-  unsigned int size;
+  unsigned int * free; // free positions in the ships array
 };
 struct saPlanet {
-  sPlanet * planets;
   unsigned int size;
+  sPlanet * planets;
 };
 struct saShot {
-  sShot * shots;
   unsigned int insertPos;
   unsigned int size;
+  sShot * shots;
 };
 // to partition the map
 struct sSquare {

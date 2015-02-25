@@ -1,4 +1,4 @@
-#include "game.hpp"
+//#include "game.hpp"
 #include "draw.hpp"
 
 #include <enet/enet.h>
@@ -41,6 +41,38 @@ int main(int argc, char ** argv){
     printf("connection to host failed\n");
   }
   
+  /*glfwInit();
+  
+  double time = glfwGetTime();
+  ENetPacket * packet = enet_packet_create(&time,sizeof(time), ENET_PACKET_FLAG_RELIABLE);
+  // send packet to peer over channel 0
+  enet_peer_send(peer, 0, packet);
+  enet_host_flush (host);
+  
+  bool done = false;
+  while (enet_host_service (host, & event, 0) || !done) {
+    switch (event.type)
+    {
+    case ENET_EVENT_TYPE_RECEIVE:
+        printf ("A packet of length %u containing %f %f was received from %s on channel %u.\n",
+                event.packet -> dataLength,
+                *(double*)event.packet -> data,
+                *((double*)(event.packet -> data)+1),
+                (char*)event.peer -> data,
+                event.channelID);
+        time = (glfwGetTime()-((double*)event.packet -> data)[0])/2 + ((double*)event.packet -> data)[1];
+        glfwSetTime(time);
+        done = true;
+        // Clean up the packet now that we're done using it. 
+        enet_packet_destroy (event.packet);   
+    default:;
+    }
+  }
+  
+  while(true){
+    printf("%f\n",glfwGetTime());
+  }
+  /**/
   //ENetPacket * packet = enet_packet_create("packet",strlen("packet")+1, ENET_PACKET_FLAG_RELIABLE);
   //enet_packet_resize(packet, strlen("packetfoo")+1);
   //strcpy((char*)&packet->data[strlen("packet")], "foo");
@@ -48,7 +80,8 @@ int main(int argc, char ** argv){
   // send packet to peer over channel 0
   //enet_peer_send(peer, 0, packet);
   //enet_host_flush (host);
-  enet_host_flush (host);
+  //enet_host_flush (host);
+  enet_host_service (host, & event, 5000);
   enet_peer_disconnect(peer, 0);
   while (enet_host_service (host, & event, 3000) > 0)  {
       switch (event.type)

@@ -4,21 +4,48 @@
 #include "inc.hpp"
 
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <stdio.h>
 
+
+class Game {
+  public:
+    vec2 map;
+    saPlanet mPlanets;
+    saShot mShots[2];
+    saShip mShips[2];
+    // todo list deadShips, newShips, newShots
+    
+    unsigned int treeW = map.w/GRID_SIZE;
+    unsigned int treeH = map.h/GRID_SIZE;
+    sSquare *mTree;
+  
+  public:
+    Game(const unsigned int MAX_SHIPS, const unsigned int NUM_PLANETS);
+    void update(const double dt);
+    void generateTree();
+    void letShoot();
+    void letCollide();
+    
+    void * packData(unsigned int & size); // 
+    void unpackData(unsigned int & size); //
+
+    void select(int clickXY);
+    void select(int rectangleXY, int rectangleWH);
+};
 
 extern float money[]; // money of PA and PB
 
 /// init list of game objects
 void initGame(saPlanet & planets, saShip * ships, saShot * shots, const unsigned int MAX_SHIPS);
-void initPlanets(saPlanet & planets, unsigned int size);
-void initShips(saShip & ships, unsigned int size);
-void initShots(saShot & shots, unsigned int size);
+void initPlanets(saPlanet & planets, const unsigned int size);
+void initShips(saShip & ships, const unsigned int size);
+void initShots(saShot & shots, const unsigned int size);
 /// process list of game objects
-void processPlanets(saPlanet & sPlanets, saShip * sShips, double dt);
-void processShips(saShip * sShips, double dt);
-void processShots(saShot * sShots, double dt);
+void updatePlanets(saPlanet & sPlanets, saShip * sShips, const double dt);
+void updateShips(saShip * sShips, const double dt);
+void updateShots(saShot * sShots, const double dt);
 
 /**
 ship/planet - ship/planet to check for closest enemy and shoot
