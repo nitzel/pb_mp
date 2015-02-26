@@ -475,7 +475,7 @@ void updatePlanets(saPlanet & sPlanets, saShip * sShips, const  double dt){
           dx = dx*SEND_SHIP_RAND_RADIUS/len;
           dy = dy*SEND_SHIP_RAND_RADIUS/len;
           // add it
-          if(!addShip(sShips[planets[i].party], planets[i].x+dt,planets[i].y,planets[i].tx+dx,planets[i].ty+dy)) {
+          if(!addShip(sShips[planets[i].party], planets[i].x,planets[i].y,planets[i].tx+dx,planets[i].ty+dy)) {
             fprintf(stderr, "ship insert failed\n"); // todo think of sth better than restoring money
             // restore money to player
             money[planets[i].party] += SHIP_COSTS * planets[i].shipQueue;
@@ -484,9 +484,8 @@ void updatePlanets(saPlanet & sPlanets, saShip * sShips, const  double dt){
             planets[i].shipQueue --; // decrement build list
           }
           
-          // still building - reset time
-          if(planets[i].shipQueue)  
-            planets[i].timeToBuild += SHIP_PROD_TIME*(1-(planets[i].level[PRODUCTION]+1)/UPGRADE_MAX_LVL);
+          // reset timeToBuild 
+          planets[i].timeToBuild += SHIP_PROD_TIME*(1-(planets[i].level[PRODUCTION]+1)/UPGRADE_MAX_LVL);
         }
       }
       // use power if shield if active
@@ -589,12 +588,12 @@ void initPlanets(saPlanet & planets, const unsigned int size){
   planets.planets = new sPlanet[planets.size];
   //memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,100,100,400,125,0,0,0, PA,3000,80,5,true};
-  planets.planets[1] = sPlanet{0,0,100,250,400,275,0,0,0, PA,3000,80,5,true};
-  planets.planets[2] = sPlanet{0,0,100,400,400,425,0,0,0, PA,3000,80,5,true};
-  planets.planets[3] = sPlanet{0,0,700,100,400, 75,0,80,0, PB,3000,80,5,true};
-  planets.planets[4] = sPlanet{0,0,700,250,400,225,0,80,0, PB,3000,80,5,true};
-  planets.planets[5] = sPlanet{0,0,700,400,400,375,0,80,0, PB,3000,80,5,false};
+  planets.planets[0] = sPlanet{0,0,100,100,400,125,0,9,0, PA,3000,80,5,true};
+  planets.planets[1] = sPlanet{0,0,100,250,400,275,0,9,0, PA,3000,80,5,true};
+  planets.planets[2] = sPlanet{0,0,100,400,400,425,0,9,0, PA,3000,80,5,true};
+  planets.planets[3] = sPlanet{0,0,700,100,400, 75,0,9,0, PB,3000,80,5,true};
+  planets.planets[4] = sPlanet{0,0,700,250,400,225,0,9,0, PB,3000,80,5,true};
+  planets.planets[5] = sPlanet{0,0,700,400,400,375,0,9,0, PB,3000,80,5,false};
 }
 void initShots(saShot & shots, const unsigned int size){
   shots.size = size;
