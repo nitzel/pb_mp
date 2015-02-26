@@ -223,13 +223,14 @@ bool upgradePlanet(sPlanet & planet, Upgrade upgrade) {
 
 void capturePlanet(sPlanet & planet, const unsigned int newParty){
   // When a planet gets neutral, it looses a lot of it's infrastructure
-  // ECONOMY is a little bit affected
-  planet.level[ECONOMY] = std::max(0, planet.level[ECONOMY]-1);
-  // More than half of the DEFENSE is destroyed. 10 -> 5 -> 2 -> 1 -> 0
-  planet.level[DEFENSE] = planet.level[DEFENSE]/2;
-  // PRODUCTION is a little bit affected
-  planet.level[PRODUCTION] = std::max(0, planet.level[ECONOMY]-1);
-  
+  if(newParty == PN) {
+    // ECONOMY is a little bit affected
+    planet.level[ECONOMY] = std::max(0, planet.level[ECONOMY]-1);
+    // More than half of the DEFENSE is destroyed. 10 -> 5 -> 2 -> 1 -> 0
+    planet.level[DEFENSE] = planet.level[DEFENSE]/2;
+    // PRODUCTION is a little bit affected
+    planet.level[PRODUCTION] = std::max(0, planet.level[ECONOMY]-1);
+  }
   // SET new party and reset health
   planet.party = newParty;
   // set health to 100% (remember, neutral full health is 0 ... ;) confusing, huh? But this way we can store it in one var)
@@ -325,7 +326,7 @@ bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTre
   if(!targetFound) {
     for(unsigned int i=0; i<sPlanets.size; i++){
       sPlanet & target = sPlanets.planets[i];      
-      if(target.party == PARTY) { // planet from same party
+      if(target.party == PARTY || target.shieldActive) { // planet from same party or shielded
         continue;
       }
       if(distanceSQ(ship.x, ship.y, target.x, target.y) < SHIP_AIM_RANGE_SQ) {
@@ -588,12 +589,12 @@ void initPlanets(saPlanet & planets, const unsigned int size){
   planets.planets = new sPlanet[planets.size];
   //memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
   
-  planets.planets[0] = sPlanet{0,0,180,100,180,100,0,0,0, PA,3000,80,70,true};
-  planets.planets[1] = sPlanet{0,0,120,230,120,230,0,0,0, PA,3000,80,60,true};
-  planets.planets[2] = sPlanet{0,0,240,420,240,420,0,0,0, PA,3000,80,20,true};
-  planets.planets[3] = sPlanet{0,0,800,110,500,110,0,0,0, PB,3000,80,50,true};
-  planets.planets[4] = sPlanet{0,0,920,280,420,280,0,0,0, PB,3000,80,100,true};
-  planets.planets[5] = sPlanet{0,0,1530,1580,630,380,0,0,0, PN,3000,10,10,false};
+  planets.planets[0] = sPlanet{0,0,100,100,400,125,0,0,0, PA,3000,80,5,true};
+  planets.planets[1] = sPlanet{0,0,100,250,400,275,0,0,0, PA,3000,80,5,true};
+  planets.planets[2] = sPlanet{0,0,100,400,400,425,0,0,0, PA,3000,80,5,true};
+  planets.planets[3] = sPlanet{0,0,700,100,400, 75,0,80,0, PB,3000,80,5,true};
+  planets.planets[4] = sPlanet{0,0,700,250,400,225,0,80,0, PB,3000,80,5,true};
+  planets.planets[5] = sPlanet{0,0,700,400,400,375,0,80,0, PB,3000,80,5,false};
 }
 void initShots(saShot & shots, const unsigned int size){
   shots.size = size;
