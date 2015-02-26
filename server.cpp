@@ -3,16 +3,6 @@
 
 #include <enet/enet.h>
 
-//todo next 
-//  colorize planets,             DONE / was already ...
-//  let planets shoot             DONE
-//  target planets for shooting   DONE
-//  planets loose levels on death DONE
-//  and then multiplayer :)      
-
-//  check for game over                 todo later
-//  make shields usable!          DONE
-
 static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
 
 int main(int argc, char ** argv){  
