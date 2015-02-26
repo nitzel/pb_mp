@@ -50,7 +50,7 @@ int main(int argc, char ** argv){
   double time = glfwGetTime();
   double dt = 0;
   double fps = 0;
-  bool paused = true;
+  bool paused = false;
   
   mouseR = {0,0};
   mouseV = {0,0};
@@ -61,9 +61,7 @@ int main(int argc, char ** argv){
   ////////////////
   map = {2000,2000};
   
-  saPlanet planets;
-  saShot shots[2];
-  saShip ships[2];
+  Game game(10000, 6);
   
   ///////////////////////////////
   // init GLFW
@@ -76,7 +74,6 @@ int main(int argc, char ** argv){
   
   
   // GAME LOOP
-  initGame(planets, ships, shots, 10000);
   while(!glfwWindowShouldClose(info.window)){ 
     // update timer
     dt = glfwGetTime() - time;
@@ -99,16 +96,13 @@ int main(int argc, char ** argv){
     
     // process game content
     if(!paused) {
-      updatePlanets(planets, ships, dt);
-      updateShips(ships, dt);
-      updateShots(shots, dt);
-      shoot(ships, planets, shots, dt);
+      game.update(dt);
     }
     
     // draw gamecontent
-    drawPlanets(planets, -view.x, -view.y);
-    drawShips(ships, -view.x, -view.y);
-    drawShots(shots, -view.x, -view.y);
+    drawPlanets(game.mPlanets, -view.x, -view.y);
+    drawShips  (game.mShips, -view.x, -view.y);
+    drawShots  (game.mShots, -view.x, -view.y);
     
     
     char s[100];

@@ -52,7 +52,7 @@ void initGfx() {
   glfwSetCursor(info.window, cursor);
   // cursor done
 }
-
+/*
 void drawTree(sSquare* tree, const float dX, const float dY){
   // draw lines
   const unsigned int W=map.w/GRID_SIZE;
@@ -86,6 +86,7 @@ void drawTree(sSquare* tree, const float dX, const float dY){
   }
   
 }
+*/
 void drawPlanets(const saPlanet & sPlanets, const float dX, const float dY){  
   sPlanet * planets = (sPlanet*)(const char*)sPlanets.planets;
   // draw Planet Texture
