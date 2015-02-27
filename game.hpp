@@ -28,7 +28,8 @@ class Game {
     void letCollide();
     
     void * packData(unsigned int & size, double time); // 
-    void unpackData(void * const data, unsigned int & size, const double time); //
+    // returns timeDelta
+    double unpackData(void * const data, unsigned int & size, const double time); //
 
     void select(int clickXY);
     void select(int rectangleXY, int rectangleWH);

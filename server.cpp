@@ -38,7 +38,7 @@ int main(int argc, char ** argv){
   // VARS
   ////////////////
   double time = glfwGetTime();
-  double dt = 0;
+  double dt = 0, vdt = 0; // virtuel dt, added to dt on data-arrival
   double fps = 0;
   bool paused = false;
   
@@ -86,7 +86,8 @@ int main(int argc, char ** argv){
     
     // process game content
     if(!paused) {
-      game.update(dt);
+      game.update(dt+vdt);
+      vdt = 0;
     }
     
     // draw gamecontent
@@ -105,8 +106,8 @@ int main(int argc, char ** argv){
       /* Wait up to 1000 milliseconds for an event. */
     {
       unsigned int size;
-      void * d = game.packData(size, glfwGetTime()-0.1);
-      game.unpackData(d, size, glfwGetTime());
+      void * d = game.packData(size, glfwGetTime());
+      vdt = game.unpackData(d, size, glfwGetTime());
       free(d);
     }
     while (enet_host_service (host, & event, 0) > 0)

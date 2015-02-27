@@ -227,7 +227,7 @@ shotsB
   memcpy(dat, mShots[1].shots,   memShots);   dat += memShots;
   return data;
 }
-void Game::unpackData(void * const data, unsigned int & size, const double time){
+double Game::unpackData(void * const data, unsigned int & size, const double time){
   unsigned int memShips, memShots, memPlanets;
   
   char * dat = (char*)data; // temp pointer
@@ -242,8 +242,7 @@ void Game::unpackData(void * const data, unsigned int & size, const double time)
   memcpy(mShips[1].ships,   dat, memShips);   dat+= memShips;
   memcpy(mShots[1].shots,   dat, memShots);   dat+= memShots;
   
-  update(dt); // keep received stuff up to date
-  return;
+  return dt;
 }
 
 
