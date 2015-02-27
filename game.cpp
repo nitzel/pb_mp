@@ -97,10 +97,6 @@ void Game::generateTree(){
   
   
   /// Set up Structure
-  //sSquare tree[2][treeW][treeH] = mTree;
-  //if(mTree != nullptr){
-  //  delete[] mTree; mTree = nullptr; 
-  //}
   if(mTree == nullptr)
     mTree = new sSquare[2 * treeW * treeH];
   
@@ -195,6 +191,61 @@ void Game::letCollide(){
     }
   }
 }
+
+void * Game::packData(unsigned int & size, double time) {
+/*
+Time double
+Money float
+Number of planets, ships, shots unsigned int
+planets
+shipsA
+shipsB
+shotsA
+shotsB
+*/
+  unsigned int memShips = sizeof(mShips) + sizeof(sShip)*mShips[0].size;
+    
+  unsigned int memShots = sizeof(mShots) + sizeof(sShot)*mShots[0].size;
+
+  unsigned int memPlanets = sizeof(mPlanets) + sizeof(sPlanet) * mPlanets.size;
+  
+  unsigned int memOther = sizeof(double) + sizeof(float)*2 + sizeof(unsigned int)*3; // time, money, number of stuff
+  
+  size = memOther + memPlanets + memShips*2 + memShots*2;
+  void * const data = calloc(1, size);
+  
+  char * dat = (char*)data; // temp pointer
+  *(double*)dat = time;                       dat += sizeof(double);
+  memcpy(dat, money, 2*sizeof(float));        dat += 2*sizeof(float);
+  *(unsigned int*)dat = memPlanets;           dat += sizeof(int);
+  *(unsigned int*)dat = memShips;             dat += sizeof(int);
+  *(unsigned int*)dat = memShots;             dat += sizeof(int);
+  memcpy(dat, mPlanets .planets, memPlanets); dat += memPlanets;
+  memcpy(dat, mShips[0].ships,   memShips);   dat += memShips;
+  memcpy(dat, mShots[0].shots,   memShots);   dat += memShots;
+  memcpy(dat, mShips[1].ships,   memShips);   dat += memShips;
+  memcpy(dat, mShots[1].shots,   memShots);   dat += memShots;
+  return data;
+}
+void Game::unpackData(void * const data, unsigned int & size, const double time){
+  unsigned int memShips, memShots, memPlanets;
+  
+  char * dat = (char*)data; // temp pointer
+  double dt = time - *(double*)dat; dat += sizeof(double);
+  memcpy(money,dat, 2*sizeof(float));        dat += 2*sizeof(float);
+  memPlanets = *(unsigned int*)dat;           dat += sizeof(int);
+  memShips   = *(unsigned int*)dat;           dat += sizeof(int);
+  memShots   = *(unsigned int*)dat;           dat += sizeof(int);
+  memcpy(mPlanets .planets, dat, memPlanets); dat+= memPlanets;
+  memcpy(mShips[0].ships,   dat, memShips);   dat+= memShips;
+  memcpy(mShots[0].shots,   dat, memShots);   dat+= memShots;
+  memcpy(mShips[1].ships,   dat, memShips);   dat+= memShips;
+  memcpy(mShots[1].shots,   dat, memShots);   dat+= memShots;
+  
+  update(dt); // keep received stuff up to date
+  return;
+}
+
 
 /// set dx, dy relative to vector (xy)->(tx,ty)
 inline void delta(const float x, const float y, const float tx, const float ty, float & dx, float & dy){

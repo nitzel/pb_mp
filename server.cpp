@@ -90,10 +90,10 @@ int main(int argc, char ** argv){
     }
     
     // draw gamecontent
-    drawPlanets(game.mPlanets, -view.x, -view.y);
-    drawShips  (game.mShips, -view.x, -view.y);
-    drawShots  (game.mShots, -view.x, -view.y);
-    
+    drawPlanets(game.mPlanets,  -view.x, -view.y);
+    drawShips  (game.mShips,    -view.x, -view.y);
+    drawShots  (game.mShots,    -view.x, -view.y);
+    drawTree   (game.mTree,     -view.x, -view.y);
     
     char s[100];
     sprintf(s,"FPS=%4.0f t=%.1fs Money A=%5i B=%5i MR%i/%i MV%i/%i View%i/%i",fps, time, (int)money[PA],(int)money[PB], (int)mouseR.x, (int)mouseR.y, (int)mouseV.x, (int)mouseV.y, (int)view.x, (int)view.y);
@@ -103,6 +103,12 @@ int main(int argc, char ** argv){
     glfwSwapBuffers(info.window);
     glfwPollEvents();
       /* Wait up to 1000 milliseconds for an event. */
+    {
+      unsigned int size;
+      void * d = game.packData(size, glfwGetTime()-0.1);
+      game.unpackData(d, size, glfwGetTime());
+      free(d);
+    }
     while (enet_host_service (host, & event, 0) > 0)
     {
       switch (event.type)

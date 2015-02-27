@@ -27,8 +27,8 @@ class Game {
     void letShoot();
     void letCollide();
     
-    void * packData(unsigned int & size); // 
-    void unpackData(unsigned int & size); //
+    void * packData(unsigned int & size, double time); // 
+    void unpackData(void * const data, unsigned int & size, const double time); //
 
     void select(int clickXY);
     void select(int rectangleXY, int rectangleWH);
