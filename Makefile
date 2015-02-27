@@ -30,28 +30,28 @@ client: $(EXECLIENT)
 server: $(EXESERVER)
 
 #client
-$(EXECLIENT): client.o inc.o draw.o game.o stb_image.o Makefile
+$(EXECLIENT): client.o inc.o draw.o game.o stb_image.o makefile
 	$(CC) client.o inc.o draw.o game.o stb_image.o -o $(EXECLIENT) $(LDFLAGS)
 #server
-$(EXESERVER): server.o inc.o draw.o game.o stb_image.o Makefile
+$(EXESERVER): server.o inc.o draw.o game.o stb_image.o makefile
 	$(CC) server.o inc.o draw.o game.o stb_image.o -o $(EXESERVER) $(LDFLAGS)
   
-server.o: server.cpp draw.hpp
+server.o: server.cpp draw.hpp makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) server.cpp
 
-client.o: client.cpp draw.hpp
+client.o: client.cpp draw.hpp makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) client.cpp
   
-draw.o: draw.cpp draw.hpp
+draw.o: draw.cpp draw.hpp makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) draw.cpp
   
-game.o: game.cpp game.hpp
+game.o: game.cpp game.hpp makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) game.cpp
   
-inc.o: inc.cpp inc.hpp
+inc.o: inc.cpp inc.hpp makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) inc.cpp
   
-stb_image.o: include/stb_image.h include/stb_image.c
+stb_image.o: include/stb_image.h include/stb_image.c makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) include/stb_image.c
 
 #lodepng.o: lodepng.cpp lodepng.h
