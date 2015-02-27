@@ -16,6 +16,8 @@
 - [x] planets loose levels on death DONE
 - [ ] and then multiplayer :)      
 - [ ] check for game over                 todo later
+  - count total amount of ships with spaceTree
+  - count planets per player
 - [x] make shields usable!          DONE
 
 
