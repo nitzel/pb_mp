@@ -1,7 +1,7 @@
 #include "draw.hpp"
 struct sInfo info;
 
-const char * textureNames[] = {"mFont.tga","planet.tga","ship.png"};
+const char * textureNames[] = {"mFont.tga","planet.png","ship.png"};
 
 void initGlfw(const char * title, const int screenW, const int screenH) {
   if(!glfwInit())
@@ -25,6 +25,8 @@ void initGlfw(const char * title, const int screenW, const int screenH) {
   // ---- OpenGL settings
   glfwSwapInterval(1); // lock to vertical sync of monitor (normally 60Hz/)
   glEnable(GL_SMOOTH); // enable (gouraud) shading
+  glEnable(GL_LINE_SMOOTH); // enable (gouraud) shading for lines
+  glHint( GL_LINE_SMOOTH_HINT, GL_NICEST ); // take the best :)
   glDisable(GL_DEPTH_TEST); // disable depth testing
   glEnable(GL_BLEND); // enable blending (used for alpha)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // set blending mode
@@ -84,6 +86,7 @@ void drawTree(sSquare* tree, const float dX, const float dY){
   }
   
 }
+
 void drawPlanets(const saPlanet & sPlanets, const float dX, const float dY){  
   sPlanet * planets = (sPlanet*)(const char*)sPlanets.planets;
   // draw Planet Texture
@@ -150,7 +153,7 @@ void drawShips(const saShip * sShips, const float dX, const float dY){
   glDisable(GL_TEXTURE_2D); 
 }
 void drawShots(const saShot * sShots, const float dX, const float dY){
-  glDisable(GL_BLEND); // shots are not blended at all
+  //glDisable(GL_BLEND); // BLEND because of GL_LINE_SMOOTH, otherwise can be turned off
   glBegin(GL_LINES);
     for(unsigned int party=0; party<PN; party++) {
       glColor3ub(party*255,255-party*255,0);
@@ -164,7 +167,7 @@ void drawShots(const saShot * sShots, const float dX, const float dY){
       }
     }
   glEnd();
-  glEnable(GL_BLEND);
+  //glEnable(GL_BLEND);
 }
 
 void loadTextures(){
