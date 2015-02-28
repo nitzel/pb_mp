@@ -51,7 +51,7 @@ int main(int argc, char ** argv){
   ////////////////
   map = {2000,2000};
   
-  Game game(10000, 6);
+  Game game(1000, 6);
   
   ///////////////////////////////
   // init GLFW
@@ -108,10 +108,10 @@ int main(int argc, char ** argv){
     timeToBroadcast -= dt;
     if(timeToBroadcast<0)
     {
-      timeToBroadcast += 0.5; /// 2x per sec
+      timeToBroadcast = 0.1; /// 2x per sec
       unsigned int size;
       void * d = game.packData(size, glfwGetTime());
-      ENetPacket * packet = enet_packet_create(d,size, ENET_PACKET_FLAG_RELIABLE);
+      ENetPacket * packet = enet_packet_create(d,size,0);// ENET_PACKET_FLAG_RELIABLE
       // send packet to peer over channel 1
       enet_host_broadcast(host, 1, packet);
       enet_host_flush (host);
@@ -136,7 +136,7 @@ int main(int argc, char ** argv){
           if(event.packet -> dataLength == 2*sizeof(double)) {
             double time[2] = {*(double*)event.packet -> data, glfwGetTime()};
             printf("timepacket received %.1f %.1f \n",time[0],time[1]);
-            ENetPacket * packet = enet_packet_create(&time,sizeof(double)*2, ENET_PACKET_FLAG_RELIABLE);
+            ENetPacket * packet = enet_packet_create(&time,sizeof(double)*2, 0); // ENET_PACKET_FLAG_RELIABLE
             // send packet to peer over channel 0
             enet_peer_send(event.peer, 0, packet);
             enet_host_flush (host);

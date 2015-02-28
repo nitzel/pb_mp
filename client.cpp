@@ -4,6 +4,9 @@
 #include <enet/enet.h>
 static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
 
+
+#define TIME_TO_SYNC 0.5f
+#define GAMESTATE_OLD 0.5f // gamestates older than this will be discarded
 int main(int argc, char ** argv){
   printf("Client\n");
   if (enet_initialize () != 0)
@@ -48,7 +51,7 @@ int main(int argc, char ** argv){
   screen = {800,600}; // {640, 480};//
   view   = {0,0};
   map = {2000, 2000};
-  Game game(10000, 6);
+  Game game(1000, 6);
   ///////////////////////////////
   // init GLFW
   /////////////////////////////////s
@@ -57,11 +60,6 @@ int main(int argc, char ** argv){
   // add input listeners
   glfwSetCursorPosCallback(info.window, cursor_pos_callback);
   
-  {
-  double time[2] = {glfwGetTime(),0};
-  ENetPacket * packet = enet_packet_create((void*)time, 2*sizeof(double),ENET_PACKET_FLAG_RELIABLE);
-  enet_peer_send(peer, 0, packet);
-  }
   ////////////////
   // VARS
   ////////////////
@@ -69,11 +67,25 @@ int main(int argc, char ** argv){
   double dt = 0, vdt = 0; // virtuel dt, added to dt on data-arrival
   double fps = 0;
   bool paused = false;
+  double timeToSyncT = 0;
   while(true){
     // update timer
     dt = glfwGetTime() - time;
     time = glfwGetTime();
     fps = (fps*500 + 10/dt)/510;
+    
+    
+    //
+    timeToSyncT -= dt;
+    if(timeToSyncT<0)
+    {
+      timeToSyncT = 1; // sync every second
+      double time[2] = {glfwGetTime(),0};
+      ENetPacket * packet = enet_packet_create((void*)time, 2*sizeof(double), 0); // ENET_PACKET_FLAG_RELIABLE
+      enet_peer_send(peer, 0, packet);
+      enet_host_flush(host);
+    }
+    
     // move view
     if(mouseR.x<40) view.x--;
     if(mouseR.y<40) view.y--;
@@ -120,8 +132,11 @@ int main(int argc, char ** argv){
             glfwSetTime(time[1]+(glfwGetTime()-time[0])/2);
           }
           else if (event.channelID == 1) { // complete gamestate
-            printf("bc size=%d \n", event.packet -> dataLength);
-            vdt = game.unpackData(event.packet -> data, event.packet -> dataLength, glfwGetTime());
+            double t = *(double*)(event.packet->data);
+            printf("bc size=%d time=%.2f dt=%.2f\n", event.packet -> dataLength, t, time-t);
+            if(time-t < GAMESTATE_OLD) {  // todo better algorithm than just age!
+              vdt = game.unpackData(event.packet -> data, event.packet -> dataLength, glfwGetTime());
+            }
           }
           /* Clean up the packet now that we're done using it. */
           enet_packet_destroy (event.packet);
