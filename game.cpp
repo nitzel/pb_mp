@@ -72,7 +72,9 @@ void Game::update(const double dt){
   updatePlanets(mPlanets, mShips, dt);
   updateShips(mShips, dt);
   updateShots(mShots, dt);
-  
+}
+
+void Game::shootAndCollide() {
   generateTree();
   letShoot();
   letCollide();

@@ -1,6 +1,6 @@
 # TODO next
-- [ ] Game::pack/unpackData !
-- [ ] Send packed data to client and display it. 
+- [x] Game::pack/unpackData !
+- [x] Send packed data to client and display it. 
 - [ ] Send new shots only
 - [ ] Send new ships and changed ones
 - [ ] Game::select
