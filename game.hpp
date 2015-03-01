@@ -23,9 +23,7 @@ class Game {
   public:
     Game(const unsigned int MAX_SHIPS, const unsigned int NUM_PLANETS);
     void update(const double dt);
-    void generateTree();
-    void letShoot();
-    void letCollide();
+    void shootAndCollide();
     
     void * packData(unsigned int & size, double time); // 
     // returns timeDelta
@@ -33,6 +31,11 @@ class Game {
 
     void select(int clickXY);
     void select(int rectangleXY, int rectangleWH);
+    
+  private:
+    void generateTree();
+    void letShoot();
+    void letCollide();
 };
 
 extern float money[]; // money of PA and PB

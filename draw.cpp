@@ -54,6 +54,7 @@ void initGfx() {
 }
 
 void drawTree(sSquare* tree, const float dX, const float dY){
+  if(tree == nullptr) return;
   // draw lines
   const unsigned int W=map.w/GRID_SIZE;
   const unsigned int H=map.h/GRID_SIZE;
