@@ -204,13 +204,13 @@ shipsB
 shotsA
 shotsB
 */
-  unsigned int memShips = sizeof(mShips) + sizeof(sShip)*mShips[0].size;
+  unsigned int memShips = sizeof(sShip)*mShips[0].size;
     
-  unsigned int memShots = sizeof(mShots) + sizeof(sShot)*mShots[0].size;
+  unsigned int memShots = sizeof(sShot)*mShots[0].size;
 
-  unsigned int memPlanets = sizeof(mPlanets) + sizeof(sPlanet) * mPlanets.size;
+  unsigned int memPlanets = sizeof(sPlanet) * mPlanets.size;
   
-  unsigned int memOther = sizeof(double) + sizeof(float)*2 + sizeof(unsigned int)*3; // time, money, number of stuff
+  unsigned int memOther = sizeof(double) + sizeof(float)*2 + sizeof(unsigned int)*3; // time, 2money, memoryUsage of ship/shot/plan
   
   size = memOther + memPlanets + memShips*2 + memShots*2;
   void * const data = calloc(1, size);
