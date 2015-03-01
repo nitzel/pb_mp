@@ -1,7 +1,7 @@
 EXECLIENT=game
 EXESERVER=server
 # -Wno-comment // or /* within a comment
-CFLAGS=-c -Wall -std=c++11 -Wno-comment -g
+CFLAGS=-c -Wall -std=c++11 -Wno-comment -g -Og -D__NO_INLINE_HYPOTF__
 #for optimization add -Os -D__NO_INLINE_HYPOTF__
 #optimization gave a speed bonus from 40 to 65fps at 2x20.000 ships
 LDFLAGS=-lglfw3  -lenet
