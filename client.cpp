@@ -38,7 +38,7 @@ int main(int argc, char ** argv){
     exit(EXIT_FAILURE);
   }
   
-  if(enet_host_service(host, &event, 5000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT)
+  if(enet_host_service(host, &event, 1000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT)
     printf("Connection to host succeeded\n");
   else {
     enet_peer_reset(peer);
@@ -59,7 +59,6 @@ int main(int argc, char ** argv){
   initGfx();
   // add input listeners
   glfwSetCursorPosCallback(info.window, cursor_pos_callback);
-  
   ////////////////
   // VARS
   ////////////////
@@ -68,7 +67,8 @@ int main(int argc, char ** argv){
   double fps = 0;
   bool paused = false;
   double timeToSyncT = 0;
-  while(true){
+  
+  while(!glfwWindowShouldClose(info.window)){
     // update timer
     dt = glfwGetTime() - time;
     time = glfwGetTime();
@@ -138,13 +138,13 @@ int main(int argc, char ** argv){
               vdt = game.unpackData(event.packet -> data, event.packet -> dataLength, glfwGetTime());
             }
           }
-          /* Clean up the packet now that we're done using it. */
+          // Clean up the packet now that we're done using it.
           enet_packet_destroy (event.packet);
           
           break;
       case ENET_EVENT_TYPE_DISCONNECT:
           printf ("%s disconnected.\n", (char*)event.peer -> data);
-          /* Reset the peer's client information. */
+          // Reset the peer's client information. 
           event.peer -> data = NULL;
           paused = true; // todo remove
           break;
@@ -152,7 +152,8 @@ int main(int argc, char ** argv){
           break;
       default:;
       }
-    }    
+    }  
+    
   }
   
   
@@ -162,7 +163,8 @@ int main(int argc, char ** argv){
   
   enet_host_flush(host);
   enet_peer_disconnect(peer, 0);
-  while (enet_host_service (host, & event, 3000) > 0)  {
+  double disconnected = false;
+  while (enet_host_service (host, & event, 1000) > 0 && !disconnected)  {
       switch (event.type)
       {
       case ENET_EVENT_TYPE_RECEIVE:
@@ -170,19 +172,31 @@ int main(int argc, char ** argv){
           break;
       case ENET_EVENT_TYPE_DISCONNECT:
           puts ("Disconnection succeeded.\n");
-          exit(EXIT_SUCCESS);
+          disconnected = true;
       default:
         break;
       }
   }
-  puts ("Disconnection failed.\n");
-  enet_peer_reset (peer);
+  if(!disconnected){
+    puts ("Disconnection failed.\n");
+    enet_peer_reset (peer);
+  }  
   
+  puts("a");
   
+  glfwDestroyWindow(info.window); // segfault? why?
+  
+  puts("b");
+  glfwTerminate();
+  
+  puts("c");
+  enet_deinitialize();
+  
+  puts("d");
   return 0;
 }
 
-static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
+static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)  {
   mouseR.x=(float)xpos;
   mouseR.y=(float)ypos;
   mouseV.x=mouseR.x + view.x;
