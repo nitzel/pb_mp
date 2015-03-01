@@ -24,7 +24,6 @@ W,H - Size of rivalTree
 // todo split into shoot and collision detection, also separate the drawTree call from here 
 bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const unsigned int W, const unsigned int H, const unsigned int PARTY);
 bool shoot(sPlanet & planet, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const unsigned int W, const unsigned int H);
-void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt);
 
 
 /// helping functions
@@ -446,115 +445,6 @@ bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTre
 }
 bool shoot(sPlanet & planet, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const unsigned int W, const unsigned int H){
   return shoot(*(sShip*)(((double*)&planet)+1), sPlanets, shots, rivalTree, W, H, planet.party);
-}
-
-void shoot(saShip * sShips, saPlanet & sPlanets, saShot * sShots,double dt){
-  /// The idea is to split the playground into squares lying next to 
-  /// each other, each the size of the aiming-range of the ships.
-  /// By coordinates you can directly calculated in which square a ship is
-  /// It then has only to check against the 9 squares around.
-  ///
-  /// If there are :alot: of ships in a square it is further divided 
-  /// into smaller ones, until they contain a reasonable amount. 
-  /// Only the ones on aim-range will be tested
-  
-  const unsigned int W = map.w/GRID_SIZE;
-  const unsigned int H = map.h/GRID_SIZE;
-  
-  /////////////////
-  // Set up Structure
-  ////////////////
-  // todo improve with several layers, experiment
-  // 1st: SHIP_AIM_RANGE^2, containing the amount in the whole Rectangle AND a list of layer2 nodes that are not empty
-  // 2nd: Smaller
-  // we dont need THE nearest enemy, just a close one!
-  sSquare tree[2][W][H];
-  // init size of tree with zero
-  for(unsigned int party=PA; party<PN; party++)
-    for(unsigned int x=0; x<W; x++)
-      for(unsigned int y=0; y<H; y++)
-        tree[party][x][y].size = 0;
-  
-  /////////////////
-  // Fill space partitioning structure with ships
-  ////////////////
-  // todo try to optimize, takes 100fps away
-  for(unsigned int party=PA; party<PN; party++){
-    sShip * ships = sShips[party].ships;
-    for(unsigned int i=0; i<sShips[party].size; i++){
-      if(ships[i].health){
-        tree[party][(unsigned int)(ships[i].x)/GRID_SIZE][(unsigned int)(ships[i].y)/GRID_SIZE].size++;
-        tree[party][(unsigned int)(ships[i].x)/GRID_SIZE][(unsigned int)(ships[i].y)/GRID_SIZE].shiplist.push_front(&ships[i]);
-      }
-    }
-  }
-  
-  /////////////////
-  // RangeTesting and shooting
-  //////////////// 
-  // hint: im using a cool algorithm i invented on my own xD
-  // commenting might be a bit odd, since it was to let the ships
-  // go in a squared without counting how many ships there are
-  // therefore we start in the center of the square and going outwards
-  // in a spiral way
-  // Here it is used for going through the grid, using closer grid
-  // parts first to find a good-enough shootable ship (optimal would take too much time, we take the first we can find in reach, which is roughly the closest. the really closest may be about sqrt(GRID_size) closer, which is acceptable)
-  for(unsigned int party=PA; party<PN; party++){
-    //sShip * lastTarget = nullptr;
-    //float lastTargetDistanceSQ = 0;
-    unsigned int rival = !party; // opponents party ID :)
-    // let ships shoot
-    for(unsigned int i=0; i<sShips[party].size; i++){
-      sShip & ship = sShips[party].ships[i];
-      if(!ship.health || ship.timeToShoot>0) {// dead or weapon not ready
-        continue;
-      }
-      shoot(ship, sPlanets, sShots[party],(sSquare*)tree[rival],  W, H, party);
-    }
-  }  
-  // let planets shoot
-  for(unsigned int i=0; i<sPlanets.size; i++){
-    sPlanet & planet = sPlanets.planets[i];      
-    if(planet.party == PN || planet.timeToShoot>0) {// dead or weapon not ready
-      continue;
-    }
-    shoot(planet, sPlanets, sShots[planet.party],(sSquare*)tree[!planet.party],  W, H);
-  }
-  /////////////////
-  // CollisionTesting
-  ////////////////
-  for(unsigned int party=0; party<PN; party++) {
-    unsigned int rival = !party; // opponents party ID :)
-    sShot * shots = sShots[party].shots;
-    for(unsigned int i=0; i<sShots[party].size; i++){
-      if(shots[i].timeToLive>0){ // shot exists 
-        /////////////////////
-        // test against ships
-        for(sShip * target : tree[rival][(int)shots[i].x/GRID_SIZE][(int)shots[i].y/GRID_SIZE].shiplist){
-          if(target->health && distanceSQ(shots[i].x, shots[i].y, target->x, target->y) < SHIP_RADIUS*SHIP_RADIUS) {
-            // collision!!!
-            shots[i].timeToLive = -1;
-            takeDamage(*target);
-            break;
-          }
-        }
-        ///////////////////////
-        // test against planets
-        if(shots[i].timeToLive>0) { // shot did not hit a ship, still alive
-          sPlanet * planets = sPlanets.planets;
-          for(unsigned int j=0; j<sPlanets.size; j++){ // take the FIRST planet you can find that is not in our party
-            if(planets[j].party != party && distanceSQ(shots[i].x, shots[i].y, planets[j].x, planets[j].y) < PLANET_RADIUS*PLANET_RADIUS) {
-              // collision!!!
-              shots[i].timeToLive = -1;
-              takeDamage(planets[j], party);
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
-  
 }
 
 void updatePlanets(saPlanet & sPlanets, saShip * sShips, const  double dt){
