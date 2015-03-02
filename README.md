@@ -5,7 +5,7 @@ Requires: [glfw3](http://www.glfw.org/download.html "glfw"), [ENet](http://enet.
 Run `make` to compile and run `./server` or `./client` to play!
 
 # ToDo
-
+  - [todolist](https://github.com/nitzel/pb_mp/blob/master/notes/todo%2Bideas.md "more extensive todo list")
   - All :)
   - Check if it still compiles on linux
   - Check if it still compiles on mac
