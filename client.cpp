@@ -81,7 +81,7 @@ int main(int argc, char ** argv){
     {
       timeToSyncT = TIME_TO_SYNC_TIME; // new timer for sync
       double time[2] = {glfwGetTime(),0};
-      ENetPacket * packet = enet_packet_create((void*)time, 2*sizeof(double), 0); // ENET_PACKET_FLAG_RELIABLE
+      ENetPacket * packet = enet_packet_create((void*)time, 2*sizeof(double), 0, PTYPE_TIME_SYNC); // ENET_PACKET_FLAG_RELIABLE
       enet_peer_send(peer, 0, packet);
       enet_host_flush(host);
     }
