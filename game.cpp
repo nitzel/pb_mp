@@ -13,6 +13,7 @@ void initShots(saShot & shots, const unsigned int size);
 void updatePlanets(saPlanet & sPlanets, saShip * sShips, const double dt);
 void updateShips(saShip * sShips, const double dt);
 void updateShots(saShot * sShots, const double dt);
+void updateShip(sShip & ship, const double dt); // single ship update
 
 /**
 ship/planet - ship/planet to check for closest enemy and shoot
@@ -54,17 +55,7 @@ Game::Game(const unsigned int MAX_SHIPS, const unsigned int NUM_PLANETS){
   initShots(mShots[PA],  MAX_SHOTS);
   initShots(mShots[PB],  MAX_SHOTS);
   initShips(mShips[PA],  MAX_SHIPS);
-  initShips(mShips[PB],  MAX_SHIPS);
-  
-  /*unsigned int memShips = sizeof(saShip) + sizeof(sShip)*MAX_SHIPS + sizeof(unsigned int) * MAX_SHIPS;
-  
-  unsigned int memShots = sizeof(saShot) + sizeof(sShot)*MAX_SHOTS + sizeof(unsigned int) * MAX_SHIPS;
-  
-  unsigned int memPlanets = sizeof(saPlanet) + sizeof(sPlanet) * NUM_PLANETS;
-  
-  calloc(1, memShips*2 + memShots*2 + memPlanets);*/
-  
-  
+  initShips(mShips[PB],  MAX_SHIPS);  
 }
 
 void Game::update(const double dt){
@@ -193,7 +184,7 @@ void Game::letCollide(){
   }
 }
 
-void * Game::packData(unsigned int & size, double time) {
+void * Game::packData(size_t & size, double time) {
 /*
 Time double
 Money float
@@ -228,7 +219,7 @@ shotsB
   memcpy(dat, mShots[1].shots,   memShots);   dat += memShots;
   return data;
 }
-double Game::unpackData(void * const data, unsigned int & size, const double time){
+double Game::unpackData(void * const data, size_t size, const double time){
   unsigned int memShips, memShots, memPlanets;
   
   char * dat = (char*)data; // temp pointer
@@ -513,10 +504,14 @@ void updatePlanets(saPlanet & sPlanets, saShip * sShips, const  double dt){
     planets[i].timeToShoot -= dt * (1+(float)planets[i].level[DEFENSE]/4);
   }
 }
-void updateShots(saShot * sShots, double dt){
-  for(unsigned int party=0; party<PN; party++) {
-    sShot * shots = sShots[party].shots;
-    for(unsigned int i=0; i<sShots[party].size; i++){
+
+void updateShotsIntervall(saShot & sShots, const unsigned int pStart, const unsigned int num, const double dt){
+  if( pStart+num > sShots.size ){ // shots to update overlap end
+    updateShotsIntervall(sShots, pStart, sShots.size-pStart,       dt);  // pStart-END
+    updateShotsIntervall(sShots, 0,      (num+pStart)%sShots.size, dt);  // BEGIN-x
+  } else {
+    sShot * shots = sShots.shots;
+    for(unsigned int i=pStart; i<pStart+num && i<sShots.size; i++){
       if(shots[i].timeToLive>0){ // shot exists
         // decrease lifetime
         shots[i].timeToLive -= dt;
@@ -532,36 +527,38 @@ void updateShots(saShot * sShots, double dt){
   }
 }
 
-void updateShips(saShip * sShips, double dt){
+void updateShots(saShot * sShots, const double dt){
+  for(unsigned int party=0; party<PN; party++) {
+    updateShotsIntervall(sShots[party],500, sShots[party].size, dt);
+  }
+}
+
+void updateShip(sShip & ship, const double dt){
+  if(ship.health){ // ship alive, handle it
+    // if moving, move :)
+    if(ship.dx || ship.dy) {
+      // move
+      ship.x += ship.dx *dt;
+      ship.y += ship.dy *dt;
+      // if overshooting target, teleport to target
+      float dx = ship.tx - ship.x;
+      float dy = ship.ty - ship.y;
+      if((dx>0 && ship.dx<0)||(dx<0 && ship.dx>0)) {ship.x=ship.tx; ship.dx=0;}
+      if((dy>0 && ship.dy<0)||(dy<0 && ship.dy>0)) {ship.y=ship.ty; ship.dy=0;}
+      
+    }
+    // reduce shooting time
+    ship.timeToShoot -= dt;  
+  }
+}
+void updateShips(saShip * sShips, const double dt){
   for(unsigned int party=0; party<PN; party++) {
     sShip * ships = sShips[party].ships;
     for(unsigned int i=0; i<sShips[party].size; i++){
-      if(ships[i].health){ // ship alive, handle it
-        if(ships[i].health < 0){
-          deleteShip(sShips[party], i);
-          continue;
-        }
-        if(party==PA){
-          //float dx = rand(-3000,3000), dy = rand(-3000,3000);
-          //normalize(dx,dy,SEND_SHIP_RAND_RADIUS);
-          //flyToTarget(ships[i], mouseV.x + dx, mouseV.y + dy);
-        }
-        /**/
-      
-        // if moving, move :)
-        if(ships[i].dx || ships[i].dy) {
-          // move
-          ships[i].x += ships[i].dx *dt;
-          ships[i].y += ships[i].dy *dt;
-          // if overshooting target, teleport to target
-          float dx = ships[i].tx - ships[i].x;
-          float dy = ships[i].ty - ships[i].y;
-          if((dx>0 && ships[i].dx<0)||(dx<0 && ships[i].dx>0)) {ships[i].x=ships[i].tx; ships[i].dx=0;}
-          if((dy>0 && ships[i].dy<0)||(dy<0 && ships[i].dy>0)) {ships[i].y=ships[i].ty; ships[i].dy=0;}
-          
-        }
-        // reduce shooting time
-        ships[i].timeToShoot -= dt;         
+      if(ships[i].health < 0){
+        deleteShip(sShips[party], i);
+      } else {
+        updateShip(ships[i],dt);
       }
     }
   }

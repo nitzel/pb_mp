@@ -25,14 +25,14 @@ class Game {
     void update(const double dt);
     void shootAndCollide();
     
-    void * packData(unsigned int & size, double time); // 
+    void * packData(size_t & size, double time); // 
     // returns timeDelta
-    double unpackData(void * const data, unsigned int & size, const double time); //
+    double unpackData(void * const data, size_t size, const double time); //
 
     void select(int clickXY);
     void select(int rectangleXY, int rectangleWH);
     
-  private:
+  public:
     void generateTree();
     void letShoot();
     void letCollide();
