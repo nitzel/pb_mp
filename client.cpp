@@ -1,11 +1,11 @@
 #include "game.hpp"
 #include "draw.hpp"
+#include "net.hpp"
 
-#include <enet/enet.h>
 static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
 
 
-#define TIME_TO_SYNC 0.5f
+#define TIME_TO_SYNC_TIME 0.5f
 #define GAMESTATE_OLD 0.5f // gamestates older than this will be discarded
 int main(int argc, char ** argv){
   printf("Client\n");
@@ -75,11 +75,11 @@ int main(int argc, char ** argv){
     fps = (fps*500 + 10/dt)/510;
     
     
-    //
+    // sync time
     timeToSyncT -= dt;
     if(timeToSyncT<0)
     {
-      timeToSyncT = 1; // sync every second
+      timeToSyncT = TIME_TO_SYNC_TIME; // new timer for sync
       double time[2] = {glfwGetTime(),0};
       ENetPacket * packet = enet_packet_create((void*)time, 2*sizeof(double), 0); // ENET_PACKET_FLAG_RELIABLE
       enet_peer_send(peer, 0, packet);
@@ -103,6 +103,7 @@ int main(int argc, char ** argv){
     // process game content
     if(!paused) {
       game.update(dt+vdt);
+      game.generateTree();
       //game.shootAndCollide();
       vdt = 0;
     }
@@ -110,7 +111,7 @@ int main(int argc, char ** argv){
     drawPlanets(game.mPlanets,  -view.x, -view.y);
     drawShips  (game.mShips,    -view.x, -view.y);
     drawShots  (game.mShots,    -view.x, -view.y);
-    //drawTree   (game.mTree,     -view.x, -view.y);
+    drawTree   (game.mTree,     -view.x, -view.y);
         char s[100];
     sprintf(s,"FPS=%4.0f t=%.1fs Money A=%5i B=%5i MR%i/%i MV%i/%i View%i/%i",fps, time, (int)money[PA],(int)money[PB], (int)mouseR.x, (int)mouseR.y, (int)mouseV.x, (int)mouseV.y, (int)view.x, (int)view.y);
     glColor3ub(255,255,255);
@@ -123,20 +124,26 @@ int main(int argc, char ** argv){
     {
       switch (event.type)
       {
-          break;
       case ENET_EVENT_TYPE_RECEIVE:
-          printf("packet received\n");
-          if(event.packet -> dataLength == 2*sizeof(double)) {//time
-            double * time = (double*)event.packet -> data;
-            printf("timepacket received %.1f %.1f \n",time[0],time[1]);
-            glfwSetTime(time[1]+(glfwGetTime()-time[0])/2);
-          }
-          else if (event.channelID == 1) { // complete gamestate
-            double t = *(double*)(event.packet->data);
-            printf("bc size=%d time=%.2f dt=%.2f\n", event.packet -> dataLength, t, time-t);
-            if(time-t < GAMESTATE_OLD) {  // todo better algorithm than just age!
-              vdt = game.unpackData(event.packet -> data, event.packet -> dataLength, glfwGetTime());
+          printf("packet received type=%d\n",enet_packet_type(event.packet));
+          switch(enet_packet_type(event.packet)){
+            case PTYPE_TIME_SYNC:
+            {
+              double * time = (double*)enet_packet_data(event.packet);
+              //printf("timepacket received %.1f %.1f \n",time[0],time[1]);
+              glfwSetTime(time[1]+(glfwGetTime()-time[0])/2);
+              break;
             }
+            case PTYPE_COMPLETE: // complete gamestate
+            {
+              double t = *(double*)enet_packet_data(event.packet);
+              //printf("bc size=%d time=%.2f dt=%.2f\n", event.packet -> dataLength, t, time-t);
+              if(time-t < GAMESTATE_OLD) {  // todo better algorithm than just age!
+                vdt = game.unpackData(enet_packet_data(event.packet), enet_packet_size(event.packet), glfwGetTime());
+              }
+              break;
+            }
+            default: ;
           }
           // Clean up the packet now that we're done using it.
           enet_packet_destroy (event.packet);
@@ -153,7 +160,6 @@ int main(int argc, char ** argv){
       default:;
       }
     }  
-    
   }
   
   
@@ -182,17 +188,12 @@ int main(int argc, char ** argv){
     enet_peer_reset (peer);
   }  
   
-  puts("a");
+  glfwDestroyWindow(info.window);
   
-  glfwDestroyWindow(info.window); // segfault? why?
-  
-  puts("b");
   glfwTerminate();
-  
-  puts("c");
+
   enet_deinitialize();
   
-  puts("d");
   return 0;
 }
 

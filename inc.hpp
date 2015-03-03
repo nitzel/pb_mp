@@ -11,7 +11,7 @@
 #define HEALTH_MAX           100    // health maximum for planets
 #define HEALTH_REGEN           1.f  // health regeneration
 #define MONEY_GEN              1.0f // money per planet per level per second
-#define SHIP_PROD_TIME         1.0f // time to produce a ship
+#define SHIP_PROD_TIME         .2f // time to produce a ship
 #define PLANET_RADIUS         64    // planet's radius
 #define SEND_SHIP_RAND_RADIUS PLANET_RADIUS    // new ships go in this radius around planet.txy 
 #define SHIP_COSTS            10    // credits to pay per ship

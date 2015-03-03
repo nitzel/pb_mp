@@ -36,10 +36,10 @@ $(EXECLIENT): client.o inc.o draw.o game.o stb_image.o makefile
 $(EXESERVER): server.o inc.o draw.o game.o stb_image.o makefile
 	$(CC) server.o inc.o draw.o game.o stb_image.o -o $(EXESERVER) $(LDFLAGS)
   
-server.o: server.cpp draw.hpp makefile
+server.o: server.cpp draw.hpp game.hpp net.hpp makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) server.cpp
 
-client.o: client.cpp draw.hpp makefile
+client.o: client.cpp draw.hpp game.hpp net.hpp makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) client.cpp
   
 draw.o: draw.cpp draw.hpp makefile

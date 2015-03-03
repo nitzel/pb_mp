@@ -1,6 +1,7 @@
 # TODO next
 - [x] Game::pack/unpackData !
 - [x] Send packed data to client and display it. 
+- [x] ENet with commands (net.hpp)
 - [ ] Send new shots only
 - [ ] Send new ships and changed ones
 - [ ] Game::select
