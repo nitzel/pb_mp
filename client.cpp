@@ -132,8 +132,7 @@ int main(int argc, char ** argv){
               double * time = (double*)enet_packet_data(event.packet);
               //printf("timepacket received %.1f %.1f \n",time[0],time[1]);
               glfwSetTime(time[1]+(glfwGetTime()-time[0])/2);
-              break;
-            }
+            } break;
             case PTYPE_COMPLETE: // complete gamestate
             {
               double t = *(double*)enet_packet_data(event.packet);
@@ -141,8 +140,11 @@ int main(int argc, char ** argv){
               if(time-t < GAMESTATE_OLD) {  // todo better algorithm than just age!
                 vdt = game.unpackData(enet_packet_data(event.packet), enet_packet_size(event.packet), glfwGetTime());
               }
-              break;
-            }
+            } break;
+            case PTYPE_TEXT:
+            {
+              
+            } break;
             default: ;
           }
           // Clean up the packet now that we're done using it.

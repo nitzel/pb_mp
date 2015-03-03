@@ -131,14 +131,30 @@ int main(int argc, char ** argv){
           break;
       case ENET_EVENT_TYPE_RECEIVE:
           //printf ("A packet of length %u containing %f was received from %s on channel %u.\n",                  event.packet -> dataLength,                  *(double*)event.packet -> data,                  (char*)event.peer -> data,                  event.channelID);
-          printf("packet received\n");
-          if(event.packet -> dataLength == 2*sizeof(double)) {
-            double time[2] = {*(double*)event.packet -> data, glfwGetTime()};
-            printf("timepacket received %.1f %.1f \n",time[0],time[1]);
-            ENetPacket * packet = enet_packet_create(&time,sizeof(double)*2, 0, PTYPE_TIME_SYNC); // ENET_PACKET_FLAG_RELIABLE
-            // send packet to peer over channel 0
-            enet_peer_send(event.peer, 0, packet);
-            enet_host_flush (host);
+          printf("packet received type=%d\n",enet_packet_type(event.packet));
+          switch(enet_packet_type(event.packet)){
+            case PTYPE_TIME_SYNC:
+            {
+              double time[2] = {*(double*)enet_packet_data(event.packet), glfwGetTime()};
+              printf("timepacket received %.1f %.1f \n",time[0],time[1]);
+              ENetPacket * packet = enet_packet_create(&time,sizeof(double)*2, 0, PTYPE_TIME_SYNC); // ENET_PACKET_FLAG_RELIABLE
+              // send packet to peer over channel 0
+              enet_peer_send(event.peer, 0, packet);
+              enet_host_flush (host);
+            } break;
+            case PTYPE_SHIPS_MOVE:
+            {
+              
+            } break;
+            case PTYPE_PLANET_ACTION:
+            {
+              
+            } break;
+            case PTYPE_TEXT:
+            {
+              
+            } break;
+            default: ;
           }
           
           /* Clean up the packet now that we're done using it. */

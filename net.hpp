@@ -4,11 +4,11 @@
 #include <cstring>
 #include <enet/enet.h>
 
-#define __PTYPE unsigned char
-enum PacketType {PTYPE_TIME_SYNC=0, PTYPE_COMPLETE, PTYPE_UPDATE, PTYPE_TEXT};
+#define __PTYPE enet_uint8
+enum PacketType {PTYPE_TIME_SYNC=0, PTYPE_COMPLETE, PTYPE_UPDATE, PTYPE_SHIPS_MOVE, PTYPE_PLANET_ACTION, PTYPE_TEXT};
 
 ENetPacket* enet_packet_create(	const void * 	data, size_t 	dataLength, enet_uint32 	flags, const PacketType packetType);
-void * enet_packet_data(ENetPacket * packet);
+enet_uint8 * enet_packet_data(ENetPacket * packet);
 PacketType enet_packet_type(ENetPacket * packet);
 size_t enet_packet_size(ENetPacket * packet);
 
@@ -25,7 +25,7 @@ PacketType enet_packet_type(ENetPacket * packet){
   return (PacketType)*(__PTYPE*)packet->data;
 }
 /// gets the data from an enetpacket (without the packetType, so its just +1)
-void * enet_packet_data(ENetPacket * packet){
+enet_uint8 * enet_packet_data(ENetPacket * packet){
   return packet->data+sizeof(__PTYPE);
 }
 /// gets the size of the data, packettype-exclusive
