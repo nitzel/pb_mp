@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "game.hpp"
 #define TREE(X,Y,Z)  mTree[(X*treeW+Y)*treeH+Z] // from XYZ to [x][y][z]
 #define TREE1(X)  &mTree[X*treeW*treeH] // from XYZ to [x][y][z]
@@ -201,7 +202,7 @@ shotsB
 
   unsigned int memPlanets = sizeof(sPlanet) * mPlanets.size;
   
-  unsigned int memOther = sizeof(double) + sizeof(float)*2 + sizeof(unsigned int)*3; // time, 2money, memoryUsage of ship/shot/plan
+  unsigned int memOther = sizeof(double) + sizeof(float)*2 + sizeof(unsigned int)*3; // time, 2money, memoryUsage of ship/shot/planets
   
   size = memOther + memPlanets + memShips*2 + memShots*2;
   void * const data = calloc(1, size);
@@ -236,10 +237,126 @@ double Game::unpackData(void * const data, size_t size, const double time){
   
   return dt;
 }
+/**
+  Take the changed list of saShips, safe the IDs of changed/deleted ships and copies of changed ships in one memory block.
+  Ignore duplicates
+  number of dead/changed ships are in the beginning of the memory
+  saShips - saShip structure with changed-list and ships
+
+returned buffer:
+  size_t numberDeadShips, numberChangedShips
+  sShip... changedShipsData
+*/
+void * packChangedShips(saShip & saShips, size_t & size){
+  sShip * ships = saShips.ships;
+  const size_t S = saShips.changed.size();
+  std::sort(saShips.changed.begin(), saShips.changed.end()); // sort vector to easily ignore dublicates
+  size_t pC=0, pD=0; // pointer=amount changed and dead ships
+  size_t data[S]; 
+  size_t lastId = saShips.changed[0]+1; // this way the first ID cannot be ignored because it cannot equal the "last one"
+  for(size_t i=0; i<S; i++){
+    size_t curId = saShips.changed[i];
+    if(curId==lastId){ // skip duplicates
+      continue;
+    }
+    if(ships[curId].health > 0){ // ship changed
+      data[pC]=curId;
+      pC++;
+    } else { // ship is dead
+      data[S-1-pD] = curId;
+      pD++;
+    }
+    lastId = curId;
+  }  
+  
+  size = (pC+pD+2)*sizeof(size_t)+pC*sizeof(sShip); // +2 because of pC and pD
+  void * const rdata = calloc(1, size);
+  char * dat = (char*)rdata;
+  *(size_t*) dat = pD; dat+=sizeof(size_t);
+  *(size_t*) dat = pC; dat+=sizeof(size_t);
+  memcpy(dat, data+S-pD,pD*sizeof(size_t));   dat+=pD*sizeof(size_t); // ids of dead ships
+  memcpy(dat, data,     pC*sizeof(size_t));   dat+=pC*sizeof(size_t); // ids of changed ships
+  for(size_t i = 0; i<pC; i++){ // copy changed ships to buffer
+    sShip * ship = &ships[data[i]];
+    memcpy(dat, ship, sizeof(sShip));
+    dat += sizeof(sShip);
+  }
+  
+  // return stuff
+  return rdata;
+}
+/**
+returned buffer:
+  size_t startID, stopID
+  sShot... shotdata
+*/
+void * packChangedShots(saShot & saShots, size_t & size){
+  const size_t S = saShots.size;
+  size_t pStart = saShots.changedPos;
+  size_t pEnd   = saShots.insertPos;
+  size_t pLen   = (pEnd-pStart+S)%S; // amount of shots
+  
+  size = 2*sizeof(size_t)+pLen*sizeof(sShot); // 2 because of pStart and pLen
+  
+  void * const rdata = calloc(1, size);
+  char * dat = (char*)rdata;
+  *(size_t*) dat = pStart;  dat+=sizeof(size_t);
+  *(size_t*) dat = pLen;    dat+=sizeof(size_t);
+  if(pStart+pLen < S) { // consecutive data
+    memcpy(dat, saShots.shots+pStart,pLen*sizeof(sShot)); dat+=pLen*sizeof(sShot);
+  }else { // pStart-S, 0-pEnd
+    memcpy(dat, saShots.shots+pStart,(S-pStart)*sizeof(sShot)); dat+=(S-pStart)*sizeof(sShot); // pStart-S
+    memcpy(dat, saShots.shots,pEnd*sizeof(sShot)); dat+=pEnd*sizeof(sShot); // 0-pEnd
+  }
+  
+  return rdata;
+}
+/**
+returned buffer
+  double time
+  float moneyA, moneyB
+  size_t sizeBuf_of_each: planets,ShipsA,shipsB,ShotsA,shotsB
+  bufferPlanets
+  bufferShips PA
+  bufferShips PB
+  bufferShots PA
+  bufferShots PB
+*/
+void * Game::packUpdateData(size_t & size, double time){
+  const size_t memPlanets = sizeof(sPlanet) * mPlanets.size; // memory usage for planets
+  size = sizeof(double) + 2*sizeof(float) + 5*sizeof(size_t) + memPlanets; // memory usage for ...
+  void * data[4];  // pointers to the update-buffers of ships/shots, each per party. shipA/shipB/shotA/shotB
+  size_t sizes[4]; // memory usage of ships/shots to update, each per party
+  for(unsigned int party=PA; party<PN; party++){
+    data[0+party] = packChangedShips(mShips[party], sizes[0+party]);
+    data[2+party] = packChangedShots(mShots[party], sizes[2+party]);
+    size += sizes[0+party] + sizes[2+party]; // += memShipsX + memShotsX
+  }
+  
+  void * rdata = calloc(1, size);
+  char * dat = (char*)rdata;
+  *(double*)dat = time;                       dat += sizeof(double);    // time
+  memcpy(dat, money, 2*sizeof(float));        dat += 2*sizeof(float);   // 2x money
+  *(size_t*)dat = memPlanets;                 dat += sizeof(size_t);    // 1x memory for planets
+  memcpy(dat, sizes, 4*sizeof(size_t));       dat += 4*sizeof(size_t);  // 4x memory for ship/shot updates
+  memcpy(dat, mPlanets .planets, memPlanets); dat += memPlanets;
+  for(size_t i=0; i<4; i++){ // copy ships and shots
+    memcpy(dat, data[i], sizes[i]); 
+    dat+=sizes[i];
+    free(data[i]);
+  }
+  
+  return rdata;
+}
+double Game::unpackUpdateData(void * const data, size_t size, const double time){
+  return 0.f; // todo
+}
 
 void Game::clearChanged(){
-  for(unsigned int party=PA; party<PN; party++)
+  for(unsigned int party=PA; party<PN; party++){
     mShips[party].changed.clear();
+    mShots[party].changedPos = mShots[party].insertPos;
+  }
 }
 
 /// set dx, dy relative to vector (xy)->(tx,ty)
@@ -598,6 +715,7 @@ void initPlanets(saPlanet & planets, const unsigned int size){
 void initShots(saShot & shots, const unsigned int size){
   shots.size = size;
   shots.insertPos = 0;
+  shots.changedPos = 0;
   shots.shots = new sShot[shots.size];
   memset(shots.shots, 0, sizeof(sShot)*size); // clear data
 }

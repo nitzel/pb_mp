@@ -90,6 +90,7 @@ struct saPlanet {
 struct saShot {
   unsigned int insertPos;
   unsigned int size;
+  unsigned int changedPos; // from here till insertPos the shots are new/changed and need to be transmitted
   sShot * shots;
 };
 // to partition the map

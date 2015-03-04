@@ -26,9 +26,11 @@ class Game {
     void shootAndCollide();
     
     void * packData(size_t & size, double time); // 
-    // returns timeDelta
-    double unpackData(void * const data, size_t size, const double time); //
+    double unpackData(void * const data, size_t size, const double time); // returns timeDelta
 
+    void * packUpdateData(size_t & size, double time); // 
+    double unpackUpdateData(void * const data, size_t size, const double time); // returns timeDelta
+    
     void select(int clickXY);
     void select(int rectangleXY, int rectangleWH);
     
