@@ -80,8 +80,8 @@ int main(int argc, char ** argv){
     if(timeToSyncT<0)
     {
       timeToSyncT = TIME_TO_SYNC_TIME; // new timer for sync
-      double time[2] = {glfwGetTime(),0};
-      ENetPacket * packet = enet_packet_create((void*)time, 2*sizeof(double), 0, PTYPE_TIME_SYNC); // ENET_PACKET_FLAG_RELIABLE
+      double pTime[2] = {glfwGetTime(),0};
+      ENetPacket * packet = enet_packet_create((void*)pTime, 2*sizeof(double), 0, PTYPE_TIME_SYNC); // ENET_PACKET_FLAG_RELIABLE
       enet_peer_send(peer, 0, packet);
       enet_host_flush(host);
     }
@@ -129,15 +129,18 @@ int main(int argc, char ** argv){
           switch(enet_packet_type(event.packet)){
             case PTYPE_TIME_SYNC:
             {
-              double * time = (double*)enet_packet_data(event.packet);
-              //printf("timepacket received %.1f %.1f \n",time[0],time[1]);
-              glfwSetTime(time[1]+(glfwGetTime()-time[0])/2);
+              double * t = (double*)enet_packet_data(event.packet); // time
+              //printf("timepacket received %.1f %.1f \n",t[0],t[1]);
+              glfwSetTime(t[1]+(glfwGetTime()-t[0])/2);
             } break;
             case PTYPE_COMPLETE: // complete gamestate
             {
-              double t = *(double*)enet_packet_data(event.packet);
-              //printf("bc size=%d time=%.2f dt=%.2f\n", event.packet -> dataLength, t, time-t);
-              if(time-t < GAMESTATE_OLD) {  // todo better algorithm than just age!
+              const double t = *(double*)enet_packet_data(event.packet);
+              const double pDt = glfwGetTime()-t; // packet delta time (packet age)
+              printf("bc size=%d servertime=%.2f dt=%.2f\n", enet_packet_size(event.packet), t, pDt);
+              if(pDt<0) { // packet from "future"
+                fprintf(stderr, "future packet received from t=%.2f at %.2f\n",t,glfwGetTime());
+              } else if(pDt < GAMESTATE_OLD) {  // todo better algorithm than just age! we discard too old packets
                 vdt = game.unpackData(enet_packet_data(event.packet), enet_packet_size(event.packet), glfwGetTime());
               }
             } break;
