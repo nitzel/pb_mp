@@ -2,6 +2,7 @@
 #define __INC__
 
 #include <forward_list>
+#include <vector>
 
 #define UPGRADE_MAX_LVL       10    // max level for upgrades
 #define UPGRADE_COSTS         50    // cost per upgrade lvl
@@ -79,6 +80,8 @@ struct saShip {
   // unused place in ships, while you can insert indices of unused
   // ships at freePush.
   unsigned int * free; // free positions in the ships array
+  // (newly created ships, dead ships) = changed ships
+  std::vector<unsigned int> changed;
 };
 struct saPlanet {
   unsigned int size;

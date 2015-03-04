@@ -32,6 +32,7 @@ class Game {
     void select(int clickXY);
     void select(int rectangleXY, int rectangleWH);
     
+    void clearChanged();
   public:
     void generateTree();
     void letShoot();

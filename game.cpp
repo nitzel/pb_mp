@@ -33,7 +33,7 @@ inline void normalize(float & x, float & y, const float LEN);  /// normalized ve
 inline unsigned int distanceSQ(const float x, const float y, const float x2, const float y2); /// distance^2
 /// command ship/shot to go somewhere
 void flyToTarget(sShot & shot, const float tx, const float ty);
-void flyToTarget(sShip & ship, const float tx, const float ty);
+void flyToTarget(saShip & ships, const unsigned int id, const float tx, const float ty);
 /// insert or delete ships or shots
 bool addShot(saShot & shots, const float x, const float y, const float tx, const float ty);
 bool addShip(saShip & ships, const float x, const float y, const float tx, const float  ty);
@@ -237,6 +237,10 @@ double Game::unpackData(void * const data, size_t size, const double time){
   return dt;
 }
 
+void Game::clearChanged(){
+  for(unsigned int party=PA; party<PN; party++)
+    mShips[party].changed.clear();
+}
 
 /// set dx, dy relative to vector (xy)->(tx,ty)
 inline void delta(const float x, const float y, const float tx, const float ty, float & dx, float & dy){
@@ -260,18 +264,24 @@ void flyToTarget(sShot & shot, const float tx, const float ty){
   delta(shot.x, shot.y, tx, ty, shot.dx, shot.dy);
   normalize(shot.dx, shot.dy, SHOT_SPEED);
 }
-void flyToTarget(sShip & ship, const float tx, const float ty){
+void flyToTarget(saShip & ships, const unsigned int id, const float tx, const float ty){
+  sShip & ship = ships.ships[id]; // reference for easy access
+  
   // dont let them go out map
   ship.tx = (tx<0)?0:(tx>=map.w?map.w-5:tx); // todo define macro or so to make nicer ...
   ship.ty = (ty<0)?0:(ty>=map.h?map.h-5:ty); // todo why -5 ?? 
 
   delta(ship.x, ship.y, ship.tx, ship.ty, ship.dx, ship.dy);
   normalize(ship.dx, ship.dy, SHIP_SPEED);
+  
+  
+  ships.changed.push_back(id); // remember ship as changed
 }
 void deleteShip(saShip & ships, const unsigned int id){
   ships.ships[id].health = 0;  // mark ship as dead 
   ships.free[ships.freePush] = id; // insert index to freeIndices list
   ships.freePush = (ships.freePush+1)%ships.size;           // increment insert pointer
+  ships.changed.push_back(id); // mark as changed
 }
 
 bool addShot(saShot & shots, const float x, const float y, const float tx, const float ty) {
@@ -290,12 +300,13 @@ bool addShip(saShip & ships, const float x, const float y, const float tx, const
   if(ships.freePop==ships.freePush && ships.ships[ships.free[ships.freePop]].health){
       return false;
   } else {  
-    sShip & ship = ships.ships[ships.free[ships.freePop]];
+    const unsigned int insertPos = ships.free[ships.freePop];
+    sShip & ship = ships.ships[insertPos];
     ship.health = SHIP_HEALTH_MAX;
     ship.timeToShoot = 0;
     ship.x = x;
     ship.y = y;
-    flyToTarget(ship,tx,ty);
+    flyToTarget(ships,insertPos,tx,ty);
     
     ships.freePop = (ships.freePop+1)%ships.size;// increment free index counter
     return true;

@@ -32,6 +32,7 @@ int main(int argc, char ** argv){
     printf("An error occured while trying to create an ENet server host.\n");
     exit(EXIT_FAILURE);
   }
+  enet_host_bandwidth_throttle(host);
   
   ////////////////
   // VARS
@@ -55,7 +56,7 @@ int main(int argc, char ** argv){
   ///////////////////////////////
   // init GLFW
   /////////////////////////////////s
-  initGlfw("PB-MP", screen.x, screen.y);
+  initGlfw("PB-MP-SERVER", screen.x, screen.y);
   initGfx();
   // add input listeners
   glfwSetCursorPosCallback(info.window, cursor_pos_callback);
@@ -111,11 +112,12 @@ int main(int argc, char ** argv){
       unsigned int size;
       void * d = game.packData(size, glfwGetTime());
       ENetPacket * packet = enet_packet_create(d,size,0,PTYPE_COMPLETE);// ENET_PACKET_FLAG_RELIABLE
+      //vdt = game.unpackData(enet_packet_data(packet), enet_packet_size(packet), glfwGetTime()+0.1f);
       // send packet to peer over channel 1
       enet_host_broadcast(host, 1, packet);
       enet_host_flush (host);
-      //vdt = game.unpackData(d, size, glfwGetTime());
       free(d);
+      game.clearChanged();
     }
     while (enet_host_service (host, & event, 0) > 0)
     {
@@ -131,7 +133,7 @@ int main(int argc, char ** argv){
           break;
       case ENET_EVENT_TYPE_RECEIVE:
           //printf ("A packet of length %u containing %f was received from %s on channel %u.\n",                  event.packet -> dataLength,                  *(double*)event.packet -> data,                  (char*)event.peer -> data,                  event.channelID);
-          printf("packet received type=%d\n",enet_packet_type(event.packet));
+          //printf("packet received type=%d\n",enet_packet_type(event.packet));
           switch(enet_packet_type(event.packet)){
             case PTYPE_TIME_SYNC:
             {

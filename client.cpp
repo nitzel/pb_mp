@@ -27,7 +27,7 @@ int main(int argc, char ** argv){
     printf("an error occured while trying to create an enet client.\n");
     exit(EXIT_FAILURE);
   }
-  
+  enet_host_bandwidth_throttle(host);
   enet_address_set_host(&address, "localhost");
   address.port = 12345;
   
@@ -55,7 +55,7 @@ int main(int argc, char ** argv){
   ///////////////////////////////
   // init GLFW
   /////////////////////////////////s
-  initGlfw("PB-MP", screen.x, screen.y);
+  initGlfw("PB-MP-Client", screen.x, screen.y);
   initGfx();
   // add input listeners
   glfwSetCursorPosCallback(info.window, cursor_pos_callback);
@@ -102,6 +102,7 @@ int main(int argc, char ** argv){
     glLoadIdentity();
     // process game content
     if(!paused) {
+      game.clearChanged();
       game.update(dt+vdt);
       game.generateTree();
       //game.shootAndCollide();
@@ -125,7 +126,7 @@ int main(int argc, char ** argv){
       switch (event.type)
       {
       case ENET_EVENT_TYPE_RECEIVE:
-          printf("packet received type=%d\n",enet_packet_type(event.packet));
+          //printf("packet received type=%d\n",enet_packet_type(event.packet));
           switch(enet_packet_type(event.packet)){
             case PTYPE_TIME_SYNC:
             {
@@ -137,7 +138,7 @@ int main(int argc, char ** argv){
             {
               const double t = *(double*)enet_packet_data(event.packet);
               const double pDt = glfwGetTime()-t; // packet delta time (packet age)
-              printf("bc size=%d servertime=%.2f dt=%.2f\n", enet_packet_size(event.packet), t, pDt);
+              //printf("bc size=%d servertime=%.2f dt=%.2f\n", enet_packet_size(event.packet), t, pDt);
               if(pDt<0) { // packet from "future"
                 fprintf(stderr, "future packet received from t=%.2f at %.2f\n",t,glfwGetTime());
               } else if(pDt < GAMESTATE_OLD) {  // todo better algorithm than just age! we discard too old packets
