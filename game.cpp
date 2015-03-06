@@ -60,8 +60,9 @@ Game::Game(const size_t MAX_SHIPS, const size_t NUM_PLANETS){
   initShips(mShips[PB],  MAX_SHIPS);  
 }
 
-void Game::update(const double dt){
-  updatePlanets(mPlanets, mShips, dt);
+void Game::update(const double dt, const bool bUpdatePlanets){
+  if(bUpdatePlanets)
+    updatePlanets(mPlanets, mShips, dt);
   updateShips(mShips, dt);
   updateShots(mShots, dt);
 }

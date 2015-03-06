@@ -22,7 +22,7 @@ class Game {
   
   public:
     Game(const size_t MAX_SHIPS, const size_t NUM_PLANETS);
-    void update(const double dt);
+    void update(const double dt, const bool bUpdatePlanets = true);
     void shootAndCollide();
     
     void * packData(size_t & size, double time); // 
