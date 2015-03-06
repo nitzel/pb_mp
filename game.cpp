@@ -245,7 +245,8 @@ double Game::unpackData(void * const data, size_t size, const double time){
 
 returned buffer:
   size_t numberDeadShips, numberChangedShips
-  sShip... changedShipsData
+  size_t[] deadShipIds, changedShipIds
+  sShip[] changedShips
 */
 void * packChangedShips(saShip & saShips, size_t & size){
   sShip * ships = saShips.ships;
@@ -284,6 +285,28 @@ void * packChangedShips(saShip & saShips, size_t & size){
   
   // return stuff
   return rdata;
+}
+void unpackChangedShips(saShip & saShips, void * const data, const double dt){
+  char * dat = (char*)data;
+  // get numbers
+  const size_t deadShips    = *(size_t*)dat;  dat += sizeof(size_t);
+  const size_t changedShips = *(size_t*)dat;  dat += sizeof(size_t);
+  // get pointer to ID-arrays
+  size_t * dead     = (size_t*)dat;           dat += sizeof(size_t) * deadShips;
+  size_t * changed  = (size_t*)dat;           dat += sizeof(size_t) * changedShips ;
+  // get pointer to ship-data arrays
+  sShip * ships = (sShip*)dat;                dat += sizeof(sShip) * changedShips ;
+  
+  // make dead ships dead :)
+  for(size_t i=0; i<deadShips; i++) {
+    saShips.ships[dead[i]].health = 0;
+  }
+  // overwrite changed ships and update them to "now"
+  for(size_t i=0; i<changedShips; i++) {
+    saShips.ships[changed[i]] = ships[i]; // overwrite
+    updateShip(saShips.ships[changed[i]], dt); // update
+  }
+  
 }
 /**
 returned buffer:
@@ -349,7 +372,18 @@ void * Game::packUpdateData(size_t & size, double time){
   return rdata;
 }
 double Game::unpackUpdateData(void * const data, size_t size, const double time){
-  return 0.f; // todo
+  size_t memPlanets;
+  size_t sizes[4];
+  
+  char * dat = (char*)data; // temp pointer
+  const double dt = time - *(double*)dat; dat += sizeof(double);
+  memcpy(money,dat, 2*sizeof(float));        dat += 2*sizeof(float); // money
+  //get memory usages
+  memPlanets = *(unsigned int*)dat;           dat += sizeof(int);
+  memcpy(sizes,dat, 4*sizeof(size_t));        dat += 4*sizeof(size_t); // sizes of shipsa/b, shotsa/b
+  // copy actual data
+  memcpy(mPlanets .planets, dat, memPlanets); dat+= memPlanets;
+  return dt; // todo
 }
 
 void Game::clearChanged(){
