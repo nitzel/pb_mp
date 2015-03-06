@@ -110,8 +110,11 @@ int main(int argc, char ** argv){
     {
       timeToBroadcast = 0.1; /// 2x per sec
       size_t size;
-      void * d = game.packData(size, glfwGetTime());
-      ENetPacket * packet = enet_packet_create(d,size,0,PTYPE_COMPLETE);// ENET_PACKET_FLAG_RELIABLE
+      //void * d = game.packData(size, glfwGetTime());
+      void * d = game.packUpdateData(size, glfwGetTime());
+      //ENetPacket * packet = enet_packet_create(d,size,0,PTYPE_COMPLETE);// ENET_PACKET_FLAG_RELIABLE
+      ENetPacket * packet = enet_packet_create(d,size,0,PTYPE_UPDATE);// ENET_PACKET_FLAG_RELIABLE
+      //game.unpackUpdateData(enet_packet_data(packet), enet_packet_size(packet), glfwGetTime()+0.1f);
       //vdt = game.unpackData(enet_packet_data(packet), enet_packet_size(packet), glfwGetTime()+0.1f);
       // send packet to peer over channel 1
       enet_host_broadcast(host, 1, packet);

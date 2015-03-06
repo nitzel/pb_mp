@@ -103,7 +103,7 @@ int main(int argc, char ** argv){
     // process game content
     if(!paused) {
       game.clearChanged();
-      game.update(dt+vdt);
+      game.update(dt+vdt, false); // dont update planets as client
       game.generateTree();
       //game.shootAndCollide();
       vdt = 0;
@@ -144,6 +144,18 @@ int main(int argc, char ** argv){
               } else if(pDt < GAMESTATE_OLD) {  // todo better algorithm than just age! we discard too old packets
                 vdt = game.unpackData(enet_packet_data(event.packet), enet_packet_size(event.packet), glfwGetTime());
               }
+            } break;
+            case PTYPE_UPDATE:
+            {
+              const double t = *(double*)enet_packet_data(event.packet);
+              const double pDt = glfwGetTime()-t; // packet delta time (packet age)
+              //printf("bc size=%d servertime=%.2f dt=%.2f\n", enet_packet_size(event.packet), t, pDt);
+              if(pDt<0) { // packet from "future"
+                fprintf(stderr, "future updatepacket received from t=%.2f at %.2f\n",t,glfwGetTime());
+              } 
+              // todo: discard old updates or not? they are still important...
+              game.unpackUpdateData(enet_packet_data(event.packet), enet_packet_size(event.packet), glfwGetTime());
+              
             } break;
             case PTYPE_TEXT:
             {
