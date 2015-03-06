@@ -109,7 +109,7 @@ int main(int argc, char ** argv){
     if(timeToBroadcast<0)
     {
       timeToBroadcast = 0.1; /// 2x per sec
-      unsigned int size;
+      size_t size;
       void * d = game.packData(size, glfwGetTime());
       ENetPacket * packet = enet_packet_create(d,size,0,PTYPE_COMPLETE);// ENET_PACKET_FLAG_RELIABLE
       //vdt = game.unpackData(enet_packet_data(packet), enet_packet_size(packet), glfwGetTime()+0.1f);

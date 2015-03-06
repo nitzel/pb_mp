@@ -23,7 +23,7 @@ unsigned long xorshf962(void) {          //period 2^96-1
   return z;
 }
 
-unsigned int rand(unsigned int max){
+size_t rand(size_t max){
   return xorshf962()%max;
 }
 int rand(int min, int max){

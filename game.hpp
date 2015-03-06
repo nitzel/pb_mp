@@ -16,12 +16,12 @@ class Game {
     saShip mShips[2];
     // todo list deadShips, newShips, newShots
     
-    unsigned int treeW = 0;
-    unsigned int treeH = 0;
+    size_t treeW = 0;
+    size_t treeH = 0;
     sSquare *mTree = nullptr;
   
   public:
-    Game(const unsigned int MAX_SHIPS, const unsigned int NUM_PLANETS);
+    Game(const size_t MAX_SHIPS, const size_t NUM_PLANETS);
     void update(const double dt);
     void shootAndCollide();
     
@@ -31,7 +31,7 @@ class Game {
     void * packUpdateData(size_t & size, double time); // 
     double unpackUpdateData(void * const data, size_t size, const double time); // returns timeDelta
     
-    void select(int clickXY);
+    void select(int clickXY);     // todo!
     void select(int rectangleXY, int rectangleWH);
     
     void clearChanged();

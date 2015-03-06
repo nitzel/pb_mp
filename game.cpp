@@ -6,14 +6,14 @@
 float money[PN] = {0,0}; // money of PA and PB
 
 /// init list of game objects
-void initGame(saPlanet & planets, saShip * ships, saShot * shots, const unsigned int MAX_SHIPS);
-void initPlanets(saPlanet & planets, const unsigned int size);
-void initShips(saShip & ships, const unsigned int size);
-void initShots(saShot & shots, const unsigned int size);
+void initGame(saPlanet & planets, saShip * ships, saShot * shots, const size_t MAX_SHIPS);
+void initPlanets(saPlanet & planets, const size_t size);
+void initShips  (saShip   & ships,   const size_t size);
+void initShots  (saShot   & shots,   const size_t size);
 /// process list of game objects
 void updatePlanets(saPlanet & sPlanets, saShip * sShips, const double dt);
 void updateShips(saShip * sShips, const double dt);
-void updateShotsIntervall(saShot & sShots, const unsigned int pStart, const unsigned int num, const double dt); 
+void updateShotsIntervall(saShot & sShots, const size_t pStart, const size_t num, const double dt); 
 void updateShots(saShot * sShots, const double dt);
 void updateShip(sShip & ship, const double dt); // single ship update
 
@@ -25,34 +25,34 @@ rivalTree - spacepartioning tree with the rival-partys ships
 W,H - Size of rivalTree
 */
 // todo split into shoot and collision detection, also separate the drawTree call from here 
-bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const unsigned int W, const unsigned int H, const unsigned int PARTY);
-bool shoot(sPlanet & planet, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const unsigned int W, const unsigned int H);
+bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const size_t W, const size_t H, const size_t PARTY);
+bool shoot(sPlanet & planet, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const size_t W, const size_t H);
 
 
 /// helping functions
 inline void delta(const float x, const float y, const float tx, const float ty, float & dx, float & dy); /// dx=tx-x
 inline void normalize(float & x, float & y, const float LEN);  /// normalized vector * LEN
-inline unsigned int distanceSQ(const float x, const float y, const float x2, const float y2); /// distance^2
+inline size_t distanceSQ(const float x, const float y, const float x2, const float y2); /// distance^2
 /// command ship/shot to go somewhere
 void flyToTarget(sShot & shot, const float tx, const float ty);
-void flyToTarget(saShip & ships, const unsigned int id, const float tx, const float ty);
+void flyToTarget(saShip & ships, const size_t id, const float tx, const float ty);
 /// insert or delete ships or shots
 bool addShot(saShot & shots, const float x, const float y, const float tx, const float ty);
 bool addShip(saShip & ships, const float x, const float y, const float tx, const float  ty);
-void deleteShip(saShip & ships, const unsigned int id);
+void deleteShip(saShip & ships, const size_t id);
 /// damage ships or planets
 void takeDamage(sShip & ship);
-void takeDamage(sPlanet & planet, const unsigned int party);
-void capturePlanet(sPlanet & planet, const unsigned int newParty);
+void takeDamage(sPlanet & planet, const size_t party);
+void capturePlanet(sPlanet & planet, const size_t newParty);
 /// upgrade planets
 bool upgradePlanet(sPlanet & planet, Upgrade upgrade);
 
-Game::Game(const unsigned int MAX_SHIPS, const unsigned int NUM_PLANETS){
+Game::Game(const size_t MAX_SHIPS, const size_t NUM_PLANETS){
   
   treeW = map.w/GRID_SIZE;
   treeH = map.h/GRID_SIZE;
   
-  const unsigned int MAX_SHOTS = MAX_SHIPS*(float)SHOT_LIFETIME/(float)SHIP_SHOOT_DELAY + 1000; // + 1000 just to be sure
+  const size_t MAX_SHOTS = MAX_SHIPS*(float)SHOT_LIFETIME/(float)SHIP_SHOOT_DELAY + 1000; // + 1000 just to be sure
   initPlanets(mPlanets,  NUM_PLANETS);
   initShots(mShots[PA],  MAX_SHOTS);
   initShots(mShots[PB],  MAX_SHOTS);
@@ -95,21 +95,21 @@ void Game::generateTree(){
     mTree = new sSquare[2 * treeW * treeH];
   
   // init size of tree with zero
-  for(unsigned int party=PA; party<PN; party++)
-    for(unsigned int x=0; x<treeW; x++)
-      for(unsigned int y=0; y<treeH; y++){
+  for(size_t party=PA; party<PN; party++)
+    for(size_t x=0; x<treeW; x++)
+      for(size_t y=0; y<treeH; y++){
         TREE(party,x,y).size = 0;
         TREE(party,x,y).shiplist.clear();
       }
   
   /// Fill space partitioning structure with ships
   // todo try to optimize, takes 100fps away
-  for(unsigned int party=PA; party<PN; party++){
+  for(size_t party=PA; party<PN; party++){
     sShip * ships = mShips[party].ships;
-    for(unsigned int i=0; i<mShips[party].size; i++){
+    for(size_t i=0; i<mShips[party].size; i++){
       if(ships[i].health){
-        TREE(party,(unsigned int)(ships[i].x)/GRID_SIZE,(unsigned int)(ships[i].y)/GRID_SIZE).size++;
-        TREE(party, (unsigned int)(ships[i].x)/GRID_SIZE, (unsigned int)(ships[i].y)/GRID_SIZE).shiplist.push_front(&ships[i]);
+        TREE(party,(size_t)(ships[i].x)/GRID_SIZE,(size_t)(ships[i].y)/GRID_SIZE).size++;
+        TREE(party, (size_t)(ships[i].x)/GRID_SIZE, (size_t)(ships[i].y)/GRID_SIZE).shiplist.push_front(&ships[i]);
       }
     }
   }
@@ -126,12 +126,12 @@ void Game::letShoot(){
   // in a spiral way
   // Here it is used for going through the grid, using closer grid
   // parts first to find a good-enough shootable ship (optimal would take too much time, we take the first we can find in reach, which is roughly the closest. the really closest may be about sqrt(GRID_size) closer, which is acceptable)
-  for(unsigned int party=PA; party<PN; party++){
+  for(size_t party=PA; party<PN; party++){
     //sShip * lastTarget = nullptr;
     //float lastTargetDistanceSQ = 0;
-    unsigned int rival = !party; // opponents party ID :)
+    size_t rival = !party; // opponents party ID :)
     // let ships shoot
-    for(unsigned int i=0; i<mShips[party].size; i++){
+    for(size_t i=0; i<mShips[party].size; i++){
       sShip & ship = mShips[party].ships[i];
       if(!ship.health || ship.timeToShoot>0) {// dead or weapon not ready
         continue;
@@ -140,7 +140,7 @@ void Game::letShoot(){
     }
   }
   // let planets shoot
-  for(unsigned int i=0; i<mPlanets.size; i++){
+  for(size_t i=0; i<mPlanets.size; i++){
     sPlanet & planet = mPlanets.planets[i];      
     if(planet.party == PN || planet.timeToShoot>0) {// dead or weapon not ready
       continue;
@@ -153,10 +153,10 @@ void Game::letCollide(){
   /////////////////
   // CollisionTesting
   ////////////////
-  for(unsigned int party=0; party<PN; party++) {
-    unsigned int rival = !party; // opponents party ID :)
+  for(size_t party=0; party<PN; party++) {
+    size_t rival = !party; // opponents party ID :)
     sShot * shots = mShots[party].shots;
-    for(unsigned int i=0; i<mShots[party].size; i++){
+    for(size_t i=0; i<mShots[party].size; i++){
       if(shots[i].timeToLive>0){ // shot exists 
         /////////////////////
         // test against ships
@@ -172,7 +172,7 @@ void Game::letCollide(){
         // test against planets
         if(shots[i].timeToLive>0) { // shot did not hit a ship, still alive
           sPlanet * planets = mPlanets.planets;
-          for(unsigned int j=0; j<mPlanets.size; j++){ // take the FIRST planet you can find that is not in our party
+          for(size_t j=0; j<mPlanets.size; j++){ // take the FIRST planet you can find that is not in our party
             if(planets[j].party != party && distanceSQ(shots[i].x, shots[i].y, planets[j].x, planets[j].y) < PLANET_RADIUS*PLANET_RADIUS) {
               // collision!!!
               shots[i].timeToLive = -1;
@@ -190,20 +190,20 @@ void * Game::packData(size_t & size, double time) {
 /*
 Time double
 Money float
-Number of planets, ships, shots unsigned int
+Number of planets, ships, shots size_t
 planets
 shipsA
 shipsB
 shotsA
 shotsB
 */
-  unsigned int memShips = sizeof(sShip)*mShips[0].size;
+  size_t memShips = sizeof(sShip)*mShips[0].size;
     
-  unsigned int memShots = sizeof(sShot)*mShots[0].size;
+  size_t memShots = sizeof(sShot)*mShots[0].size;
 
-  unsigned int memPlanets = sizeof(sPlanet) * mPlanets.size;
+  size_t memPlanets = sizeof(sPlanet) * mPlanets.size;
   
-  unsigned int memOther = sizeof(double) + sizeof(float)*2 + sizeof(unsigned int)*3; // time, 2money, memoryUsage of ship/shot/planets
+  size_t memOther = sizeof(double) + sizeof(float)*2 + sizeof(size_t)*3; // time, 2money, memoryUsage of ship/shot/planets
   
   size = memOther + memPlanets + memShips*2 + memShots*2;
   void * const data = calloc(1, size);
@@ -211,9 +211,9 @@ shotsB
   char * dat = (char*)data; // temp pointer
   *(double*)dat = time;                       dat += sizeof(double);
   memcpy(dat, money, 2*sizeof(float));        dat += 2*sizeof(float);
-  *(unsigned int*)dat = memPlanets;           dat += sizeof(int);
-  *(unsigned int*)dat = memShips;             dat += sizeof(int);
-  *(unsigned int*)dat = memShots;             dat += sizeof(int);
+  *(size_t*)dat = memPlanets;           dat += sizeof(size_t);
+  *(size_t*)dat = memShips;             dat += sizeof(size_t);
+  *(size_t*)dat = memShots;             dat += sizeof(size_t);
   memcpy(dat, mPlanets .planets, memPlanets); dat += memPlanets;
   memcpy(dat, mShips[0].ships,   memShips);   dat += memShips;
   memcpy(dat, mShots[0].shots,   memShots);   dat += memShots;
@@ -222,14 +222,14 @@ shotsB
   return data;
 }
 double Game::unpackData(void * const data, size_t size, const double time){
-  unsigned int memShips, memShots, memPlanets;
+  size_t memShips, memShots, memPlanets;
   
   char * dat = (char*)data; // temp pointer
   double dt = time - *(double*)dat; dat += sizeof(double);
   memcpy(money,dat, 2*sizeof(float));        dat += 2*sizeof(float);
-  memPlanets = *(unsigned int*)dat;           dat += sizeof(int);
-  memShips   = *(unsigned int*)dat;           dat += sizeof(int);
-  memShots   = *(unsigned int*)dat;           dat += sizeof(int);
+  memPlanets = *(size_t*)dat;           dat += sizeof(size_t);
+  memShips   = *(size_t*)dat;           dat += sizeof(size_t);
+  memShots   = *(size_t*)dat;           dat += sizeof(size_t);
   memcpy(mPlanets .planets, dat, memPlanets); dat+= memPlanets;
   memcpy(mShips[0].ships,   dat, memShips);   dat+= memShips;
   memcpy(mShots[0].shots,   dat, memShots);   dat+= memShots;
@@ -367,7 +367,7 @@ void * Game::packUpdateData(size_t & size, double time){
   size = sizeof(double) + 2*sizeof(float) + 5*sizeof(size_t) + memPlanets; // memory usage for ...
   void * data[4];  // pointers to the update-buffers of ships/shots, each per party. shipA/shotA/shipB/shotB
   size_t sizes[4]; // memory usage of ships/shots to update, each per party
-  for(unsigned int party=PA; party<PN; party++){
+  for(size_t party=PA; party<PN; party++){
     data[2*party+0] = packChangedShips(mShips[party], sizes[2*party+0]);
     data[2*party+1] = packChangedShots(mShots[party], sizes[2*party+1]);
     size += sizes[2*party+0] + sizes[2*party+1]; // += memShipsX + memShotsX
@@ -396,12 +396,12 @@ double Game::unpackUpdateData(void * const data, size_t size, const double time)
   const double dt = time - *(double*)dat; dat += sizeof(double);
   memcpy(money,dat, 2*sizeof(float));        dat += 2*sizeof(float); // money
   //get memory usages
-  memPlanets = *(unsigned int*)dat;           dat += sizeof(int);
+  memPlanets = *(size_t*)dat;           dat += sizeof(int);
   memcpy(sizes,dat, 4*sizeof(size_t));        dat += 4*sizeof(size_t); // sizes of shipsa/b, shotsa/b
   // copy actual data
   memcpy(mPlanets .planets, dat, memPlanets); dat+= memPlanets;
   // unpack ships and shots (shipsA,shotsA,shipsB,shotsB)
-  for(unsigned int party=PA; party<PN; party++){
+  for(size_t party=PA; party<PN; party++){
     unpackChangedShips(mShips[party], dat+sizes[2*party+0],                  dt);
     unpackChangedShots(mShots[party], dat+sizes[2*party+0]+sizes[2*party+1], dt);
     size += sizes[2*party+0] + sizes[2*party+1]; // += memShipsX + memShotsX
@@ -410,7 +410,7 @@ double Game::unpackUpdateData(void * const data, size_t size, const double time)
 }
 
 void Game::clearChanged(){
-  for(unsigned int party=PA; party<PN; party++){
+  for(size_t party=PA; party<PN; party++){
     mShips[party].changed.clear();
     mShots[party].changedPos = mShots[party].insertPos;
   }
@@ -431,14 +431,14 @@ inline void normalize(float & x, float & y, const float LEN){
     y = normFac*y;
   }
 }
-inline unsigned int distanceSQ(const float x, const float y, const float x2, const float y2) {
+inline size_t distanceSQ(const float x, const float y, const float x2, const float y2) {
   return (x-x2)*(x-x2)+(y-y2)*(y-y2);
 }
 void flyToTarget(sShot & shot, const float tx, const float ty){
   delta(shot.x, shot.y, tx, ty, shot.dx, shot.dy);
   normalize(shot.dx, shot.dy, SHOT_SPEED);
 }
-void flyToTarget(saShip & ships, const unsigned int id, const float tx, const float ty){
+void flyToTarget(saShip & ships, const size_t id, const float tx, const float ty){
   sShip & ship = ships.ships[id]; // reference for easy access
   
   // dont let them go out map
@@ -451,7 +451,7 @@ void flyToTarget(saShip & ships, const unsigned int id, const float tx, const fl
   
   ships.changed.push_back(id); // remember ship as changed
 }
-void deleteShip(saShip & ships, const unsigned int id){
+void deleteShip(saShip & ships, const size_t id){
   ships.ships[id].health = 0;  // mark ship as dead 
   ships.free[ships.freePush] = id; // insert index to freeIndices list
   ships.freePush = (ships.freePush+1)%ships.size;           // increment insert pointer
@@ -474,7 +474,7 @@ bool addShip(saShip & ships, const float x, const float y, const float tx, const
   if(ships.freePop==ships.freePush && ships.ships[ships.free[ships.freePop]].health){
       return false;
   } else {  
-    const unsigned int insertPos = ships.free[ships.freePop];
+    const size_t insertPos = ships.free[ships.freePop];
     sShip & ship = ships.ships[insertPos];
     ship.health = SHIP_HEALTH_MAX;
     ship.timeToShoot = 0;
@@ -489,7 +489,7 @@ bool addShip(saShip & ships, const float x, const float y, const float tx, const
 
 bool upgradePlanet(sPlanet & planet, Upgrade upgrade) {
   if(planet.level[upgrade] < UPGRADE_MAX_LVL){
-    unsigned int costs = UPGRADE_COSTS; // const upgrade costs
+    size_t costs = UPGRADE_COSTS; // const upgrade costs
     if(money[planet.party] >= costs) {
       money[planet.party] -= costs;
       planet.level[upgrade]++;
@@ -498,7 +498,7 @@ bool upgradePlanet(sPlanet & planet, Upgrade upgrade) {
   return false;
 }
 
-void capturePlanet(sPlanet & planet, const unsigned int newParty){
+void capturePlanet(sPlanet & planet, const size_t newParty){
   // When a planet gets neutral, it looses a lot of it's infrastructure
   if(newParty == PN) {
     // ECONOMY is a little bit affected
@@ -524,7 +524,7 @@ void takeDamage(sShip & ship){
 planet - planet to take damage/ that was shot
 party - party dealing the damage
 */
-void takeDamage(sPlanet & planet, const unsigned int party){
+void takeDamage(sPlanet & planet, const size_t party){
   if(planet.party == PN){ // neutral planet
     planet.health -= (signed int)party*2-1; // take one for PA, add one for PB. Remember, neutral planets are full health at 0 and overtaken at +-100.
     if(planet.health <= -HEALTH_MAX || planet.health >= HEALTH_MAX){ // overtake
@@ -546,8 +546,8 @@ shots - list of shots from the same party as ships
 rivalTree - spacepartioning tree with the rival-partys ships
 W,H - Size of rivalTree
 */
-bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const unsigned int W, const unsigned int H, const unsigned int PARTY){
-    const unsigned int MAX_GRIDS = (2*SHIP_AIM_RANGE/GRID_SIZE+1)*(2*SHIP_AIM_RANGE/GRID_SIZE+1); // at max we need to check this many grids
+bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const size_t W, const size_t H, const size_t PARTY){
+    const size_t MAX_GRIDS = (2*SHIP_AIM_RANGE/GRID_SIZE+1)*(2*SHIP_AIM_RANGE/GRID_SIZE+1); // at max we need to check this many grids
   
   int dir = 0; // direction we're inserting the next lines in the rectangle
   // location to insert ships (+1 because first dir is up(-1))
@@ -558,7 +558,7 @@ bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTre
   int repeat = 1; // how many lines to draw before level++  (will be counted down)
   
   bool targetFound = false; // will be true when found ;)
-  for(unsigned int j=0; j<MAX_GRIDS && !targetFound; j++) {
+  for(size_t j=0; j<MAX_GRIDS && !targetFound; j++) {
     switch(dir){ // get location for next insertion
     case 0:
             ly --;
@@ -573,7 +573,7 @@ bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTre
             lx --;
             break; //left
     }
-    if(ly >= 0 && (unsigned int)ly < H && lx >= 0 && (unsigned int)lx < W && rivalTree[lx*W+ly].size) {           // valid lxy and not empty 
+    if(ly >= 0 && (size_t)ly < H && lx >= 0 && (size_t)lx < W && rivalTree[lx*W+ly].size) {           // valid lxy and not empty 
       // todo check if square is in range
       // range checking in here :)
       for(sShip * target : rivalTree[lx*W+ly].shiplist){
@@ -601,7 +601,7 @@ bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTre
   }
   // aim for planets
   if(!targetFound) {
-    for(unsigned int i=0; i<sPlanets.size; i++){
+    for(size_t i=0; i<sPlanets.size; i++){
       sPlanet & target = sPlanets.planets[i];      
       if(target.party == PARTY || target.shieldActive) { // planet from same party or shielded
         continue;
@@ -619,13 +619,13 @@ bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTre
   
   return true; // todo
 }
-bool shoot(sPlanet & planet, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const unsigned int W, const unsigned int H){
+bool shoot(sPlanet & planet, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const size_t W, const size_t H){
   return shoot(*(sShip*)(((double*)&planet)+1), sPlanets, shots, rivalTree, W, H, planet.party);
 }
 
 void updatePlanets(saPlanet & sPlanets, saShip * sShips, const  double dt){
   sPlanet * planets = (sPlanet*)(const char*)sPlanets.planets;
-  for(unsigned int i=0; i<sPlanets.size; i++){
+  for(size_t i=0; i<sPlanets.size; i++){
     //planets[i].tx = mouseV.x; // todo remove
     //planets[i].ty = mouseV.y;
     
@@ -690,13 +690,13 @@ void updatePlanets(saPlanet & sPlanets, saShip * sShips, const  double dt){
   }
 }
 
-void updateShotsIntervall(saShot & sShots, const unsigned int pStart, const unsigned int num, const double dt){
+void updateShotsIntervall(saShot & sShots, const size_t pStart, const size_t num, const double dt){
   if( pStart+num > sShots.size ){ // shots to update overlap end
     updateShotsIntervall(sShots, pStart, sShots.size-pStart,       dt);  // pStart-END
     updateShotsIntervall(sShots, 0,      (num+pStart)%sShots.size, dt);  // BEGIN-x
   } else {
     sShot * shots = sShots.shots;
-    for(unsigned int i=pStart; i<pStart+num && i<sShots.size; i++){
+    for(size_t i=pStart; i<pStart+num && i<sShots.size; i++){
       if(shots[i].timeToLive>0){ // shot exists
         // decrease lifetime
         shots[i].timeToLive -= dt;
@@ -713,7 +713,7 @@ void updateShotsIntervall(saShot & sShots, const unsigned int pStart, const unsi
 }
 
 void updateShots(saShot * sShots, const double dt){
-  for(unsigned int party=0; party<PN; party++) {
+  for(size_t party=0; party<PN; party++) {
     updateShotsIntervall(sShots[party],500, sShots[party].size, dt);
   }
 }
@@ -737,9 +737,9 @@ void updateShip(sShip & ship, const double dt){
   }
 }
 void updateShips(saShip * sShips, const double dt){
-  for(unsigned int party=0; party<PN; party++) {
+  for(size_t party=0; party<PN; party++) {
     sShip * ships = sShips[party].ships;
-    for(unsigned int i=0; i<sShips[party].size; i++){
+    for(size_t i=0; i<sShips[party].size; i++){
       if(ships[i].health < 0){
         deleteShip(sShips[party], i);
       } else {
@@ -749,15 +749,15 @@ void updateShips(saShip * sShips, const double dt){
   }
 }
 
-void initGame(saPlanet & planets, saShip * ships, saShot * shots, const unsigned int MAX_SHIPS) {
+void initGame(saPlanet & planets, saShip * ships, saShot * shots, const size_t MAX_SHIPS) {
   initPlanets(planets, 6);
-  const unsigned int MAX_SHOTS = MAX_SHIPS*(float)SHOT_LIFETIME/(float)SHIP_SHOOT_DELAY + 1000; // + 1000 just to be sure
+  const size_t MAX_SHOTS = MAX_SHIPS*(float)SHOT_LIFETIME/(float)SHIP_SHOOT_DELAY + 1000; // + 1000 just to be sure
   initShots(shots[PA],  MAX_SHOTS);
   initShots(shots[PB],  MAX_SHOTS);
   initShips(ships[PA],  MAX_SHIPS);
   initShips(ships[PB],  MAX_SHIPS);
 }
-void initPlanets(saPlanet & planets, const unsigned int size){
+void initPlanets(saPlanet & planets, const size_t size){
   planets.size = size;
   planets.planets = new sPlanet[planets.size];
   //memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
@@ -769,22 +769,22 @@ void initPlanets(saPlanet & planets, const unsigned int size){
   planets.planets[4] = sPlanet{0,0,700,250,400,225,0,9,0, PB,3000,80,5,true};
   planets.planets[5] = sPlanet{0,0,700,400,400,375,0,9,0, PB,3000,80,5,false};
 }
-void initShots(saShot & shots, const unsigned int size){
+void initShots(saShot & shots, const size_t size){
   shots.size = size;
   shots.insertPos = 0;
   shots.changedPos = 0;
   shots.shots = new sShot[shots.size];
   memset(shots.shots, 0, sizeof(sShot)*size); // clear data
 }
-void initShips(saShip & ships, const unsigned int size){
+void initShips(saShip & ships, const size_t size){
   ships.size = size;
   ships.ships = new sShip[ships.size];
   
   memset(ships.ships, 0, sizeof(sShip)*size); // clear
   ships.freePush = 0;
   ships.freePop  = 0;
-  ships.free = new unsigned int[ships.size];
-  for(unsigned int i=0; i<ships.size; i++)
+  ships.free = new size_t[ships.size];
+  for(size_t i=0; i<ships.size; i++)
     ships.free[i]=i;
   
 }

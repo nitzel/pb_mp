@@ -37,7 +37,7 @@ void initGfx() {
   loadTextures();
   
   // make a cursor
-  unsigned int pixels[15][15];
+  size_t pixels[15][15];
   memset(pixels, 0x00, sizeof(pixels));
   pixels[0][0] = 0xffffffff;
   pixels[14][0] = 0xffffffff;
@@ -56,14 +56,14 @@ void initGfx() {
 void drawTree(sSquare* tree, const float dX, const float dY){
   if(tree == nullptr) return;
   // draw lines
-  const unsigned int W=map.w/GRID_SIZE;
-  const unsigned int H=map.h/GRID_SIZE;
-  const unsigned int WH=W*H;
+  const size_t W=map.w/GRID_SIZE;
+  const size_t H=map.h/GRID_SIZE;
+  const size_t WH=W*H;
   
   glBegin(GL_LINES);
   glColor3ub(255,255,0);
-  for(unsigned int x=0; x<W; x++){
-    for(unsigned int y=0; y<H; y++){
+  for(size_t x=0; x<W; x++){
+    for(size_t y=0; y<H; y++){
         // vertical
         glVertex2i(dX+x*GRID_SIZE,   dY+y*GRID_SIZE);
         glVertex2i(dX+x*GRID_SIZE,   dY+(y+1)*GRID_SIZE);
@@ -77,9 +77,9 @@ void drawTree(sSquare* tree, const float dX, const float dY){
   // data
   int dx = (int)dX;
   int dy = (int)dY;
-  for(unsigned int party=PA; party<PN; party++){
-    for(unsigned int x=0; x<W; x++){
-      for(unsigned int y=0; y<H; y++){
+  for(size_t party=PA; party<PN; party++){
+    for(size_t x=0; x<W; x++){
+      for(size_t y=0; y<H; y++){
         glColor3ub(party*255,255-party*255,0);
         drawInt(tree[party*WH+x*H+y].size,dx+x*GRID_SIZE,   dy+y*GRID_SIZE+party*15);
       }
@@ -96,7 +96,7 @@ void drawPlanets(const saPlanet & sPlanets, const float dX, const float dY){
   glBegin(GL_QUADS);
     const int R = PLANET_RADIUS; // radius
     
-    for(unsigned int i=0; i<sPlanets.size; i++){
+    for(size_t i=0; i<sPlanets.size; i++){
       if(planets[i].shieldActive) { // draw a shielded planet!
         glColor3ub(planets[i].party*150,150-planets[i].party*150,255);
       } else {
@@ -112,13 +112,13 @@ void drawPlanets(const saPlanet & sPlanets, const float dX, const float dY){
   // draw line to gathering point for created ships
   glBegin(GL_LINES);
     glColor3ub(100,100,100);
-    for(unsigned int i=0; i<sPlanets.size; i++){
+    for(size_t i=0; i<sPlanets.size; i++){
       glVertex2i(dX+planets[i].x ,dY+planets[i].y );
       glVertex2i(dX+planets[i].tx,dY+planets[i].ty);
     }
   glEnd();
   // draw Health and other numbers onto planet
-  for(unsigned int i=0; i<sPlanets.size; i++){
+  for(size_t i=0; i<sPlanets.size; i++){
     glColor3ub(250,250,25);
     drawInt(planets[i].party,     dX+planets[i].x,      dY+planets[i].y-R, 1);
     drawInt(planets[i].level[0],  dX+planets[i].x-R+20, dY+planets[i].y-R/2, 1);
@@ -138,9 +138,9 @@ void drawShips(const saShip * sShips, const float dX, const float dY){
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, info.textures[TEX_SHIP].id);
   glBegin(GL_QUADS);
-    for(unsigned int party=0; party<PN; party++) {
+    for(size_t party=0; party<PN; party++) {
       sShip * ships = sShips[party].ships;
-      for(unsigned int i=0; i<sShips[party].size; i++){
+      for(size_t i=0; i<sShips[party].size; i++){
         if(ships[i].health>0){
           glColor3ub(party * 255, (1 - party) * 255, (10 - ships[i].health) * 25);
           glTexCoord2f(0.0,0.0); glVertex2i(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
@@ -156,10 +156,10 @@ void drawShips(const saShip * sShips, const float dX, const float dY){
 void drawShots(const saShot * sShots, const float dX, const float dY){
   //glDisable(GL_BLEND); // BLEND because of GL_LINE_SMOOTH, otherwise can be turned off
   glBegin(GL_LINES);
-    for(unsigned int party=0; party<PN; party++) {
+    for(size_t party=0; party<PN; party++) {
       glColor3ub(party*255,255-party*255,0);
       sShot * shots = sShots[party].shots;
-      for(unsigned int i=0; i<sShots[party].size; i++){
+      for(size_t i=0; i<sShots[party].size; i++){
         if(shots[i].timeToLive>0) {
           glVertex2i(dX+shots[i].x,dY+shots[i].y);
           glVertex2i(dX+shots[i].x+shots[i].dx*SHOT_LENGTH/SHOT_SPEED,dY+shots[i].y+shots[i].dy*SHOT_LENGTH/SHOT_SPEED);
@@ -209,14 +209,14 @@ void drawInt(int i, float strX, float strY, float stretchX, float stretchY){
     sprintf(s,"%i",i);
     drawString(s,strlen(s),strX,strY,stretchX, stretchY);
 }
-void drawString(const char* str, unsigned int strlen, float strX, float strY, float stretchXY){
+void drawString(const char* str, size_t strlen, float strX, float strY, float stretchXY){
     drawString(str,strlen,strX,strY,stretchXY,stretchXY);
 }
-void drawString(const char* str, unsigned int strlen, float strX, float strY, float stretchX, float stretchY){
+void drawString(const char* str, size_t strlen, float strX, float strY, float stretchX, float stretchY){
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, info.textures[TEX_FONT].id);               // Select Our Texture
     glBegin(GL_QUADS);
-        for(unsigned int i=0;i<strlen;i++){
+        for(size_t i=0;i<strlen;i++){
             char c = str[i];
             float cx = ((c-' ')%16)/16.0f; // 16 chars per row, relative to width=1.0f
             float cy = ((c-' ')/16)/6.0f; // 16 chars per row, 6 per col, relative to height=1.0f

@@ -39,8 +39,8 @@ void drawShots(const saShot * shots, const float dX, const float dY);
 // draw text/numbers/strings
 void drawInt(int i, float strX, float strY, float stretchX, float stretchY);
 void drawInt(int i, float strX, float strY, float stretchXY=1);
-void drawString(const char* str, unsigned int strlen, float strX, float strY, float stretchX, float stretchY);
-void drawString(const char* str, unsigned int strlen, float strX, float strY, float stretchXY=1);
+void drawString(const char* str, size_t strlen, float strX, float strY, float stretchX, float stretchY);
+void drawString(const char* str, size_t strlen, float strX, float strY, float stretchXY=1);
 
 ////////////////////
 //  other stuff

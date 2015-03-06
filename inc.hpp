@@ -69,9 +69,9 @@ struct sPlanet {
 };
 
 struct saShip {
-  unsigned int freePush;// where to save index in free-array
-  unsigned int freePop; // where to take index in free-array
-  unsigned int size;
+  size_t freePush;// where to save index in free-array
+  size_t freePop; // where to take index in free-array
+  size_t size;
   sShip * ships;
   // how it works
   // In the ships array all ships are stored. To know where to
@@ -79,30 +79,30 @@ struct saShip {
   // Taking an indice from the free array at freePop gives you an 
   // unused place in ships, while you can insert indices of unused
   // ships at freePush.
-  unsigned int * free; // free positions in the ships array
+  size_t * free; // free positions in the ships array
   // (newly created ships, dead ships) = changed ships
-  std::vector<unsigned int> changed;
+  std::vector<size_t> changed;
 };
 struct saPlanet {
-  unsigned int size;
+  size_t size;
   sPlanet * planets;
 };
 struct saShot {
-  unsigned int insertPos;
-  unsigned int size;
-  unsigned int changedPos; // from here till insertPos the shots are new/changed and need to be transmitted
+  size_t insertPos;
+  size_t size;
+  size_t changedPos; // from here till insertPos the shots are new/changed and need to be transmitted
   sShot * shots;
 };
 // to partition the map
 struct sSquare {
-  unsigned int size;
+  size_t size;
   std::forward_list<sShip*> shiplist; 
 };
 
 /// random numbers
 float randf();
 int rand(int min, int max);
-unsigned int rand(unsigned int max);
+size_t rand(size_t max);
 unsigned long xorshf96(void);
 
 
