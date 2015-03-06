@@ -402,9 +402,9 @@ double Game::unpackUpdateData(void * const data, size_t size, const double time)
   memcpy(mPlanets .planets, dat, memPlanets); dat+= memPlanets;
   // unpack ships and shots (shipsA,shotsA,shipsB,shotsB)
   for(size_t party=PA; party<PN; party++){
-    unpackChangedShips(mShips[party], dat+sizes[2*party+0],                  dt);
-    unpackChangedShots(mShots[party], dat+sizes[2*party+0]+sizes[2*party+1], dt);
-    size += sizes[2*party+0] + sizes[2*party+1]; // += memShipsX + memShotsX
+    unpackChangedShips(mShips[party], dat,                  dt);
+    unpackChangedShots(mShots[party], dat+sizes[2*party+0], dt);
+    dat += sizes[2*party+0] + sizes[2*party+1]; // += memShipsX + memShotsX
   }
   return dt; 
 }
