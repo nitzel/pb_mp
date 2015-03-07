@@ -59,8 +59,7 @@ int main(int argc, char ** argv){
   mouseV = {0,0};
   screen = {800,600}; // {640, 480};//
   view   = {0,0};
-  map = {2000, 2000};
-  Game game(shipAmount, 6);
+  Game game(vec2{2000,2000}, shipAmount, 6);
   ///////////////////////////////
   // init GLFW
   /////////////////////////////////s
@@ -106,8 +105,8 @@ int main(int argc, char ** argv){
       view.y += dy/80.f*20;
       if(view.x<0) view.x = 0;
       if(view.y<0) view.y = 0;    
-      if(view.x>map.w-screen.w) view.x = map.w-screen.w;
-      if(view.y>map.h-screen.h) view.y = map.h-screen.h;
+      if(view.x>game.mMap.w-screen.w) view.x = game.mMap.w-screen.w;
+      if(view.y>game.mMap.h-screen.h) view.y = game.mMap.h-screen.h;
     }
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT);
@@ -125,9 +124,9 @@ int main(int argc, char ** argv){
     drawPlanets(game.mPlanets,  -view.x, -view.y);
     drawShips  (game.mShips,    -view.x, -view.y);
     drawShots  (game.mShots,    -view.x, -view.y);
-    drawTree   (game.mTree,     -view.x, -view.y);
+    drawTree   (game.mTree,     game.treeW, game.treeH, -view.x, -view.y);
         char s[100];
-    sprintf(s,"FPS=%4.0f t=%.1fs Money A=%5i B=%5i MR%i/%i MV%i/%i View%i/%i",fps, time, (int)money[PA],(int)money[PB], (int)mouseR.x, (int)mouseR.y, (int)mouseV.x, (int)mouseV.y, (int)view.x, (int)view.y);
+    sprintf(s,"FPS=%4.0f t=%.1fs Money A=%5i B=%5i MR%i/%i MV%i/%i View%i/%i",fps, time, (int)game.mMoney[PA],(int)game.mMoney[PB], (int)mouseR.x, (int)mouseR.y, (int)mouseV.x, (int)mouseV.y, (int)view.x, (int)view.y);
     glColor3ub(255,255,255);
     drawString(s,strlen(s),10,10);
     

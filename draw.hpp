@@ -29,7 +29,7 @@ void initGlfw(const char * title, const int screenW, const int screenH);
 void initGfx();
 
 
-void drawTree(sSquare* tree, const float dX, const float dY);
+void drawTree(sSquare* tree, const size_t W, const size_t H, const float dX, const float dY);
 ///////////
 // draw game content
 void drawPlanets(const saPlanet & sPlanets, const float dX, const float dY);

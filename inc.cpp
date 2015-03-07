@@ -1,6 +1,6 @@
 #include "inc.hpp"
 
-struct vec2 map, screen, view, mouseR, mouseV;
+struct vec2 screen, view, mouseR, mouseV;
 
 //////////////////////////////
 //// random number generation

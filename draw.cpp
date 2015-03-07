@@ -53,11 +53,9 @@ void initGfx() {
   // cursor done
 }
 
-void drawTree(sSquare* tree, const float dX, const float dY){
+void drawTree(sSquare* tree, const size_t W, const size_t H, const float dX, const float dY){
   if(tree == nullptr) return;
   // draw lines
-  const size_t W=map.w/GRID_SIZE;
-  const size_t H=map.h/GRID_SIZE;
   const size_t WH=W*H;
   
   glBegin(GL_LINES);
