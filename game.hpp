@@ -14,7 +14,6 @@ class Game {
     saPlanet mPlanets;
     saShot mShots[2];
     saShip mShips[2];
-    // todo list deadShips, newShips, newShots
     
     size_t treeW = 0;
     size_t treeH = 0;

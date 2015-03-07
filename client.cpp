@@ -9,6 +9,15 @@ static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
 #define GAMESTATE_OLD 0.5f // gamestates older than this will be discarded
 int main(int argc, char ** argv){
   printf("Client\n");
+  char * serverIP = (char*)"localhost";
+  size_t shipAmount = 1000;
+  if(argc==3){
+    serverIP = argv[1];
+    shipAmount = atoi(argv[2]);
+  }
+  
+  printf("Server: %s\nMAX-Ships: %d\n", serverIP, shipAmount);
+  
   if (enet_initialize () != 0)
   {
       fprintf (stderr, "An error occurred while initializing ENet.\n");
@@ -28,7 +37,7 @@ int main(int argc, char ** argv){
     exit(EXIT_FAILURE);
   }
   enet_host_bandwidth_throttle(host);
-  enet_address_set_host(&address, "localhost");
+  enet_address_set_host(&address, serverIP);
   address.port = 12345;
   
   peer = enet_host_connect(host, &address, 2, 0);
@@ -51,7 +60,7 @@ int main(int argc, char ** argv){
   screen = {800,600}; // {640, 480};//
   view   = {0,0};
   map = {2000, 2000};
-  Game game(1000, 6);
+  Game game(shipAmount, 6);
   ///////////////////////////////
   // init GLFW
   /////////////////////////////////s
@@ -87,15 +96,19 @@ int main(int argc, char ** argv){
     }
     
     // move view
-    if(mouseR.x<40) view.x--;
-    if(mouseR.y<40) view.y--;
-    if(mouseR.x>screen.w-40) view.x++;
-    if(mouseR.y>screen.h-40) view.y++;
-    if(view.x<0) view.x = 0;
-    if(view.y<0) view.y = 0;    
-    if(view.x>map.w-screen.w) view.x = map.w-screen.w;
-    if(view.y>map.h-screen.h) view.y = map.h-screen.h;
-    
+    {
+      float dx=0, dy=0;
+      if(mouseR.x<80) dx = mouseR.x-80;
+      if(mouseR.y<80) dy = mouseR.y-80;
+      if(mouseR.x>screen.w-80) dx = mouseR.x-(screen.w-80);
+      if(mouseR.y>screen.h-80) dy = mouseR.y-(screen.h-80);
+      view.x += dx/80.f*20;
+      view.y += dy/80.f*20;
+      if(view.x<0) view.x = 0;
+      if(view.y<0) view.y = 0;    
+      if(view.x>map.w-screen.w) view.x = map.w-screen.w;
+      if(view.y>map.h-screen.h) view.y = map.h-screen.h;
+    }
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW); // reset the matrix

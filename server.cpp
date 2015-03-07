@@ -7,6 +7,12 @@ static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
 int main(int argc, char ** argv){  
   freopen("stderr.txt","w",stderr);
   fprintf(stderr, "Started\n");
+  
+  size_t shipAmount = 1000;
+  if(argc==2){
+    shipAmount = atoi(argv[1]);
+  }
+  printf("MAX-Ships: %d\n", shipAmount);
   //////////
   // ENET
   /////////
@@ -51,7 +57,7 @@ int main(int argc, char ** argv){
   ////////////////
   map = {2000,2000};
   
-  Game game(1000, 6);
+  Game game(shipAmount, 6);
   
   ///////////////////////////////
   // init GLFW
@@ -70,15 +76,19 @@ int main(int argc, char ** argv){
     time = glfwGetTime();
     fps = (fps*500 + 10/dt)/510;
     // move view
-    if(mouseR.x<40) view.x--;
-    if(mouseR.y<40) view.y--;
-    if(mouseR.x>screen.w-40) view.x++;
-    if(mouseR.y>screen.h-40) view.y++;
-    if(view.x<0) view.x = 0;
-    if(view.y<0) view.y = 0;    
-    if(view.x>map.w-screen.w) view.x = map.w-screen.w;
-    if(view.y>map.h-screen.h) view.y = map.h-screen.h;
-    
+    {
+      float dx=0, dy=0;
+      if(mouseR.x<80) dx = mouseR.x-80;
+      if(mouseR.y<80) dy = mouseR.y-80;
+      if(mouseR.x>screen.w-80) dx = mouseR.x-(screen.w-80);
+      if(mouseR.y>screen.h-80) dy = mouseR.y-(screen.h-80);
+      view.x += dx/80.f*20;
+      view.y += dy/80.f*20;
+      if(view.x<0) view.x = 0;
+      if(view.y<0) view.y = 0;    
+      if(view.x>map.w-screen.w) view.x = map.w-screen.w;
+      if(view.y>map.h-screen.h) view.y = map.h-screen.h;
+    }
     // clear screen
     glClear(GL_COLOR_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW); // reset the matrix
@@ -146,6 +156,10 @@ int main(int argc, char ** argv){
               // send packet to peer over channel 0
               enet_peer_send(event.peer, 0, packet);
               enet_host_flush (host);
+            } break;
+            case PTYPE_GAME_SETTINGS: 
+            { // send game settings to client
+              
             } break;
             case PTYPE_SHIPS_MOVE:
             {

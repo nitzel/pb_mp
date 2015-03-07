@@ -2,8 +2,8 @@
 - [x] Game::pack/unpackData !
 - [x] Send packed data to client and display it. 
 - [x] ENet with commands (net.hpp)
-- [ ] Send new shots only
-- [ ] Send new ships and changed ones
+- [x] Send new shots only
+- [x] Send new ships and changed ones
 - [ ] Game::select
 - [ ] Commands from client to server
   - [ ] Send ships to a target
