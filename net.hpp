@@ -5,7 +5,7 @@
 #include <enet/enet.h>
 
 #define __PTYPE enet_uint8
-enum PacketType {PTYPE_TIME_SYNC=0, PTYPE_COMPLETE, PTYPE_UPDATE, PTYPE_GAME_SETTINGS, PTYPE_SHIPS_MOVE, PTYPE_PLANET_ACTION, PTYPE_TEXT};
+enum PacketType {PTYPE_TIME_SYNC=0, PTYPE_COMPLETE, PTYPE_UPDATE, PTYPE_GAME_CONFIG, PTYPE_SHIPS_MOVE, PTYPE_PLANET_ACTION, PTYPE_TEXT, PTYPE_START};
 
 ENetPacket* enet_packet_create(	const void * 	data, size_t 	dataLength, enet_uint32 	flags, const PacketType packetType);
 enet_uint8 * enet_packet_data(ENetPacket * packet);
