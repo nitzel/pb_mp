@@ -96,7 +96,7 @@ struct saShot {
 // to partition the map
 struct sSquare {
   size_t size;
-  std::vector<sShip*> shiplist; 
+  std::vector<size_t> shiplist; 
 };
 
 /// random numbers

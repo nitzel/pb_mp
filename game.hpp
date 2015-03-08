@@ -31,6 +31,7 @@ class Game {
     size_t treeH = 0;
     sSquare *mTree = nullptr;
   
+    std::vector<size_t> selectedShips;
   private:
     void GameCtor(GameConfig cfg);
     GameConfig config;
@@ -50,8 +51,8 @@ class Game {
     void * packUpdateData(size_t & size, double time); // 
     double unpackUpdateData(void * const data, size_t size, const double time); // returns timeDelta
     
-    void select(int clickXY);     // todo!
-    void select(int rectangleXY, int rectangleWH);
+    void select(vec2 v);
+    void select(vec2 v1, vec2 v2);
     
     void clearChanged();
     

@@ -2,7 +2,13 @@
 #include "draw.hpp"
 #include "net.hpp"
 
-static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
+// just about mouseclicks/releases!
+int mouseChanged[8];  // -1 nothing, GLFW_PRESS or GLFW_RELEASE
+vec2 mouseStates [8][4]; // mousebutton 0-7, posDown(R), posUp(R), posDown(Virtual), posUp
+
+static void callback_mouseMove(GLFWwindow* window, double xpos, double ypos);
+static void callback_mouseButton(GLFWwindow* window, int button, int action, int mods);
+static void callback_mouseScroll(GLFWwindow* window, double dx, double dy);
 
 
 #define TIME_TO_SYNC_TIME 0.5f
@@ -67,7 +73,9 @@ int main(int argc, char ** argv){
   initGlfw("PB-MP-Client", screen.x, screen.y);
   initGfx();
   // add input listeners
-  glfwSetCursorPosCallback(info.window, cursor_pos_callback);
+  glfwSetCursorPosCallback(info.window, callback_mouseMove);
+  glfwSetMouseButtonCallback(info.window, callback_mouseButton);
+  glfwSetScrollCallback(info.window, callback_mouseScroll);
   ////////////////
   // VARS
   ////////////////
@@ -99,6 +107,22 @@ int main(int argc, char ** argv){
         enet_peer_send(peer, 1, packetGR);
       }
       enet_host_flush(host);
+    }
+    
+    //////////////////
+    // Handle input //
+    //////////////////
+    
+    // evaluate mouseactions
+    if(mouseChanged[GLFW_MOUSE_BUTTON_1] == GLFW_RELEASE) { // left up
+      vec2 vp = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_PRESS+2]; // press
+      vec2 vr = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_RELEASE+2]; // release
+      if(vp.x != vr.x || vp.y != vr.y){ // range select
+        game->select(vp, vr);
+      } else { // just a click
+        game->select(vp);
+      }
+      mouseChanged[GLFW_MOUSE_BUTTON_1] = -1; // mark as read
     }
     
     // move view
@@ -262,9 +286,19 @@ int main(int argc, char ** argv){
   return 0;
 }
 
-static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)  {
+static void callback_mouseMove(GLFWwindow* window, double xpos, double ypos)  {
   mouseR.x=(float)xpos;
   mouseR.y=(float)ypos;
   mouseV.x=mouseR.x + view.x;
   mouseV.y=mouseR.y + view.y;
+}
+
+static void callback_mouseButton(GLFWwindow* window, int button, int action, int mods){
+  printf("mouseclick btn=%d action=%d mods=%d\n", button, action, mods);
+  mouseChanged[button] = action;
+  mouseStates[button][action] = mouseR; // save real mouse pos
+  mouseStates[button][action+2] = mouseV; // save virtual mouse pos
+}
+static void callback_mouseScroll(GLFWwindow* window, double dx, double dy){
+  printf("mousescroll %f   %f\n",dx,dy);
 }

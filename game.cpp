@@ -105,7 +105,7 @@ void Game::generateTree(){
     for(size_t i=0; i<mShips[party].size; i++){
       if(ships[i].health>0){
         TREE(party,(size_t)(ships[i].x)/GRID_SIZE,(size_t)(ships[i].y)/GRID_SIZE).size++;
-        TREE(party,(size_t)(ships[i].x)/GRID_SIZE,(size_t)(ships[i].y)/GRID_SIZE).shiplist.push_back(&ships[i]); // todo figure out why it takes sooo much time. maybe just update Tree instead of building it completely new
+        TREE(party,(size_t)(ships[i].x)/GRID_SIZE,(size_t)(ships[i].y)/GRID_SIZE).shiplist.push_back(i); 
       }
     }
   }
@@ -156,11 +156,12 @@ void Game::letCollide(){
       if(shots[i].timeToLive>0){ // shot exists 
         /////////////////////
         // test against ships
-        for(sShip * target : TREE(rival,(int)shots[i].x/GRID_SIZE, (int)shots[i].y/GRID_SIZE).shiplist){
-          if(target->health && distanceSQ(shots[i].x, shots[i].y, target->x, target->y) < SHIP_RADIUS*SHIP_RADIUS) {
+        for(size_t targetId : TREE(rival,(int)shots[i].x/GRID_SIZE, (int)shots[i].y/GRID_SIZE).shiplist){
+          sShip & target = mShips[rival].ships[targetId];
+          if(target.health && distanceSQ(shots[i].x, shots[i].y, target.x, target.y) < SHIP_RADIUS*SHIP_RADIUS) {
             // collision!!!
             shots[i].timeToLive = -1;
-            takeDamage(*target);
+            takeDamage(target);
             break;
           }
         }
@@ -575,13 +576,15 @@ bool Game::shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * ri
             break; //left
     }
     if(ly >= 0 && (size_t)ly < H && lx >= 0 && (size_t)lx < W && rivalTree[lx*W+ly].size) {           // valid lxy and not empty 
+      const Party rival = (Party)(size_t)!party;
       // todo check if square is in range
       // range checking in here :)
-      for(sShip * target : rivalTree[lx*W+ly].shiplist){
-        if(distanceSQ(ship.x, ship.y, target->x, target->y) < SHIP_AIM_RANGE_SQ) {
+      for(size_t targetId : rivalTree[lx*W+ly].shiplist){
+        sShip & target = mShips[rival].ships[targetId];
+        if(distanceSQ(ship.x, ship.y, target.x, target.y) < SHIP_AIM_RANGE_SQ) {
           // okey we found someone to shoot
           targetFound = true;
-          addShot(party, ship.x, ship.y, target->x, target->y);
+          addShot(party, ship.x, ship.y, target.x, target.y);
           ship.timeToShoot += SHIP_SHOOT_DELAY;
           return true;
         }
@@ -791,5 +794,47 @@ void Game::initShips(saShip & ships, const size_t size){
 }
 
 Game::GameConfig Game::getConfig(){
+  
+  
   return config;
 }
+
+void Game::select(vec2 v){}
+/** selects ships within the rectangle formed by the two points v1, v2 
+the selected ships can be found in the list Game::selectedShips
+*/
+void Game::select(vec2 v1, vec2 v2){
+  // todo: select depending on which party the player is on PA/PB
+  // todo: work with mods(keyboard modifiern like shift/ctrl to select/unselect ships with this function!)
+  
+  vec2 va{std::min(v1.x, v2.x), std::min(v1.y, v2.y)}; // upper left
+  vec2 vb{std::max(v1.x, v2.x), std::max(v1.y, v2.y)}; // lower right
+  
+  // positions in space partitioning tree: 
+  vec2 const gridA{(float)((int)va.x/GRID_SIZE),(float)((int)va.y/GRID_SIZE)};
+  vec2 const gridB{(float)((int)vb.x/GRID_SIZE),(float)((int)vb.y/GRID_SIZE)};
+  printf("selecting[ %f/%f %f/%f\n",v1.x,v1.y,v2.x,v2.y);
+  printf("selecting- %f/%f %f/%f\n",va.x,va.y,vb.x,vb.y);
+  printf("selecting] %f/%f %f/%f\n",gridA.x,gridA.y,gridB.x,gridB.y);
+
+  // empty selected Ship list
+  selectedShips.clear();
+  // traverse tree to look for ships within this range
+  for(size_t x=gridA.x; x<=gridB.x; x++){
+    for(size_t y=gridA.y; y<=gridB.y; y++){
+      //if(y >= 0 && y < treeH && x >= 0 && x < treeW && TREE(PA,x,y).size) {           // valid xy and not empty 
+        // check all ships in square
+        for(size_t targetId : TREE(PA,x,y).shiplist){
+          //printf("checking %d/%d with %d ships\n", x,y,TREE(PA,x,y).size);
+          sShip & target = mShips[PA].ships[targetId];
+          if(target.x > va.x && target.x < vb.x && target.y > va.y && target.y < vb.y) { // within rectangle
+            selectedShips.push_back(targetId); // mark as selected
+          }
+        }
+      //}
+    }
+  }
+  
+  printf("selected %d ships\n",selectedShips.size());
+}
+
