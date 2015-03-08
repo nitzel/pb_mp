@@ -24,6 +24,8 @@ class Game {
   
   public:
     Game(vec2 map, const size_t MAX_SHIPS, const size_t NUM_PLANETS);
+    ~Game();
+    
     void update(const double dt, const bool bUpdatePlanets = true);
     void shootAndCollide();
     
@@ -90,8 +92,6 @@ class Game {
     void * packChangedShots(Party party, size_t & size);
     void unpackChangedShots(Party party, void * const data, const double dt);
 };
-
-extern float money[]; // money of PA and PB
 
 
 #endif // __GAME__

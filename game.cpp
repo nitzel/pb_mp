@@ -19,6 +19,19 @@ Game::Game(vec2 map, const size_t MAX_SHIPS, const size_t NUM_PLANETS){
   initShips(mShips[PB],  MAX_SHIPS);  
 }
 
+Game::~Game(){
+  if(mTree != nullptr) {
+    delete[] mTree; 
+    mTree = nullptr;
+  }
+  for(size_t party=0; party<PN; party++){
+    delete[] mShots[party].shots;
+    delete[] mShips[party].ships;
+    delete[] mShips[party].free;
+  }
+  delete[] mPlanets.planets;
+}
+
 void Game::update(const double dt, const bool bUpdatePlanets){
   if(bUpdatePlanets)
     updatePlanets(dt);
