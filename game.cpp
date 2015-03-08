@@ -3,20 +3,43 @@
 #define TREE(X,Y,Z)  mTree[(X*treeW+Y)*treeH+Z] // from XYZ to [x][y][z]
 #define TREE1(X)  &mTree[X*treeW*treeH] // from XYZ to [x][y][z]
 
-Game::Game(vec2 map, const size_t MAX_SHIPS, const size_t NUM_PLANETS){
-  mMoney[PA]=0;
-  mMoney[PB]=0;
-  mMap = map;
+Game::GameConfig Game::createConfig(size_t const NUM_PLANETS, size_t const NUM_SHIPS, vec2 const map, float moneyA, float moneyB){
+  GameConfig cfg;
+  cfg.numPlanets = NUM_PLANETS;
+  cfg.numShips = NUM_SHIPS;
+  cfg.numShots = cfg.numShips*(float)SHOT_LIFETIME/(float)SHIP_SHOOT_DELAY + cfg.numPlanets*50; // + 50/planet just to be sure - that means, a planet can shoot 50 shots within the lifespan of one shot  and we can still store all shots. Also all planets (and they are all captured by one party) fire at the same time and all ships ... will probably not happen, but just to be sure :D
+  if(map.x>0 && map.y>0)
+    cfg.map = map;
+  else  {
+    fprintf(stderr, "createcfg: invalid mapsize %f/%f, resized to 1000/1000", map.x, map.y);
+    cfg.map = vec2{1000,1000};
+  }
+  cfg.money[PA] = moneyA;
+  cfg.money[PB] = moneyB;
+  
+  return cfg;
+}
+
+void Game::GameCtor(GameConfig cfg){
+  config = cfg;
+  mMoney[PA] = config.money[PA];
+  mMoney[PB] = config.money[PB];
+  mMap = config.map;
   
   treeW = mMap.w/GRID_SIZE;
   treeH = mMap.h/GRID_SIZE;
   
-  const size_t MAX_SHOTS = MAX_SHIPS*(float)SHOT_LIFETIME/(float)SHIP_SHOOT_DELAY + 1000; // + 1000 just to be sure
-  initPlanets(mPlanets,  NUM_PLANETS);
-  initShots(mShots[PA],  MAX_SHOTS);
-  initShots(mShots[PB],  MAX_SHOTS);
-  initShips(mShips[PA],  MAX_SHIPS);
-  initShips(mShips[PB],  MAX_SHIPS);  
+  initPlanets(mPlanets,  config.numPlanets);
+  initShips(mShips[PA],  config.numShips);
+  initShips(mShips[PB],  config.numShips);
+  initShots(mShots[PA],  config.numShots);
+  initShots(mShots[PB],  config.numShots);  
+}
+Game::Game(GameConfig cfg){
+  GameCtor(cfg);
+}
+Game::Game(vec2 map, const size_t MAX_SHIPS, const size_t NUM_PLANETS){
+  GameCtor(Game::createConfig(NUM_PLANETS, MAX_SHIPS, vec2{2000,2000}));
 }
 
 Game::~Game(){
@@ -80,9 +103,9 @@ void Game::generateTree(){
   for(size_t party=PA; party<PN; party++){
     sShip * ships = mShips[party].ships;
     for(size_t i=0; i<mShips[party].size; i++){
-      if(ships[i].health){
+      if(ships[i].health>0){
         TREE(party,(size_t)(ships[i].x)/GRID_SIZE,(size_t)(ships[i].y)/GRID_SIZE).size++;
-        TREE(party, (size_t)(ships[i].x)/GRID_SIZE, (size_t)(ships[i].y)/GRID_SIZE).shiplist.push_front(&ships[i]);
+        TREE(party,(size_t)(ships[i].x)/GRID_SIZE,(size_t)(ships[i].y)/GRID_SIZE).shiplist.push_front(&ships[i]); // todo figure out why it takes sooo much time. maybe just update Tree instead of building it completely new
       }
     }
   }
@@ -766,3 +789,6 @@ void Game::initShips(saShip & ships, const size_t size){
   
 }
 
+Game::GameConfig Game::getConfig(){
+  return config;
+}

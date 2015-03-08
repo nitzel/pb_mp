@@ -59,7 +59,7 @@ int main(int argc, char ** argv){
   mouseV = {0,0};
   screen = {800,600}; // {640, 480};//
   view   = {0,0};
-  Game game(vec2{2000,2000}, shipAmount, 6);
+  Game game(Game::createConfig(6, shipAmount, vec2{2000,2000}));
   ///////////////////////////////
   // init GLFW
   /////////////////////////////////s
@@ -117,7 +117,6 @@ int main(int argc, char ** argv){
       game.clearChanged();
       game.update(dt+vdt, false); // dont update planets as client
       game.generateTree();
-      //game.shootAndCollide();
       vdt = 0;
     }
     // draw gamecontent
@@ -126,7 +125,7 @@ int main(int argc, char ** argv){
     drawShots  (game.mShots,    -view.x, -view.y);
     drawTree   (game.mTree,     game.treeW, game.treeH, -view.x, -view.y);
         char s[100];
-    sprintf(s,"FPS=%4.0f t=%.1fs Money A=%5i B=%5i MR%i/%i MV%i/%i View%i/%i",fps, time, (int)game.mMoney[PA],(int)game.mMoney[PB], (int)mouseR.x, (int)mouseR.y, (int)mouseV.x, (int)mouseV.y, (int)view.x, (int)view.y);
+    sprintf(s,"FPS=%4.1f=%2.1f t=%.1fs Money A=%5i B=%5i MR%i/%i MV%i/%i View%i/%i",fps, 1/dt, time, (int)game.mMoney[PA],(int)game.mMoney[PB], (int)mouseR.x, (int)mouseR.y, (int)mouseV.x, (int)mouseV.y, (int)view.x, (int)view.y);
     glColor3ub(255,255,255);
     drawString(s,strlen(s),10,10);
     

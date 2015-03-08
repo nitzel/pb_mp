@@ -9,7 +9,16 @@
 #include <stdio.h>
 
 
-class Game {
+class Game {  
+  public:
+    struct GameConfig {
+      size_t numPlanets;
+      size_t numShips;
+      size_t numShots;
+      vec2 map;
+      float money[2];
+    };
+    static GameConfig createConfig(size_t const NUM_PLANETS, size_t const NUM_SHIPS, vec2 const map, float moneyA=0, float moneyB=0);
   public:
     float mMoney[PN]; // money of PA and PB
     vec2 mMap;
@@ -22,9 +31,15 @@ class Game {
     size_t treeH = 0;
     sSquare *mTree = nullptr;
   
+  private:
+    void GameCtor(GameConfig cfg);
+    GameConfig config;
   public:
     Game(vec2 map, const size_t MAX_SHIPS, const size_t NUM_PLANETS);
+    Game(GameConfig cfg);
     ~Game();
+    
+    GameConfig getConfig();
     
     void update(const double dt, const bool bUpdatePlanets = true);
     void shootAndCollide();
@@ -39,7 +54,7 @@ class Game {
     void select(int rectangleXY, int rectangleWH);
     
     void clearChanged();
-  public:
+    
     void generateTree();
     void letShoot();
     void letCollide();
