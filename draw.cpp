@@ -1,7 +1,7 @@
 #include "draw.hpp"
 struct sInfo info;
 
-const char * textureNames[] = {"mFont.tga","planet.png","ship.png"};
+const char * textureNames[] = {"mFont.png","planet.png","ship.png"};
 
 void initGlfw(const char * title, const int screenW, const int screenH) {
   if(!glfwInit())
