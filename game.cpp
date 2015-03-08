@@ -251,22 +251,23 @@ void *  Game::packChangedShips(Party party, size_t & size){
   std::sort(mShips[party].changed.begin(), mShips[party].changed.end()); // sort vector to easily ignore dublicates
   size_t pC=0, pD=0; // pointer=amount changed and dead ships
   size_t data[S]; 
-  size_t lastId = mShips[party].changed[0]+1; // this way the first ID cannot be ignored because it cannot equal the "last one"
-  for(size_t i=0; i<S; i++){
-    size_t curId = mShips[party].changed[i];
-    if(curId==lastId){ // skip duplicates
-      continue;
-    }
-    if(ships[curId].health > 0){ // ship changed
-      data[pC]=curId;
-      pC++;
-    } else { // ship is dead
-      data[S-1-pD] = curId;
-      pD++;
-    }
-    lastId = curId;
-  }  
-  
+  if(!mShips[party].changed.empty()) { // only if changed is not empty
+    size_t lastId = mShips[party].changed[0]+1; // this way the first ID cannot be ignored because it cannot equal the "last one"
+    for(size_t i=0; i<S; i++){
+      size_t curId = mShips[party].changed[i];
+      if(curId==lastId){ // skip duplicates
+        continue;
+      }
+      if(ships[curId].health > 0){ // ship changed
+        data[pC]=curId;
+        pC++;
+      } else { // ship is dead
+        data[S-1-pD] = curId;
+        pD++;
+      }
+      lastId = curId;
+    }  
+  }
   size = (pC+pD+2)*sizeof(size_t)+pC*sizeof(sShip); // +2 because of pC and pD
   void * const rdata = calloc(1, size);
   char * dat = (char*)rdata;

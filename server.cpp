@@ -5,8 +5,8 @@
 static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
 
 int main(int argc, char ** argv){  
-  freopen("stderr.txt","w",stderr);
-  fprintf(stderr, "Started\n");
+  freopen("stderr_server.txt","w",stderr);
+  fprintf(stderr, "Started Server\n");
   
   size_t shipAmount = 1000;
   if(argc==2){
@@ -46,7 +46,7 @@ int main(int argc, char ** argv){
   double time = glfwGetTime();
   double dt = 0, vdt = 0; // virtuel dt, added to dt on data-arrival
   double fps = 0;
-  bool paused = false;
+  bool paused = true;
   
   mouseR = {0,0};
   mouseV = {0,0};
@@ -119,18 +119,15 @@ int main(int argc, char ** argv){
     {
       timeToBroadcast = 0.1; /// 2x per sec
       size_t size;
-      //void * d = game.packData(size, glfwGetTime());
       void * d = game.packUpdateData(size, glfwGetTime());
-      //ENetPacket * packet = enet_packet_create(d,size,0,PTYPE_COMPLETE);// ENET_PACKET_FLAG_RELIABLE
       ENetPacket * packet = enet_packet_create(d,size,0,PTYPE_UPDATE);// ENET_PACKET_FLAG_RELIABLE
-      //game.unpackUpdateData(enet_packet_data(packet), enet_packet_size(packet), glfwGetTime()+0.1f);
-      //vdt = game.unpackData(enet_packet_data(packet), enet_packet_size(packet), glfwGetTime()+0.1f);
-      // send packet to peer over channel 1
+
       enet_host_broadcast(host, 1, packet);
       enet_host_flush (host);
       free(d);
       game.clearChanged();
     }
+    
     while (enet_host_service (host, & event, 0) > 0)
     {
       switch (event.type)
@@ -141,7 +138,6 @@ int main(int argc, char ** argv){
                   event.peer -> address.port);
           /* Store any relevant client information here. */
           event.peer -> data = (void*)"Client information";
-          paused = false; // todo remove
           break;
       case ENET_EVENT_TYPE_RECEIVE:
           //printf ("A packet of length %u containing %f was received from %s on channel %u.\n",                  event.packet -> dataLength,                  *(double*)event.packet -> data,                  (char*)event.peer -> data,                  event.channelID);
@@ -156,9 +152,19 @@ int main(int argc, char ** argv){
               enet_peer_send(event.peer, 0, packet);
               enet_host_flush (host);
             } break;
-            case PTYPE_GAME_SETTINGS: 
-            { // send game settings to client
-              
+            case PTYPE_COMPLETE: // send requestet game-sync
+            {      
+              size_t size;
+              void * d = game.packData(size, glfwGetTime());
+              ENetPacket * packet = enet_packet_create(d,size,ENET_PACKET_FLAG_RELIABLE,PTYPE_COMPLETE);
+              enet_peer_send(event.peer, 1, packet);
+              free(d);
+            } break;
+            case PTYPE_GAME_CONFIG: 
+            { // send game config to client
+              Game::GameConfig config = game.getConfig();
+              ENetPacket * packet = enet_packet_create(&config,sizeof(Game::GameConfig),ENET_PACKET_FLAG_RELIABLE, PTYPE_GAME_CONFIG); 
+              enet_peer_send(event.peer, 1, packet);
             } break;
             case PTYPE_SHIPS_MOVE:
             {
@@ -171,6 +177,14 @@ int main(int argc, char ** argv){
             case PTYPE_TEXT:
             {
               
+            } break;
+            case PTYPE_START:
+            {
+              paused = false;
+              // tell the game is going on
+              double time = glfwGetTime();
+              ENetPacket * packet = enet_packet_create(&time,sizeof(time), ENET_PACKET_FLAG_RELIABLE, PTYPE_START);
+              enet_host_broadcast(host, 0, packet);
             } break;
             default: ;
           }
