@@ -105,7 +105,7 @@ void Game::generateTree(){
     for(size_t i=0; i<mShips[party].size; i++){
       if(ships[i].health>0){
         TREE(party,(size_t)(ships[i].x)/GRID_SIZE,(size_t)(ships[i].y)/GRID_SIZE).size++;
-        TREE(party,(size_t)(ships[i].x)/GRID_SIZE,(size_t)(ships[i].y)/GRID_SIZE).shiplist.push_front(&ships[i]); // todo figure out why it takes sooo much time. maybe just update Tree instead of building it completely new
+        TREE(party,(size_t)(ships[i].x)/GRID_SIZE,(size_t)(ships[i].y)/GRID_SIZE).shiplist.push_back(&ships[i]); // todo figure out why it takes sooo much time. maybe just update Tree instead of building it completely new
       }
     }
   }

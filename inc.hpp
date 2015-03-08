@@ -1,7 +1,7 @@
 #ifndef __INC__
 #define __INC__
 
-#include <forward_list>
+#include <cstdlib>
 #include <vector>
 
 #define UPGRADE_MAX_LVL       10    // max level for upgrades
@@ -28,9 +28,9 @@
 
 #define SHOT_SPEED           640    // shot-speed pixel per second
 #define SHOT_LIFETIME          1.    // timeToLive of a shot, in sec
-#define SHOT_LENGTH           16
+#define SHOT_LENGTH           16    // length of a shot in pixel
 
-#define GRID_SIZE            100    //
+#define GRID_SIZE            100    // for space-partitioning
 
 enum Party{PA=0,PB,PN};
 enum Upgrade{ECONOMY=0,DEFENSE,PRODUCTION};
@@ -96,7 +96,7 @@ struct saShot {
 // to partition the map
 struct sSquare {
   size_t size;
-  std::forward_list<sShip*> shiplist; 
+  std::vector<sShip*> shiplist; 
 };
 
 /// random numbers
