@@ -12,7 +12,7 @@ static void callback_mouseScroll(GLFWwindow* window, double dx, double dy);
 
 
 #define TIME_TO_SYNC_TIME 0.5f
-#define GAMESTATE_OLD 0.5f // gamestates older than this will be discarded
+#define GAMESTATE_OLD 100.f // dont care about age! 0.5f // gamestates older than this will be discarded
 int main(int argc, char ** argv){
   freopen("stderr_client.txt","w",stderr);
   fprintf(stderr, "Started Client\n");
