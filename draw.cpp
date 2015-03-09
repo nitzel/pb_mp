@@ -1,7 +1,7 @@
 #include "draw.hpp"
 struct sInfo info;
 
-const char * textureNames[] = {"mFont.png","planet.png","ship.png"};
+const char * textureNames[] = {"mFont.png","planet.png","ship.png","ship_marker.png"};
 
 void initGlfw(const char * title, const int screenW, const int screenH) {
   if(!glfwInit())
@@ -151,6 +151,25 @@ void drawShips(const saShip * sShips, const float dX, const float dY){
   glEnd();
   glDisable(GL_TEXTURE_2D); 
 }
+void drawShipMarkers(const sShip * const ships, std::vector<size_t> & selectedShips, const float dX, const float dY){
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, info.textures[TEX_SHIP_MARKER].id);
+  glBegin(GL_QUADS);
+  glColor3ub(255,255,255); // always white
+  //glColor3ub(75, 255, 75);
+  for(size_t i : selectedShips){
+    if(ships[i].health>0){
+      //glColor3ub(party * 255, (1 - party) * 255, (10 - ships[i].health) * 25);
+      glTexCoord2f(0.0,0.0); glVertex2i(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
+      glTexCoord2f(1.0,0.0); glVertex2i(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
+      glTexCoord2f(1.0,1.0); glVertex2i(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
+      glTexCoord2f(0.0,1.0); glVertex2i(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
+    }
+  }
+  glEnd();
+  glDisable(GL_TEXTURE_2D); 
+}
+
 void drawShots(const saShot * sShots, const float dX, const float dY){
   //glDisable(GL_BLEND); // BLEND because of GL_LINE_SMOOTH, otherwise can be turned off
   glBegin(GL_LINES);
@@ -167,6 +186,19 @@ void drawShots(const saShot * sShots, const float dX, const float dY){
     }
   glEnd();
   //glEnable(GL_BLEND);
+}
+
+
+void drawRectangle(vec2 v1, vec2 v2, const float dX, const float dY){
+  glBegin(GL_LINE_STRIP);
+  glColor3ub(255,255,255);
+  glVertex2i(dX+v1.x,   dY+v1.y); // start upper left
+  glVertex2i(dX+v2.x,   dY+v1.y); // go upper right
+  glVertex2i(dX+v2.x,   dY+v2.y); // go lower right
+  glVertex2i(dX+v1.x,   dY+v2.y); // go lower left
+  glVertex2i(dX+v1.x,   dY+v1.y); // to beginning
+
+  glEnd();
 }
 
 void loadTextures(){

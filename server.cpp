@@ -168,7 +168,8 @@ int main(int argc, char ** argv){
             } break;
             case PTYPE_SHIPS_MOVE:
             {
-              
+              printf("received shipmove event\n");
+              game.sendShips(enet_packet_data(event.packet));
             } break;
             case PTYPE_PLANET_ACTION:
             {

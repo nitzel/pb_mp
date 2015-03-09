@@ -3,7 +3,7 @@
 #include "net.hpp"
 
 // just about mouseclicks/releases!
-int mouseChanged[8];  // -1 nothing, GLFW_PRESS or GLFW_RELEASE
+int mouseChanged[8]{-1,-1,-1,-1,-1,-1,-1,-1};  // -1 nothing, GLFW_PRESS or GLFW_RELEASE
 vec2 mouseStates [8][4]; // mousebutton 0-7, posDown(R), posUp(R), posDown(Virtual), posUp
 
 static void callback_mouseMove(GLFWwindow* window, double xpos, double ypos);
@@ -17,13 +17,11 @@ int main(int argc, char ** argv){
   freopen("stderr_client.txt","w",stderr);
   fprintf(stderr, "Started Client\n");
   char * serverIP = (char*)"localhost";
-  size_t shipAmount = 1000;
-  if(argc==3){
+  if(argc==2){
     serverIP = argv[1];
-    shipAmount = atoi(argv[2]);
   }
   
-  printf("Server: %s\nMAX-Ships: %d\n", serverIP, shipAmount);
+  printf("Server: %s\n", serverIP);
   
   if (enet_initialize () != 0)
   {
@@ -66,7 +64,7 @@ int main(int argc, char ** argv){
   mouseV = {0,0};
   screen = {800,600}; // {640, 480};//
   view   = {0,0};
-  Game * game = nullptr; //(Game::createConfig(6, shipAmount, vec2{2000,2000}));
+  Game * game = nullptr; 
   ///////////////////////////////
   // init GLFW
   /////////////////////////////////s
@@ -112,21 +110,35 @@ int main(int argc, char ** argv){
     //////////////////
     // Handle input //
     //////////////////
-    
-    // evaluate mouseactions
-    if(mouseChanged[GLFW_MOUSE_BUTTON_1] == GLFW_RELEASE) { // left up
-      vec2 vp = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_PRESS+2]; // press
-      vec2 vr = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_RELEASE+2]; // release
-      if(vp.x != vr.x || vp.y != vr.y){ // range select
-        game->select(vp, vr);
-      } else { // just a click
-        game->select(vp);
-      }
-      mouseChanged[GLFW_MOUSE_BUTTON_1] = -1; // mark as read
-    }
-    
-    // move view
     if(game){
+      // evaluate mouseactions
+      if(mouseChanged[GLFW_MOUSE_BUTTON_1] == GLFW_RELEASE) { // left up
+        vec2 vp = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_PRESS+2]; // press
+        vec2 vr = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_RELEASE+2]; // release
+        if(vp.x != vr.x || vp.y != vr.y){ // range select
+          game->select(vp, vr);
+        } else { // just a click
+          game->select(vp);
+        }
+        mouseChanged[GLFW_MOUSE_BUTTON_1] = -1; // mark as read
+      }
+      if(mouseChanged[GLFW_MOUSE_BUTTON_2] == GLFW_RELEASE) { // right up
+        vec2 vp = mouseStates[GLFW_MOUSE_BUTTON_2][GLFW_PRESS+2]; // press
+        vec2 vr = mouseStates[GLFW_MOUSE_BUTTON_2][GLFW_RELEASE+2]; // release
+        if(vp.x != vr.x || vp.y != vr.y){ // todo: formations
+          //game->select(vp, vr);
+        } else { // just a click, send to target
+          size_t size = 0;
+          void * data = game->sendSelectedGetData(PA, vp, size);
+          //game->sendShips(data);
+          ENetPacket * packet = enet_packet_create(data,size, ENET_PACKET_FLAG_RELIABLE, PTYPE_SHIPS_MOVE);
+          enet_peer_send(peer, 1, packet);
+          free(data);
+        }
+        mouseChanged[GLFW_MOUSE_BUTTON_2] = -1; // mark as read
+      }
+    
+      // move view
       float dx=0, dy=0;
       if(mouseR.x<80) dx = mouseR.x-80;
       if(mouseR.y<80) dy = mouseR.y-80;
@@ -158,9 +170,13 @@ int main(int argc, char ** argv){
     // draw gamecontent
     if(game) {
       drawPlanets(game->mPlanets,  -view.x, -view.y);
+      drawShipMarkers  (game->mShips[PA].ships, game->selectedShips, -view.x, -view.y);
       drawShips  (game->mShips,    -view.x, -view.y);
       drawShots  (game->mShots,    -view.x, -view.y);
       drawTree   (game->mTree,     game->treeW, game->treeH, -view.x, -view.y);
+      if(mouseChanged[GLFW_MOUSE_BUTTON_1] == GLFW_PRESS){ // if dragging, draw rectangle
+        drawRectangle(mouseStates[GLFW_MOUSE_BUTTON_1][2+GLFW_PRESS],mouseV, -view.x, -view.y); // draw rectangle, virtual one (2+0/1)
+      }
           char s[100];
       sprintf(s,"FPS=%4.1f=%2.1f t=%.1fs Money A=%5i B=%5i MR%i/%i MV%i/%i View%i/%i",fps, 1/dt, time, (int)game->mMoney[PA],(int)game->mMoney[PB], (int)mouseR.x, (int)mouseR.y, (int)mouseV.x, (int)mouseV.y, (int)view.x, (int)view.y);
       glColor3ub(255,255,255);
