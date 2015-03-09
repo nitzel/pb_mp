@@ -4,6 +4,8 @@ Requires: [glfw3](http://www.glfw.org/download.html "glfw"), [ENet](http://enet.
 
 Run `make` to compile and run `./server` or `./client` to play!
 
+Both, client and server, can take a console-parameter. For the client it is the server-ip, and for the server it's the maximum amount of ships per player. 
+
 # ToDo
   - [todolist](https://github.com/nitzel/pb_mp/blob/master/notes/todo%2Bideas.md "more extensive todo list")
   - All :)

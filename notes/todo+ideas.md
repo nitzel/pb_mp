@@ -4,9 +4,9 @@
 - [x] ENet with commands (net.hpp)
 - [x] Send new shots only
 - [x] Send new ships and changed ones
-- [ ] Game::select
-- [ ] Commands from client to server
-  - [ ] Send ships to a target
+- [x] Game::select
+- [ x Commands from client to server
+  - [x] Send ships to a target
   - [ ] Planet Upgrades (first with shortcuts)
 - [ ] Client GUI
   - [ ] Minimap
