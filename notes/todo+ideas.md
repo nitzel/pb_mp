@@ -5,25 +5,28 @@
 - [x] Send new shots only
 - [x] Send new ships and changed ones
 - [x] Game::select
-- [ x Commands from client to server
+- [ ] Commands from client to server
   - [x] Send ships to a target
   - [ ] Planet Upgrades (first with shortcuts)
 - [ ] Client GUI
   - [ ] Minimap
-  - [ ] Select and order ships
+  - [x] Select and order ships
   - [ ] Select and order Planets
   - [ ] Zoom ! 
-
+- [ ] assign party to clients
+  - [ ] so that they are either PA or PB
+  - [ ] They should get a notification of that
+  - [ ] adapt commands like ship-sending to this
 # TODO 2
-- [x] colorize planets,             DONE / was already ...
-- [x] let planets shoot             DONE
-- [x] target planets for shooting   DONE
-- [x] planets loose levels on death DONE
-- [ ] and then multiplayer :)      
+- [x] colorize planets,            
+- [x] let planets shoot            
+- [x] target planets for shooting  
+- [x] planets loose levels on death
+- [x] and then multiplayer (its not realy "playing" yet)      
+- [x] make shields usable!
 - [ ] check for game over                 todo later
   - count total amount of ships with spaceTree
   - count planets per player
-- [x] make shields usable!          DONE
 
 
 #Client needs
