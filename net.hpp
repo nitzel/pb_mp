@@ -14,7 +14,9 @@ enum PacketType {
   PTYPE_SHIPS_MOVE,         // C sends commanded ships
   PTYPE_PLANET_ACTION,      // C sends planet action (upgrade, shipqueue)
   PTYPE_TEXT,               // C/S sends text message
-  PTYPE_START,              // C signals ready/S starts game
+  PTYPE_READY,              // C signals ready true/false
+  PTYPE_START,              // S starts game
+  PTYPE_PAUSE,              // S pauses game
 };
 
 ENetPacket* enet_packet_create(	const void * 	data, size_t 	dataLength, enet_uint32 	flags, const PacketType packetType);
