@@ -62,7 +62,7 @@ int main(int argc, char ** argv){
   
   mouseR = {0,0};
   mouseV = {0,0};
-  screen = {800,600}; // {640, 480};//
+  screen = {640, 480}; // {800, 600};//
   view   = {0,0};
   Game * game = nullptr; 
   ///////////////////////////////
@@ -77,6 +77,7 @@ int main(int argc, char ** argv){
   ////////////////
   // VARS
   ////////////////
+  Party party = PN; // shall be overwritten later!
   double time = glfwGetTime();
   double dt = 0, vdt = 0; // virtuel dt, added to dt on data-arrival
   double fps = 0;
@@ -116,9 +117,9 @@ int main(int argc, char ** argv){
         vec2 vp = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_PRESS+2]; // press
         vec2 vr = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_RELEASE+2]; // release
         if(vp.x != vr.x || vp.y != vr.y){ // range select
-          game->select(vp, vr);
+          game->select(party, vp, vr);
         } else { // just a click
-          game->select(vp);
+          game->select(party, vp);
         }
         mouseChanged[GLFW_MOUSE_BUTTON_1] = -1; // mark as read
       }
@@ -202,6 +203,13 @@ int main(int argc, char ** argv){
               glfwSetTime(t[1]+(glfwGetTime()-t[0])/2);
               timeSynced = true;
             } break;
+            case PTYPE_PARTY_ASSIGN: // got a party assigned
+            {
+              Party newParty = *(Party*)enet_packet_data(event.packet);
+              if(party!=PN){fprintf(stderr,"ERR: MultipePartyAssign: %i assigned, was %i before",newParty, party);} // reporting error
+              party = newParty;
+              printf("new party: %i\n",party);
+            } break;
             case PTYPE_COMPLETE: // complete gamestate
             {
               if(game){
@@ -252,7 +260,7 @@ int main(int argc, char ** argv){
               vdt = glfwGetTime()-*(double*)enet_packet_data(event.packet);
             } break;
             case PTYPE_PAUSE:
-            { // todo testing!!
+            { 
               printf("pause!\n");
               paused = true;
               // todo time since stop... should be gone backwards

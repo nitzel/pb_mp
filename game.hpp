@@ -51,8 +51,8 @@ class Game {
     void * packUpdateData(size_t & size, double time); // 
     double unpackUpdateData(void * const data, size_t size, const double time); // returns timeDelta
     
-    void select(vec2 v);
-    void select(vec2 v1, vec2 v2);
+    void select(Party party, vec2 v);
+    void select(Party party, vec2 v1, vec2 v2);
     /// command all selected ships to go somewhere
     void * sendSelectedGetData(Party party, vec2 v, size_t & size);
     void sendShips(void * const data);
