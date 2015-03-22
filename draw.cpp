@@ -39,11 +39,15 @@ void initGfx() {
   // make a cursor
   size_t pixels[15][15];
   memset(pixels, 0x00, sizeof(pixels));
-  pixels[0][0] = 0xffffffff;
-  pixels[14][0] = 0xffffffff;
-  pixels[14][14] = 0xffffffff;
-  pixels[0][14] = 0xffffffff;
-  pixels[7][7] = 0xffffffff;
+  for(size_t i = 0; i<15; i++){
+    pixels[0][i]  = 0xffffffff;        // vert1
+    pixels[14][i] = 0xffffffff;        // vert2
+    pixels[i][0]  = 0xffffffff;        // horizontal1
+    pixels[i][14] = 0xffffffff;        // horizontal2
+    pixels[i][i]  = 0xffffffff;        // diag1
+    pixels[i][15-i-1] = 0xffffffff;   // diag2
+  }
+
   GLFWimage image;
   image.width = 15;
   image.height = 15;
