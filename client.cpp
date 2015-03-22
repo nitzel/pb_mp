@@ -36,7 +36,7 @@ int main(int argc, char ** argv){
   ENetEvent event;
   
   // client
-  host = enet_host_create(NULL,1,2,0,0);
+  host = enet_host_create(NULL,1,3,0,0); // 3 channels
   if(host == NULL) {
     printf("an error occured while trying to create an enet client.\n");
     exit(EXIT_FAILURE);
@@ -45,7 +45,7 @@ int main(int argc, char ** argv){
   enet_address_set_host(&address, serverIP);
   address.port = 12345;
   
-  peer = enet_host_connect(host, &address, 2, 0);
+  peer = enet_host_connect(host, &address, 3, 0); // 3 channels
   
   if(peer == nullptr){
     printf("no available peers for initiating an enet connection\n");
@@ -203,18 +203,21 @@ int main(int argc, char ** argv){
               timeSynced = true;
             } break;
             case PTYPE_COMPLETE: // complete gamestate
-            if(game){
-              const double t = *(double*)enet_packet_data(event.packet);
-              const double pDt = glfwGetTime()-t; // packet delta time (packet age)
-              printf("bc size=%d servertime=%.2f dt=%.2f\n", enet_packet_size(event.packet), t, pDt);
-              if(pDt<0) { // packet from "future"
-                fprintf(stderr, "future packet received from t=%.2f at %.2f\n",t,glfwGetTime());
-              } else if(pDt < GAMESTATE_OLD) {  // todo better algorithm than just age! we discard too old packets
-                vdt = game->unpackData(enet_packet_data(event.packet), enet_packet_size(event.packet), glfwGetTime());
+            {
+              if(game){
+                const double t = *(double*)enet_packet_data(event.packet);
+                const double pDt = glfwGetTime()-t; // packet delta time (packet age)
+                printf("bc size=%d servertime=%.2f dt=%.2f\n", enet_packet_size(event.packet), t, pDt);
+                if(pDt<0) { // packet from "future"
+                  fprintf(stderr, "future packet received from t=%.2f at %.2f\n",t,glfwGetTime());
+                } else if(pDt < GAMESTATE_OLD) {  // todo better algorithm than just age! we discard too old packets
+                  vdt = game->unpackData(enet_packet_data(event.packet), enet_packet_size(event.packet), glfwGetTime());
+                }
+                // tell server this client is ready
+                bool ready = true;
+                ENetPacket * packet = enet_packet_create(&ready,sizeof(ready), ENET_PACKET_FLAG_RELIABLE, PTYPE_READY);
+                enet_peer_send(peer, 1, packet);
               }
-              // tell server to continue
-              ENetPacket * packet = enet_packet_create(nullptr,0, ENET_PACKET_FLAG_RELIABLE, PTYPE_START);
-              enet_peer_send(peer, 1, packet);
             } break;
             case PTYPE_UPDATE:
             if(game){
@@ -243,9 +246,17 @@ int main(int argc, char ** argv){
             } break;
             case PTYPE_START:
             {
+              printf("start!\n");
               paused = false;
               // time since start...
               vdt = glfwGetTime()-*(double*)enet_packet_data(event.packet);
+            } break;
+            case PTYPE_PAUSE:
+            { // todo testing!!
+              printf("pause!\n");
+              paused = true;
+              // todo time since stop... should be gone backwards
+              //vdt = -(glfwGetTime()-*(double*)enet_packet_data(event.packet));
             } break;
             default: ;
           }
