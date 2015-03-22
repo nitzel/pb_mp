@@ -55,7 +55,7 @@ class Game {
     void select(Party party, vec2 v1, vec2 v2);
     /// command all selected ships to go somewhere
     void * sendSelectedGetData(Party party, vec2 v, size_t & size);
-    void sendShips(void * const data);
+    void sendShips(Party party, void * const data);
     
     void clearChanged();
     

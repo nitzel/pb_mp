@@ -130,8 +130,8 @@ int main(int argc, char ** argv){
           //game->select(vp, vr);
         } else { // just a click, send to target
           size_t size = 0;
-          void * data = game->sendSelectedGetData(PA, vp, size);
-          game->sendShips(data);
+          void * data = game->sendSelectedGetData(party, vp, size);
+          game->sendShips(party, data);
           ENetPacket * packet = enet_packet_create(data,size, ENET_PACKET_FLAG_RELIABLE, PTYPE_SHIPS_MOVE);
           enet_peer_send(peer, 1, packet);
           free(data);

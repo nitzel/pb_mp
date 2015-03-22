@@ -875,13 +875,13 @@ void * Game::sendSelectedGetData(Party party, vec2 v, size_t & size){
 /**
  tage data from above and execute on ships
 */
-void Game::sendShips(void * const data){
+void Game::sendShips(Party party, void * const data){
   char * const dat = (char *)data;
   const size_t S = *(size_t*)dat;
   size_t * ids = (size_t*)(dat+sizeof(size_t));
   vec2 * vecs = (vec2*)(dat+sizeof(size_t)+sizeof(size_t)*S);
   for(size_t i=0; i<S; i++){
-    flyToTarget(PA, ids[i], vecs[i].x, vecs[i].y);
+    flyToTarget(party, ids[i], vecs[i].x, vecs[i].y);
   }
 }
 

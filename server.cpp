@@ -63,7 +63,7 @@ int main(int argc, char ** argv){
   
   mouseR = {0,0};
   mouseV = {0,0};
-  screen = {800,600}; // {640, 480};//
+  screen = {640,480}; // {640, 480};//
   view   = {0,0};
   ////////////////
   // GAME VARS
@@ -168,8 +168,6 @@ int main(int argc, char ** argv){
         }
       } break;
       case ENET_EVENT_TYPE_RECEIVE:
-          //printf ("A packet of length %u containing %f was received from %s on channel %u.\n",                  event.packet -> dataLength,                  *(double*)event.packet -> data,                  (char*)event.peer -> data,                  event.channelID);
-          //printf("packet received type=%d\n",enet_packet_type(event.packet));
           switch(enet_packet_type(event.packet)){
             case PTYPE_TIME_SYNC:
             {
@@ -197,7 +195,8 @@ int main(int argc, char ** argv){
             case PTYPE_SHIPS_MOVE:
             {
               printf("received shipmove event\n");
-              game.sendShips(enet_packet_data(event.packet));
+              Party commandingParty = ((ClientData*)event.peer -> data) -> party;
+              game.sendShips(commandingParty, enet_packet_data(event.packet));
             } break;
             case PTYPE_PLANET_ACTION:
             {
