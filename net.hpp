@@ -9,7 +9,7 @@ enum PacketType {
   PTYPE_TIME_SYNC=0,        // C requests/S answers timesync
   PTYPE_COMPLETE,           // C requests/S answers complete game-state sync
   PTYPE_UPDATE,             // S sends partial game-state (changed data)
-  PTYPE_PARTY_ASSIGN        // S sends assigned party to client
+  PTYPE_PARTY_ASSIGN,       // S sends assigned party to client
   PTYPE_GAME_CONFIG,        // C requests/S answers game configuration (x ships, y shots, z planets, mapsize...)
   PTYPE_SHIPS_MOVE,         // C sends commanded ships
   PTYPE_PLANET_ACTION,      // C sends planet action (upgrade, shipqueue)
