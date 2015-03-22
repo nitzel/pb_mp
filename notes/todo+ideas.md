@@ -14,7 +14,7 @@
   - [ ] Select and order Planets
   - [ ] Zoom ! 
 - [ ] assign party to clients
-  - [ ] so that they are either PA or PB
+  - [x]  so that they are either PA or PB
   - [ ] They should get a notification of that
   - [ ] adapt commands like ship-sending to this
   
