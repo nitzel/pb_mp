@@ -5,7 +5,17 @@
 #include <enet/enet.h>
 
 #define __PTYPE enet_uint8
-enum PacketType {PTYPE_TIME_SYNC=0, PTYPE_COMPLETE, PTYPE_UPDATE, PTYPE_GAME_CONFIG, PTYPE_SHIPS_MOVE, PTYPE_PLANET_ACTION, PTYPE_TEXT, PTYPE_START};
+enum PacketType {
+  PTYPE_TIME_SYNC=0,        // C requests/S answers timesync
+  PTYPE_COMPLETE,           // C requests/S answers complete game-state sync
+  PTYPE_UPDATE,             // S sends partial game-state (changed data)
+  PTYPE_PARTY_ASSIGN        // S sends assigned party to client
+  PTYPE_GAME_CONFIG,        // C requests/S answers game configuration (x ships, y shots, z planets, mapsize...)
+  PTYPE_SHIPS_MOVE,         // C sends commanded ships
+  PTYPE_PLANET_ACTION,      // C sends planet action (upgrade, shipqueue)
+  PTYPE_TEXT,               // C/S sends text message
+  PTYPE_START,              // C signals ready/S starts game
+};
 
 ENetPacket* enet_packet_create(	const void * 	data, size_t 	dataLength, enet_uint32 	flags, const PacketType packetType);
 enet_uint8 * enet_packet_data(ENetPacket * packet);
