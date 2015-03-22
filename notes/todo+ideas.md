@@ -17,6 +17,7 @@
   - [ ] so that they are either PA or PB
   - [ ] They should get a notification of that
   - [ ] adapt commands like ship-sending to this
+  
 # TODO 2
 - [x] colorize planets,            
 - [x] let planets shoot            
