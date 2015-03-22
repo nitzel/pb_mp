@@ -13,10 +13,11 @@
   - [x] Select and order ships
   - [ ] Select and order Planets
   - [ ] Zoom ! 
-- [ ] assign party to clients
-  - [ ] so that they are either PA or PB
-  - [ ] They should get a notification of that
-  - [ ] adapt commands like ship-sending to this
+- [x] assign party to clients
+  - [x] so that they are either PA or PB
+  - [x] They should get a notification of that
+  - [x] adapt commands like ship-sending to this
+  
 # TODO 2
 - [x] colorize planets,            
 - [x] let planets shoot            

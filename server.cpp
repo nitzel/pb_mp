@@ -2,7 +2,14 @@
 #include "draw.hpp"
 #include "net.hpp"
 
+struct ClientData {
+  Party party;
+  ENetPeer * peer;
+  bool isReady;
+};
 static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
+bool allClientsReady(ClientData * clientData, const size_t size);
+void broadcastIfReadystateChanged(ENetHost * host, const bool formerReadyState, const bool newReadyState);
 
 int main(int argc, char ** argv){  
   freopen("stderr_server.txt","w",stderr);
@@ -24,7 +31,6 @@ int main(int argc, char ** argv){
   atexit (enet_deinitialize);
   
   ENetHost * host;
-  //ENetPeer * peer;
   ENetAddress address;
   ENetEvent event;
   
@@ -32,7 +38,7 @@ int main(int argc, char ** argv){
   printf("Server\n");
   address.host = ENET_HOST_ANY;
   address.port = 12345;
-  host = enet_host_create(&address, 32, 2, 0, 0);
+  host = enet_host_create(&address, 2, 3, 0, 0); // 2 connections, 3 channels
   
   if(host == NULL) {
     printf("An error occured while trying to create an ENet server host.\n");
@@ -43,6 +49,13 @@ int main(int argc, char ** argv){
   ////////////////
   // VARS
   ////////////////
+  ClientData clientData[PN];
+  for(size_t party = 0; party < PN; party++){
+    clientData[party].party = (Party)party;
+    clientData[party].peer = nullptr;
+    clientData[party].isReady = false;
+  }
+  
   double time = glfwGetTime();
   double dt = 0, vdt = 0; // virtuel dt, added to dt on data-arrival
   double fps = 0;
@@ -50,7 +63,7 @@ int main(int argc, char ** argv){
   
   mouseR = {0,0};
   mouseV = {0,0};
-  screen = {800,600}; // {640, 480};//
+  screen = {640,480}; // {640, 480};//
   view   = {0,0};
   ////////////////
   // GAME VARS
@@ -133,15 +146,28 @@ int main(int argc, char ** argv){
       switch (event.type)
       {
       case ENET_EVENT_TYPE_CONNECT:
-          printf ("A new client connected from %x:%u.\n", 
-                  event.peer -> address.host,
-                  event.peer -> address.port);
-          /* Store any relevant client information here. */
-          event.peer -> data = (void*)"Client information";
-          break;
+      {
+        printf ("A new client connected from %x:%u.\n", 
+                event.peer -> address.host,
+                event.peer -> address.port);
+        /* Store any relevant client information here. */
+        Party assignedParty = PN;
+        for(size_t party = 0; party < PN; party++) {
+          if(clientData[party].peer == 0){
+            event.peer -> data = (void*)&clientData[party];
+            clientData[party].peer = event.peer;
+            assignedParty = (Party)party;
+            break;
+          }
+        }
+        if(assignedParty!=PN){ // client was accepted as a player
+            enet_peer_send(event.peer, 1, 
+              enet_packet_create(&assignedParty,sizeof(Party), ENET_PACKET_FLAG_RELIABLE, PTYPE_PARTY_ASSIGN));
+        } else {
+          // todo tell client he was not accepted as a player
+        }
+      } break;
       case ENET_EVENT_TYPE_RECEIVE:
-          //printf ("A packet of length %u containing %f was received from %s on channel %u.\n",                  event.packet -> dataLength,                  *(double*)event.packet -> data,                  (char*)event.peer -> data,                  event.channelID);
-          //printf("packet received type=%d\n",enet_packet_type(event.packet));
           switch(enet_packet_type(event.packet)){
             case PTYPE_TIME_SYNC:
             {
@@ -169,7 +195,8 @@ int main(int argc, char ** argv){
             case PTYPE_SHIPS_MOVE:
             {
               printf("received shipmove event\n");
-              game.sendShips(enet_packet_data(event.packet));
+              Party commandingParty = ((ClientData*)event.peer -> data) -> party;
+              game.sendShips(commandingParty, enet_packet_data(event.packet));
             } break;
             case PTYPE_PLANET_ACTION:
             {
@@ -179,13 +206,13 @@ int main(int argc, char ** argv){
             {
               
             } break;
-            case PTYPE_START:
+            case PTYPE_READY:
             {
-              paused = false;
-              // tell the game is going on
-              double time = glfwGetTime();
-              ENetPacket * packet = enet_packet_create(&time,sizeof(time), ENET_PACKET_FLAG_RELIABLE, PTYPE_START);
-              enet_host_broadcast(host, 0, packet);
+              bool formerReadyState = allClientsReady(clientData, PN);
+              // client tells: he is (not) ready
+              ((ClientData*)event.peer -> data) -> isReady = *(bool*)enet_packet_data(event.packet);
+              paused = !allClientsReady(clientData, PN);
+              broadcastIfReadystateChanged(host, formerReadyState, !paused);
             } break;
             default: ;
           }
@@ -194,11 +221,20 @@ int main(int argc, char ** argv){
           enet_packet_destroy (event.packet);
           break;
       case ENET_EVENT_TYPE_DISCONNECT:
-          printf ("%s disconnected.\n", (char*)event.peer -> data);
+      {
+          printf ("client party=%i disconnected.\n", (size_t)((ClientData*)event.peer -> data)->party);
+          
+          bool formerReadyState = allClientsReady(clientData, PN);
           /* Reset the peer's client information. */
-          event.peer -> data = NULL;
-          paused = true; // todo remove
-          break;
+          if(event.peer -> data != nullptr) {
+            ((ClientData*)event.peer -> data) -> peer = nullptr;
+            ((ClientData*)event.peer -> data) -> isReady = false;
+            event.peer -> data = nullptr;
+          }
+          // broadcast changes if necessary
+          paused = !allClientsReady(clientData, PN); 
+          broadcastIfReadystateChanged(host, formerReadyState, !paused);
+      } break;
       case ENET_EVENT_TYPE_NONE:
           break;
       default:;
@@ -219,3 +255,32 @@ static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
   mouseV.x=mouseR.x + view.x;
   mouseV.y=mouseR.y + view.y;
 }
+
+/**
+checks if all clients are read (ClientData.isReady==true)
+*/
+bool allClientsReady(ClientData * clientData, const size_t size){
+  for(size_t i = 0; i < size; i++){
+    if(!clientData[i].isReady)
+      return false;
+  }
+  return true;
+}
+/**
+returns the new paused-state
+*/
+void broadcastIfReadystateChanged(ENetHost * host, const bool formerReadyState, const bool newReadyState){
+  if(formerReadyState != newReadyState) { // sth changed
+    PacketType command;
+    if(newReadyState){ // all ready
+      command = PTYPE_START;
+    } else { // at least one is not ready
+      command = PTYPE_PAUSE;
+    }
+    // tell if game continues/pauses
+    double time = glfwGetTime();
+    ENetPacket * packet = enet_packet_create(&time,sizeof(time), ENET_PACKET_FLAG_RELIABLE, command);
+    enet_host_broadcast(host, 0, packet);
+  }
+}
+// eof

@@ -799,14 +799,14 @@ Game::GameConfig Game::getConfig(){
   return config;
 }
 
-void Game::select(vec2 v){
+void Game::select(Party party, vec2 v){
   // todo implement select(vec2) to select one ship or one planet
-  select(v,v); // right now it's indirectly just deselecting
+  select(party, v,v); // right now it's indirectly just deselecting
 }
 /** selects ships within the rectangle formed by the two points v1, v2 
 the selected ships can be found in the list Game::selectedShips
 */
-void Game::select(vec2 v1, vec2 v2){
+void Game::select(Party party, vec2 v1, vec2 v2){
   if(mTree == nullptr)
     return;
   // todo: select depending on which party the player is on PA/PB
@@ -827,9 +827,8 @@ void Game::select(vec2 v1, vec2 v2){
   // traverse tree to look for ships within this range
   for(size_t x=gridA.x; x<=gridB.x; x++){
     for(size_t y=gridA.y; y<=gridB.y; y++){
-      for(size_t targetId : TREE(PA,x,y).shiplist){
-        //printf("checking %d/%d with %d ships\n", x,y,TREE(PA,x,y).size);
-        sShip & target = mShips[PA].ships[targetId];
+      for(size_t targetId : TREE(party,x,y).shiplist){
+        sShip & target = mShips[party].ships[targetId];
         if(target.x >= va.x && target.x <= vb.x && target.y >= va.y && target.y <= vb.y) { // within rectangle
           selectedShips.push_back(targetId); // mark as selected
         }
@@ -876,13 +875,13 @@ void * Game::sendSelectedGetData(Party party, vec2 v, size_t & size){
 /**
  tage data from above and execute on ships
 */
-void Game::sendShips(void * const data){
+void Game::sendShips(Party party, void * const data){
   char * const dat = (char *)data;
   const size_t S = *(size_t*)dat;
   size_t * ids = (size_t*)(dat+sizeof(size_t));
   vec2 * vecs = (vec2*)(dat+sizeof(size_t)+sizeof(size_t)*S);
   for(size_t i=0; i<S; i++){
-    flyToTarget(PA, ids[i], vecs[i].x, vecs[i].y);
+    flyToTarget(party, ids[i], vecs[i].x, vecs[i].y);
   }
 }
 

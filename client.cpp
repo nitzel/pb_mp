@@ -36,7 +36,7 @@ int main(int argc, char ** argv){
   ENetEvent event;
   
   // client
-  host = enet_host_create(NULL,1,2,0,0);
+  host = enet_host_create(NULL,1,3,0,0); // 3 channels
   if(host == NULL) {
     printf("an error occured while trying to create an enet client.\n");
     exit(EXIT_FAILURE);
@@ -45,7 +45,7 @@ int main(int argc, char ** argv){
   enet_address_set_host(&address, serverIP);
   address.port = 12345;
   
-  peer = enet_host_connect(host, &address, 2, 0);
+  peer = enet_host_connect(host, &address, 3, 0); // 3 channels
   
   if(peer == nullptr){
     printf("no available peers for initiating an enet connection\n");
@@ -62,7 +62,7 @@ int main(int argc, char ** argv){
   
   mouseR = {0,0};
   mouseV = {0,0};
-  screen = {800,600}; // {640, 480};//
+  screen = {640, 480}; // {800, 600};//
   view   = {0,0};
   Game * game = nullptr; 
   ///////////////////////////////
@@ -77,6 +77,7 @@ int main(int argc, char ** argv){
   ////////////////
   // VARS
   ////////////////
+  Party party = PN; // shall be overwritten later!
   double time = glfwGetTime();
   double dt = 0, vdt = 0; // virtuel dt, added to dt on data-arrival
   double fps = 0;
@@ -116,9 +117,9 @@ int main(int argc, char ** argv){
         vec2 vp = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_PRESS+2]; // press
         vec2 vr = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_RELEASE+2]; // release
         if(vp.x != vr.x || vp.y != vr.y){ // range select
-          game->select(vp, vr);
+          game->select(party, vp, vr);
         } else { // just a click
-          game->select(vp);
+          game->select(party, vp);
         }
         mouseChanged[GLFW_MOUSE_BUTTON_1] = -1; // mark as read
       }
@@ -129,8 +130,8 @@ int main(int argc, char ** argv){
           //game->select(vp, vr);
         } else { // just a click, send to target
           size_t size = 0;
-          void * data = game->sendSelectedGetData(PA, vp, size);
-          game->sendShips(data);
+          void * data = game->sendSelectedGetData(party, vp, size);
+          game->sendShips(party, data);
           ENetPacket * packet = enet_packet_create(data,size, ENET_PACKET_FLAG_RELIABLE, PTYPE_SHIPS_MOVE);
           enet_peer_send(peer, 1, packet);
           free(data);
@@ -202,19 +203,29 @@ int main(int argc, char ** argv){
               glfwSetTime(t[1]+(glfwGetTime()-t[0])/2);
               timeSynced = true;
             } break;
+            case PTYPE_PARTY_ASSIGN: // got a party assigned
+            {
+              Party newParty = *(Party*)enet_packet_data(event.packet);
+              if(party!=PN){fprintf(stderr,"ERR: MultipePartyAssign: %i assigned, was %i before",newParty, party);} // reporting error
+              party = newParty;
+              printf("new party: %i\n",party);
+            } break;
             case PTYPE_COMPLETE: // complete gamestate
-            if(game){
-              const double t = *(double*)enet_packet_data(event.packet);
-              const double pDt = glfwGetTime()-t; // packet delta time (packet age)
-              printf("bc size=%d servertime=%.2f dt=%.2f\n", enet_packet_size(event.packet), t, pDt);
-              if(pDt<0) { // packet from "future"
-                fprintf(stderr, "future packet received from t=%.2f at %.2f\n",t,glfwGetTime());
-              } else if(pDt < GAMESTATE_OLD) {  // todo better algorithm than just age! we discard too old packets
-                vdt = game->unpackData(enet_packet_data(event.packet), enet_packet_size(event.packet), glfwGetTime());
+            {
+              if(game){
+                const double t = *(double*)enet_packet_data(event.packet);
+                const double pDt = glfwGetTime()-t; // packet delta time (packet age)
+                printf("bc size=%d servertime=%.2f dt=%.2f\n", enet_packet_size(event.packet), t, pDt);
+                if(pDt<0) { // packet from "future"
+                  fprintf(stderr, "future packet received from t=%.2f at %.2f\n",t,glfwGetTime());
+                } else if(pDt < GAMESTATE_OLD) {  // todo better algorithm than just age! we discard too old packets
+                  vdt = game->unpackData(enet_packet_data(event.packet), enet_packet_size(event.packet), glfwGetTime());
+                }
+                // tell server this client is ready
+                bool ready = true;
+                ENetPacket * packet = enet_packet_create(&ready,sizeof(ready), ENET_PACKET_FLAG_RELIABLE, PTYPE_READY);
+                enet_peer_send(peer, 1, packet);
               }
-              // tell server to continue
-              ENetPacket * packet = enet_packet_create(nullptr,0, ENET_PACKET_FLAG_RELIABLE, PTYPE_START);
-              enet_peer_send(peer, 1, packet);
             } break;
             case PTYPE_UPDATE:
             if(game){
@@ -243,9 +254,17 @@ int main(int argc, char ** argv){
             } break;
             case PTYPE_START:
             {
+              printf("start!\n");
               paused = false;
               // time since start...
               vdt = glfwGetTime()-*(double*)enet_packet_data(event.packet);
+            } break;
+            case PTYPE_PAUSE:
+            { 
+              printf("pause!\n");
+              paused = true;
+              // todo time since stop... should be gone backwards
+              //vdt = -(glfwGetTime()-*(double*)enet_packet_data(event.packet));
             } break;
             default: ;
           }
