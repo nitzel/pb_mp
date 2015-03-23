@@ -182,8 +182,8 @@ void drawShots(const saShot * sShots, const float dX, const float dY){
       sShot * shots = sShots[party].shots;
       for(size_t i=0; i<sShots[party].size; i++){
         if(shots[i].timeToLive>0) {
-          glVertex2i(dX+shots[i].x,dY+shots[i].y);
-          glVertex2i(dX+shots[i].x+shots[i].dx*SHOT_LENGTH/SHOT_SPEED,dY+shots[i].y+shots[i].dy*SHOT_LENGTH/SHOT_SPEED);
+          glVertex2f(dX+shots[i].x,dY+shots[i].y);
+          glVertex2f(dX+shots[i].x+shots[i].dx*SHOT_LENGTH/SHOT_SPEED,dY+shots[i].y+shots[i].dy*SHOT_LENGTH/SHOT_SPEED);
           //drawInt(i, shots[i].x, shots[i].y); // draw ID instead, glEnd needed!
         }
       }
