@@ -114,8 +114,8 @@ int main(int argc, char ** argv){
     if(game){
       // evaluate mouseactions
       if(mouseChanged[GLFW_MOUSE_BUTTON_1] == GLFW_RELEASE) { // left up
-        vec2 vp = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_PRESS+2]; // press
-        vec2 vr = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_RELEASE+2]; // release
+        vec2 vp = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_PRESS+2]; // press coords
+        vec2 vr = mouseStates[GLFW_MOUSE_BUTTON_1][GLFW_RELEASE+2]; // release coords
         if(vp.x != vr.x || vp.y != vr.y){ // range select
           game->select(party, vp, vr);
         } else { // just a click
@@ -124,18 +124,19 @@ int main(int argc, char ** argv){
         mouseChanged[GLFW_MOUSE_BUTTON_1] = -1; // mark as read
       }
       if(mouseChanged[GLFW_MOUSE_BUTTON_2] == GLFW_RELEASE) { // right up
-        vec2 vp = mouseStates[GLFW_MOUSE_BUTTON_2][GLFW_PRESS+2]; // press
-        vec2 vr = mouseStates[GLFW_MOUSE_BUTTON_2][GLFW_RELEASE+2]; // release
-        if(vp.x != vr.x || vp.y != vr.y){ // todo: formations
+        vec2 vp = mouseStates[GLFW_MOUSE_BUTTON_2][GLFW_PRESS+2]; // press coords
+        vec2 vr = mouseStates[GLFW_MOUSE_BUTTON_2][GLFW_RELEASE+2]; // release coords
+        //if(vp.x != vr.x || vp.y != vr.y){ // todo: formations
           //game->select(vp, vr);
-        } else { // just a click, send to target
+        //} else { // just a click, send to target
+          size_t formation = 0; // todo circle, square, rect etc...
           size_t size = 0;
-          void * data = game->sendSelectedGetData(party, vp, size);
+          void * data = game->sendSelectedGetData(party, vp, vr, formation, size);
           game->sendShips(party, data);
           ENetPacket * packet = enet_packet_create(data,size, ENET_PACKET_FLAG_RELIABLE, PTYPE_SHIPS_MOVE);
           enet_peer_send(peer, 1, packet);
           free(data);
-        }
+        //}
         mouseChanged[GLFW_MOUSE_BUTTON_2] = -1; // mark as read
       }
     

@@ -54,7 +54,7 @@ class Game {
     void select(Party party, vec2 v);
     void select(Party party, vec2 v1, vec2 v2);
     /// command all selected ships to go somewhere
-    void * sendSelectedGetData(Party party, vec2 v, size_t & size);
+    void * sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation, size_t & size);
     void sendShips(Party party, void * const data);
     
     void clearChanged();
@@ -86,6 +86,7 @@ class Game {
     bool shoot(sShip & ship, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const size_t W, const size_t H, Party party);
     bool shoot(sPlanet & planet, saPlanet & sPlanets, saShot & shots, sSquare * rivalTree, const size_t W, const size_t H);
     /// helping functions
+    inline double vecLen(const vec2 v);
     inline void delta(const float x, const float y, const float tx, const float ty, float & dx, float & dy); /// dx=tx-x
     inline void normalize(float & x, float & y, const float LEN);  /// normalized vector * LEN
     inline size_t distanceSQ(const float x, const float y, const float x2, const float y2); /// distance^2

@@ -414,6 +414,11 @@ void Game::clearChanged(){
   }
 }
 
+/// get length of vector
+inline double Game::vecLen(const vec2 v){
+  return sqrt(v.x*v.x + v.y*v.y);
+}
+
 /// set dx, dy relative to vector (xy)->(tx,ty)
 inline void Game::delta(const float x, const float y, const float tx, const float ty, float & dx, float & dy){
   dx = tx-x;
@@ -799,7 +804,9 @@ Game::GameConfig Game::getConfig(){
 
 void Game::select(Party party, vec2 v){
   // todo implement select(vec2) to select one ship or one planet
-  select(party, v,v); // right now it's indirectly just deselecting
+  vec2 u = {v.x-SHIP_RADIUS, v.y-SHIP_RADIUS};
+  v = {v.x+SHIP_RADIUS, v.y+SHIP_RADIUS};
+  select(party, u,v); // right now it's indirectly just deselecting
 }
 /** selects ships within the rectangle formed by the two points v1, v2 
 the selected ships can be found in the list Game::selectedShips
@@ -839,22 +846,30 @@ void Game::select(Party party, vec2 v1, vec2 v2){
 
 
 /** get data to send to server to ask him to send the ships to the desired place
+v1 start click/drag
+v2 end click/drag coords
+formation is formation to use // todo
+
 
 size_t numberOfElements
 size_t[] elementIds
 vec2[] newPositions
 */
-void * Game::sendSelectedGetData(Party party, vec2 v, size_t & size){
+void * Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation, size_t & size){
   //std::sort(selectedShips.begin(), selectedShips.end()); // todo necessary?
   printf("prep send data: size=%d\n", selectedShips.size());
   std::vector<vec2> targetPositions; //todo init with same size as selectedShips
-  for(size_t i : selectedShips){          
-    float dx = rand(-50,50), dy = rand(-50,50);
-    float len = sqrt(dx*dx + dy*dy);
-    dx = dx*SEND_SHIP_RAND_RADIUS/len;
-    dy = dy*SEND_SHIP_RAND_RADIUS/len;
-    //flyToTarget(party, i, v.x+dx, v.y+dy);
-    targetPositions.push_back(vec2{v.x+dx, v.y+dy});    
+  
+  switch(formation){
+    case 0: // circle
+    {
+      float radius = vecLen(vec2{v2.x-v1.x, v2.y-v1.y});
+      for(size_t i : selectedShips){          
+        vec2 dv{randf(), randf()}; 
+        normalize(dv.x, dv.y, radius);
+        targetPositions.push_back(vec2{v1.x+dv.x, v1.y+dv.y});    
+      }
+    }break;
   }
   
   size = sizeof(size_t)+(sizeof(size_t)+sizeof(vec2))*selectedShips.size();
@@ -871,7 +886,7 @@ void * Game::sendSelectedGetData(Party party, vec2 v, size_t & size){
 }
 
 /**
- tage data from above and execute on ships
+ take data from above and execute on ships
 */
 void Game::sendShips(Party party, void * const data){
   char * const dat = (char *)data;
