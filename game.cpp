@@ -421,13 +421,11 @@ inline void Game::delta(const float x, const float y, const float tx, const floa
 }
 inline void Game::normalize(float & x, float & y, const float LEN){
   const float normFac = LEN/sqrt(x*x + y*y);
-  if(std::isnan(normFac)) {
-    x=0; 
-    y=0; 
-  } else {
-    x = normFac*x;
-    y = normFac*y;
-  }
+  x = normFac*x;
+  y = normFac*y;
+  // because of division by 0 we may have some NaNs
+  if(std::isnan(x)) x=0;
+  if(std::isnan(y)) y=0;
 }
 inline size_t Game::distanceSQ(const float x, const float y, const float x2, const float y2) {
   return (x-x2)*(x-x2)+(y-y2)*(y-y2);
@@ -441,8 +439,8 @@ void Game::flyToTarget(Party party, const size_t id, const float tx, const float
   sShip & ship = ships.ships[id]; // reference for easy access
   
   // dont let them go out mMap
-  ship.tx = (tx<0)?0:(tx>=mMap.w?mMap.w-5:tx); // todo define macro or so to make nicer ...
-  ship.ty = (ty<0)?0:(ty>=mMap.h?mMap.h-5:ty); // todo why -5 ?? 
+  ship.tx = (tx<0)?5:(tx>=mMap.w?mMap.w-5:tx); // todo define macro or so to make nicer ...
+  ship.ty = (ty<0)?5:(ty>=mMap.h?mMap.h-5:ty); // todo why -5 ?? 
 
   delta(ship.x, ship.y, ship.tx, ship.ty, ship.dx, ship.dy);
   normalize(ship.dx, ship.dy, SHIP_SPEED);
