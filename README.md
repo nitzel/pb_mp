@@ -3,6 +3,7 @@
 Requires: [glfw3](http://www.glfw.org/download.html "glfw"), [ENet](http://enet.bespin.org/ "ENet")
 
 Run `make` to compile and run `./server` or `./client` to play!
+It is important that the game will not start until there are two clients connected to the server, so make sure you start the `client` twice or have a friend that connects, too.
 
 Both, client and server, can take a console-parameter. For the client it is the server-ip, and for the server it's the maximum amount of ships per player. 
 
