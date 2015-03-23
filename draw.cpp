@@ -145,10 +145,10 @@ void drawShips(const saShip * sShips, const float dX, const float dY){
       for(size_t i=0; i<sShips[party].size; i++){
         if(ships[i].health>0){
           glColor3ub(party * 255, (1 - party) * 255, (10 - ships[i].health) * 25);
-          glTexCoord2f(0.0,0.0); glVertex2i(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
-          glTexCoord2f(1.0,0.0); glVertex2i(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
-          glTexCoord2f(1.0,1.0); glVertex2i(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
-          glTexCoord2f(0.0,1.0); glVertex2i(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
+          glTexCoord2f(0.0,0.0); glVertex2f(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
+          glTexCoord2f(1.0,0.0); glVertex2f(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
+          glTexCoord2f(1.0,1.0); glVertex2f(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
+          glTexCoord2f(0.0,1.0); glVertex2f(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
         }
       }
     }
@@ -164,10 +164,10 @@ void drawShipMarkers(const sShip * const ships, std::vector<size_t> & selectedSh
   for(size_t i : selectedShips){
     if(ships[i].health>0){
       //glColor3ub(party * 255, (1 - party) * 255, (10 - ships[i].health) * 25);
-      glTexCoord2f(0.0,0.0); glVertex2i(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
-      glTexCoord2f(1.0,0.0); glVertex2i(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
-      glTexCoord2f(1.0,1.0); glVertex2i(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
-      glTexCoord2f(0.0,1.0); glVertex2i(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
+      glTexCoord2f(0.0,0.0); glVertex2f(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
+      glTexCoord2f(1.0,0.0); glVertex2f(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y-SHIP_RADIUS);
+      glTexCoord2f(1.0,1.0); glVertex2f(dX+ships[i].x+SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
+      glTexCoord2f(0.0,1.0); glVertex2f(dX+ships[i].x-SHIP_RADIUS,dY+ships[i].y+SHIP_RADIUS);
     }
   }
   glEnd();
