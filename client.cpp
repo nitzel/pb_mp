@@ -171,7 +171,7 @@ int main(int argc, char ** argv){
     // draw gamecontent
     if(game) {
       drawPlanets(game->mPlanets,  -view.x, -view.y);
-      drawShipMarkers  (game->mShips[PA].ships, game->selectedShips, -view.x, -view.y);
+      drawShipMarkers  (game->mShips[party].ships, game->selectedShips, -view.x, -view.y);
       drawShips  (game->mShips,    -view.x, -view.y);
       drawShots  (game->mShots,    -view.x, -view.y);
       drawTree   (game->mTree,     game->treeW, game->treeH, -view.x, -view.y);
