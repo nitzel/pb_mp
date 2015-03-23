@@ -865,17 +865,60 @@ void * Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation
   std::vector<vec2> targetPositions; //todo init with same size as selectedShips
   
   switch(formation){
-    case 0: // relative move, ships keep distance relative to middle of formation
+    case 0: // square
+    {
+      const size_t S = selectedShips.size();
+      const vec2 mouseVec = vec2{v2.x-v1.x, v2.y-v1.y};
+      const float mouseDelta = vecLen(vec2{mouseVec.x, mouseVec.y});
+      const float offset = std::max(mouseDelta/10, (float)SHIP_RADIUS); // min-offset of SHIP_RADIUS
+      
+      int dir = 0; // direction we're inserting the next lines in the rectangle
+      int lx = 0, ly = 1; // location to insert ships (+10 because first dir is up(-10))
+      int shipsPerLevel = 1; // how many ships to draw per line (will be counted down)
+      int level = 0; // how many ships per level
+      int repeat = 1; // how many lines to draw before level++  (will be counted down)
+
+      for(size_t i : selectedShips){ 
+          switch(dir){ // get location for next insertion
+          case 0:
+                  ly --;
+                  break; // up
+          case 1:
+                  lx ++;
+                  break; // right
+          case 2:
+                  ly ++;
+                  break; // down
+          case 3:
+                  lx --;
+                  break; //left
+          }
+
+          targetPositions.push_back(vec2{v1.x+lx*offset, v1.y+ly*offset});//(vec2{v1.x+lx*offset, v1.y+ly*offset});
+
+          shipsPerLevel--;
+          if(shipsPerLevel <= 0){
+              dir = (dir + 1) % 4;
+              repeat--;
+              if(repeat <= 0){
+                  level++;
+                  repeat = 2;
+              }
+              shipsPerLevel = level;
+          }
+      }
+    }break;
+    case 3: // relative move, ships keep distance relative to middle of formation
     {
       // calculate scaling
-      float mouseMoveDistance = vecLen(vec2{v2.x-v1.x, v2.y-v1.y});
+      const float mouseDelta = vecLen(vec2{v2.x-v1.x, v2.y-v1.y});
       float scale;
-      if(mouseMoveDistance<10)
+      if(mouseDelta<10)
         scale = 1;
       else
-        scale = mouseMoveDistance/100;// 100pix=keep scale
+        scale = mouseDelta/100;// 100pix=keep scale
       // find middle coords of formation
-      size_t S = selectedShips.size();
+      const size_t S = selectedShips.size();
       vec2 middle{0,0};
       for(size_t i : selectedShips){  
         middle.x += mShips[party].ships[i].x;
@@ -884,19 +927,19 @@ void * Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation
       middle = vec2{middle.x/S, middle.y/S}; // middlepoint of all ships
       // move ships relative
       for(size_t i : selectedShips){ 
-        vec2 vOld = vec2{mShips[party].ships[i].x, mShips[party].ships[i].y};
+        const vec2 vOld = vec2{mShips[party].ships[i].x, mShips[party].ships[i].y};
         vec2 vDv = vec2{vOld.x - middle.x, vOld.y - middle.y}; // shipXY to middle
         vDv = vec2{vDv.x*scale, vDv.y*scale}; // scale
         
         // vNew = (vOld-middle)*scale
-        vec2 vNew = vec2{v1.x + vDv.x, v1.y + vDv.y};
+        const vec2 vNew = vec2{v1.x + vDv.x, v1.y + vDv.y};
         targetPositions.push_back(vNew);    
       }
     }break;
     case 1: // line
     {
-      size_t S = selectedShips.size();
-      vec2 lineVec = vec2{v2.x-v1.x, v2.y-v1.y};
+      const size_t S = selectedShips.size();
+      const vec2 lineVec = vec2{v2.x-v1.x, v2.y-v1.y};
       vec2 lineDelta = vec2{lineVec.x/S, lineVec.y/S};
       if(vecLen(lineDelta) < SHIP_RADIUS) { // minimum offset of SHIP_RADIUS todo tweak
         normalize(lineDelta.x, lineDelta.y, SHIP_RADIUS);
@@ -911,7 +954,7 @@ void * Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation
     case 2: // circle
     { // todo minimum size, maybe depending on amount of ships
       // todo std size if radius=0 (can be included in todo above)
-      float radius = vecLen(vec2{v2.x-v1.x, v2.y-v1.y});
+      const float radius = vecLen(vec2{v2.x-v1.x, v2.y-v1.y});
       for(size_t i : selectedShips){          
         vec2 dv{randf(), randf()}; 
         normalize(dv.x, dv.y, radius);
