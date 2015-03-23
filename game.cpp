@@ -865,7 +865,22 @@ void * Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation
   std::vector<vec2> targetPositions; //todo init with same size as selectedShips
   
   switch(formation){
-    case 0: // circle
+    case 0: // line
+    {
+      size_t S = selectedShips.size();
+      vec2 lineVec = vec2{v2.x-v1.x, v2.y-v1.y};
+      vec2 lineDelta = vec2{lineVec.x/S, lineVec.y/S};
+      if(vecLen(lineDelta) < SHIP_RADIUS) { // minimum offset of SHIP_RADIUS todo tweak
+        normalize(lineDelta.x, lineDelta.y, SHIP_RADIUS);
+      }
+      
+      vec2 linePos = v1;
+      for(size_t i : selectedShips){          
+        targetPositions.push_back(linePos);    
+        linePos = vec2{linePos.x+lineDelta.x, linePos.y+lineDelta.y};
+      }
+    }break;
+    case 1: // circle
     { // todo minimum size, maybe depending on amount of ships
       // todo std size if radius=0 (can be included in todo above)
       float radius = vecLen(vec2{v2.x-v1.x, v2.y-v1.y});
