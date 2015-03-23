@@ -856,13 +856,18 @@ size_t[] elementIds
 vec2[] newPositions
 */
 void * Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation, size_t & size){
-  //std::sort(selectedShips.begin(), selectedShips.end()); // todo necessary?
+  std::sort(selectedShips.begin(), selectedShips.end()); // todo necessary?
+  
+  // remove dead ships
+  selectedShips.erase(std::remove_if(selectedShips.begin(),selectedShips.end(),[&](size_t i){return !(mShips[party].ships[i].health>0);), selectedShips.end()); 
+  
   printf("prep send data: size=%d\n", selectedShips.size());
   std::vector<vec2> targetPositions; //todo init with same size as selectedShips
   
   switch(formation){
     case 0: // circle
-    {
+    { // todo minimum size, maybe depending on amount of ships
+      // todo std size if radius=0 (can be included in todo above)
       float radius = vecLen(vec2{v2.x-v1.x, v2.y-v1.y});
       for(size_t i : selectedShips){          
         vec2 dv{randf(), randf()}; 
