@@ -859,13 +859,41 @@ void * Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation
   std::sort(selectedShips.begin(), selectedShips.end()); // todo necessary?
   
   // remove dead ships
-  selectedShips.erase(std::remove_if(selectedShips.begin(),selectedShips.end(),[&](size_t i){return !(mShips[party].ships[i].health>0);), selectedShips.end()); 
+  selectedShips.erase(std::remove_if(selectedShips.begin(),selectedShips.end(),[&](size_t i){return !(mShips[party].ships[i].health>0);}), selectedShips.end()); 
   
   printf("prep send data: size=%d\n", selectedShips.size());
   std::vector<vec2> targetPositions; //todo init with same size as selectedShips
   
   switch(formation){
-    case 0: // line
+    case 0: // relative move, ships keep distance relative to middle of formation
+    {
+      // calculate scaling
+      float mouseMoveDistance = vecLen(vec2{v2.x-v1.x, v2.y-v1.y});
+      float scale;
+      if(mouseMoveDistance<10)
+        scale = 1;
+      else
+        scale = mouseMoveDistance/100;// 100pix=keep scale
+      // find middle coords of formation
+      size_t S = selectedShips.size();
+      vec2 middle{0,0};
+      for(size_t i : selectedShips){  
+        middle.x += mShips[party].ships[i].x;
+        middle.y += mShips[party].ships[i].y;
+      }
+      middle = vec2{middle.x/S, middle.y/S}; // middlepoint of all ships
+      // move ships relative
+      for(size_t i : selectedShips){ 
+        vec2 vOld = vec2{mShips[party].ships[i].x, mShips[party].ships[i].y};
+        vec2 vDv = vec2{vOld.x - middle.x, vOld.y - middle.y}; // shipXY to middle
+        vDv = vec2{vDv.x*scale, vDv.y*scale}; // scale
+        
+        // vNew = (vOld-middle)*scale
+        vec2 vNew = vec2{v1.x + vDv.x, v1.y + vDv.y};
+        targetPositions.push_back(vNew);    
+      }
+    }break;
+    case 1: // line
     {
       size_t S = selectedShips.size();
       vec2 lineVec = vec2{v2.x-v1.x, v2.y-v1.y};
@@ -880,7 +908,7 @@ void * Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation
         linePos = vec2{linePos.x+lineDelta.x, linePos.y+lineDelta.y};
       }
     }break;
-    case 1: // circle
+    case 2: // circle
     { // todo minimum size, maybe depending on amount of ships
       // todo std size if radius=0 (can be included in todo above)
       float radius = vecLen(vec2{v2.x-v1.x, v2.y-v1.y});
