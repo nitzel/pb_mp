@@ -394,7 +394,7 @@ double  Game::unpackUpdateData(void * const data, size_t size, const double time
   const double dt = time - *(double*)dat; dat += sizeof(double);
   memcpy(mMoney,dat, 2*sizeof(float));        dat += 2*sizeof(float); // mMoney
   //get memory usages
-  memPlanets = *(size_t*)dat;           dat += sizeof(int);
+  memPlanets = *(size_t*)dat;           dat += sizeof(size_t);
   memcpy(sizes,dat, 4*sizeof(size_t));        dat += 4*sizeof(size_t); // sizes of shipsa/b, shotsa/b
   // copy actual data
   memcpy(mPlanets .planets, dat, memPlanets); dat+= memPlanets;
@@ -531,7 +531,7 @@ party - party dealing the damage
 */
 void Game::takeDamage(sPlanet & planet, const size_t party){
   if(planet.party == PN){ // neutral planet
-    planet.health -= (signed int)party*2-1; // take one for PA, add one for PB. Remember, neutral planets are full health at 0 and overtaken at +-100.
+    planet.health -= (signed int)(party)*2-1; // take one for PA, add one for PB. Remember, neutral planets are full health at 0 and overtaken at +-100. Casting unsigned party to signed is crucial!
     if(planet.health <= -HEALTH_MAX || planet.health >= HEALTH_MAX){ // overtake
       capturePlanet(planet, party);
     }
