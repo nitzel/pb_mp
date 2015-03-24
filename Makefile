@@ -4,7 +4,7 @@ EXESERVER=server
 CFLAGS=-c -Wall -std=c++11 -Wno-comment -g -Os -D__NO_INLINE_HYPOTF__
 #for optimization add -Os -D__NO_INLINE_HYPOTF__
 #optimization gave a speed bonus from 40 to 65fps at 2x20.000 ships
-LDFLAGS=-lglfw3  -lenet -static-libgcc -static-libstdc++
+LDFLAGS=-lglfw3  -lenet
 # -s for strip symbols from binaries -> smaller
 
 # Which compiler to use?
@@ -22,7 +22,7 @@ else
 #RM=del -f
 EXECLIENT = client.exe
 EXESERVER = server.exe
-LDFLAGS += -lopengl32 -lgdi32 -lws2_32 -lwinmm
+LDFLAGS += -lopengl32 -lgdi32 -lws2_32 -lwinmm -static-libgcc -static-libstdc++
 endif
 
 all: $(EXECLIENT) $(EXESERVER)
