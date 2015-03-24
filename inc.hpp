@@ -1,6 +1,7 @@
 #ifndef __INC__
 #define __INC__
 
+#include <cstdint>
 #include <cstdlib>
 #include <vector>
 
@@ -36,42 +37,46 @@ enum Party{PA=0,PB,PN};
 enum Upgrade{ECONOMY=0,DEFENSE,PRODUCTION};
 
 struct vec2 { // for rectangles and coordinates etc
+  /// networked, use constsize types only
   union {float x, w;};
   union {float y, h;};
 };
-extern struct vec2 map, screen, view, mouseR, mouseV;
+extern struct vec2 screen, view, mouseR, mouseV;
 
 struct sShip {
+  /// networked, use constsize types only
   double timeToShoot;      // when we can fire the next
   float x,y;   // position
   float dx, dy;  // deltaXY to get to target
   float tx, ty;// target coordinate
-  signed char health; // health, zero is dead, below zero is marked for deletion
+  int8_t health; // health, zero is dead, below zero is marked for deletion
 };
 
-struct sShot {              
+struct sShot {    
+  /// networked, use constsize types only          
   double timeToLive;        // dead after max-age
   float x,y;       // position
   float dx,dy;// deltaXY, moving direction
 };
 
 struct sPlanet {
+  /// networked, use constsize types only
   double timeToBuild;
   double timeToShoot;
   float x,y;
-  float tx,ty;   // pos to send new shipsProduction
-  signed char level[3]; // level Economy, Resistance, 
-  unsigned char party;    // PlayerA/B/Neutral
-  unsigned short shipQueue; // number of ships in queue
+  float tx,ty;        // pos to send new shipsProduction
+  int8_t level[3];    // level Economy, Resistance, 
+  uint8_t party;      // PlayerA/B/Neutral
+  uint16_t shipQueue; // number of ships in queue
   float health;
   float power;
-  unsigned char shieldActive;
+  uint8_t shieldActive; // todo bool instead? can be false/true
 };
 
 struct saShip {
-  size_t freePush;// where to save index in free-array
-  size_t freePop; // where to take index in free-array
-  size_t size;
+  uint32_t freePush;// where to save index in free-array
+  uint32_t freePop; // where to take index in free-array
+  uint32_t size;
   sShip * ships;
   // how it works
   // In the ships array all ships are stored. To know where to
@@ -79,31 +84,31 @@ struct saShip {
   // Taking an indice from the free array at freePop gives you an 
   // unused place in ships, while you can insert indices of unused
   // ships at freePush.
-  size_t * free; // free positions in the ships array
+  uint32_t * free; // free positions in the ships array
   // (newly created ships, dead ships) = changed ships
-  std::vector<size_t> changed;
+  std::vector<uint32_t> changed;
 };
 struct saPlanet {
-  size_t size;
+  uint32_t size;
   sPlanet * planets;
 };
 struct saShot {
-  size_t insertPos;
-  size_t size;
-  size_t changedPos; // from here till insertPos the shots are new/changed and need to be transmitted
+  uint32_t insertPos;
+  uint32_t size;
+  uint32_t changedPos; // from here till insertPos the shots are new/changed and need to be transmitted
   sShot * shots;
 };
 // to partition the map
 struct sSquare {
-  size_t size;
-  std::vector<size_t> shiplist; 
+  uint32_t size;
+  std::vector<uint32_t> shiplist; 
 };
 
 /// random numbers
 float randf();
-int rand(int min, int max);
-size_t rand(size_t max);
-unsigned long xorshf96(void);
+int32_t rand(int32_t min, int32_t max);
+uint32_t rand(uint32_t max);
+uint32_t xorshf96(void);
 
 
 #endif // __INC__

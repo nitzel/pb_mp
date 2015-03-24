@@ -8,14 +8,14 @@ struct ClientData {
   bool isReady;
 };
 static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
-bool allClientsReady(ClientData * clientData, const size_t size);
+bool allClientsReady(ClientData * clientData, const uint32_t size);
 void broadcastIfReadystateChanged(ENetHost * host, const bool formerReadyState, const bool newReadyState);
 
 int main(int argc, char ** argv){  
   freopen("stderr_server.txt","w",stderr);
   fprintf(stderr, "Started Server\n");
   
-  size_t shipAmount = 1000;
+  uint32_t shipAmount = 1000;
   if(argc==2){
     shipAmount = atoi(argv[1]);
   }
@@ -50,7 +50,7 @@ int main(int argc, char ** argv){
   // VARS
   ////////////////
   ClientData clientData[PN];
-  for(size_t party = 0; party < PN; party++){
+  for(uint32_t party = 0; party < PN; party++){
     clientData[party].party = (Party)party;
     clientData[party].peer = nullptr;
     clientData[party].isReady = false;
@@ -131,7 +131,7 @@ int main(int argc, char ** argv){
     if(timeToBroadcast<0)
     {
       timeToBroadcast = 0.1; /// 2x per sec
-      size_t size;
+      uint32_t size;
       void * d = game.packUpdateData(size, glfwGetTime());
       ENetPacket * packet = enet_packet_create(d,size,0,PTYPE_UPDATE);// ENET_PACKET_FLAG_RELIABLE
 
@@ -152,7 +152,7 @@ int main(int argc, char ** argv){
                 event.peer -> address.port);
         /* Store any relevant client information here. */
         Party assignedParty = PN;
-        for(size_t party = 0; party < PN; party++) {
+        for(uint32_t party = 0; party < PN; party++) {
           if(clientData[party].peer == 0){
             event.peer -> data = (void*)&clientData[party];
             clientData[party].peer = event.peer;
@@ -164,7 +164,7 @@ int main(int argc, char ** argv){
             enet_peer_send(event.peer, 1, 
               enet_packet_create(&assignedParty,sizeof(Party), ENET_PACKET_FLAG_RELIABLE, PTYPE_PARTY_ASSIGN));
         } else {
-          // todo tell client he was not accepted as a player
+          // todo tell client he was not accepted as a player. can that happen? maybe accept more connections as host, first.
         }
       } break;
       case ENET_EVENT_TYPE_RECEIVE:
@@ -180,7 +180,7 @@ int main(int argc, char ** argv){
             } break;
             case PTYPE_COMPLETE: // send requestet game-sync
             {      
-              size_t size;
+              uint32_t size;
               void * d = game.packData(size, glfwGetTime());
               ENetPacket * packet = enet_packet_create(d,size,ENET_PACKET_FLAG_RELIABLE,PTYPE_COMPLETE);
               enet_peer_send(event.peer, 1, packet);
@@ -222,7 +222,7 @@ int main(int argc, char ** argv){
           break;
       case ENET_EVENT_TYPE_DISCONNECT:
       {
-          printf ("client party=%i disconnected.\n", (size_t)((ClientData*)event.peer -> data)->party);
+          printf ("client party=%i disconnected.\n", (uint32_t)((ClientData*)event.peer -> data)->party);
           
           bool formerReadyState = allClientsReady(clientData, PN);
           /* Reset the peer's client information. */
@@ -259,8 +259,8 @@ static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
 /**
 checks if all clients are read (ClientData.isReady==true)
 */
-bool allClientsReady(ClientData * clientData, const size_t size){
-  for(size_t i = 0; i < size; i++){
+bool allClientsReady(ClientData * clientData, const uint32_t size){
+  for(uint32_t i = 0; i < size; i++){
     if(!clientData[i].isReady)
       return false;
   }

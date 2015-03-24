@@ -126,11 +126,11 @@ int main(int argc, char ** argv){
       if(mouseChanged[GLFW_MOUSE_BUTTON_2] == GLFW_RELEASE) { // right up
         vec2 vp = mouseStates[GLFW_MOUSE_BUTTON_2][GLFW_PRESS+2]; // press coords
         vec2 vr = mouseStates[GLFW_MOUSE_BUTTON_2][GLFW_RELEASE+2]; // release coords
-        //if(vp.x != vr.x || vp.y != vr.y){ // todo: formations
+        //if(vp.x != vr.x || vp.y != vr.y){
           //game->select(vp, vr);
         //} else { // just a click, send to target
-          size_t formation = 0; // todo circle, square, rect etc...
-          size_t size = 0;
+          uint32_t formation = 0; // todo circle, square, rect etc...
+          uint32_t size = 0;
           void * data = game->sendSelectedGetData(party, vp, vr, formation, size);
           game->sendShips(party, data);
           ENetPacket * packet = enet_packet_create(data,size, ENET_PACKET_FLAG_RELIABLE, PTYPE_SHIPS_MOVE);
@@ -264,7 +264,7 @@ int main(int argc, char ** argv){
             { 
               printf("pause!\n");
               paused = true;
-              // todo time since stop... should be gone backwards
+              // todo time since stop... should be gone backwards but may lead to crashes when ships leave the map
               //vdt = -(glfwGetTime()-*(double*)enet_packet_data(event.packet));
             } break;
             default: ;
@@ -278,7 +278,7 @@ int main(int argc, char ** argv){
           printf ("%s disconnected.\n", (char*)event.peer -> data);
           // Reset the peer's client information. 
           event.peer -> data = NULL;
-          paused = true; // todo remove
+          paused = true;
           break;
       case ENET_EVENT_TYPE_NONE:
           break;
