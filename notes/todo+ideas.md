@@ -26,8 +26,8 @@
 - [x] and then multiplayer (its not realy "playing" yet)      
 - [x] make shields usable!
 - [ ] check for game over                 todo later
-  - count total amount of ships with spaceTree
-  - count planets per player
+  1. count planets per player
+  2. if still has planets: count total amount of ships with spaceTree
 
 
 #Client needs
