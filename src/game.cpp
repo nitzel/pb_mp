@@ -877,8 +877,8 @@ void* Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation,
     if (S == 0)
         return nullptr;
 
-    printf("prep send data: size=%zu\n", S);
-    std::vector<vec2> targetPositions; //todo init with same size as selectedShips
+    printf("SendSelected: prep send data: size=%zu\n", S);
+    std::vector<vec2> targetPositions(S);
 
     switch (formation) {
     case 0: // square
@@ -893,7 +893,7 @@ void* Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation,
         int level = 0; // how many ships per level
         int repeat = 1; // how many lines to draw before level++  (will be counted down)
 
-        for (size_t i : selectedShips) {
+        for (size_t i = 0; i < S; i++) {
             switch (dir) { // get location for next insertion
             case 0:
                 ly--;
@@ -909,7 +909,7 @@ void* Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation,
                 break; //left
             }
 
-            targetPositions.push_back(vec2{ v1.x + lx * offset, v1.y + ly * offset });//(vec2{v1.x+lx*offset, v1.y+ly*offset});
+            targetPositions[i] = vec2{ v1.x + lx * offset, v1.y + ly * offset }; //(vec2{v1.x+lx*offset, v1.y+ly*offset});
 
             shipsPerLevel--;
             if (shipsPerLevel <= 0) {
@@ -940,14 +940,15 @@ void* Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation,
         }
         middle = vec2{ middle.x / S, middle.y / S }; // middlepoint of all ships
         // move ships relative
-        for (size_t i : selectedShips) {
-            const vec2 vOld = vec2{ mShips[party].ships[i].x, mShips[party].ships[i].y };
+        for (size_t i = 0; i < S; i++) {
+            const enet_uint32 shipId = selectedShips[i];
+            const vec2 vOld = vec2{ mShips[party].ships[shipId].x, mShips[party].ships[shipId].y };
             vec2 vDv = vec2{ vOld.x - middle.x, vOld.y - middle.y }; // shipXY to middle
             vDv = vec2{ vDv.x * scale, vDv.y * scale }; // scale
 
             // vNew = (vOld-middle)*scale
             const vec2 vNew = vec2{ v1.x + vDv.x, v1.y + vDv.y };
-            targetPositions.push_back(vNew);
+            targetPositions[shipId] = vNew;
         }
     }break;
     case 1: // line
@@ -959,8 +960,8 @@ void* Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation,
         }
 
         vec2 linePos = v1;
-        for (size_t i : selectedShips) {
-            targetPositions.push_back(linePos);
+        for (size_t i = 0; i < S; i++) {
+            targetPositions[i] = linePos;
             linePos = vec2{ linePos.x + lineDelta.x, linePos.y + lineDelta.y };
         }
     }break;
@@ -968,29 +969,24 @@ void* Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation,
     { // todo minimum size, maybe depending on amount of ships
       // todo std size if radius=0 (can be included in todo above)
         const float radius = vecLen(vec2{ v2.x - v1.x, v2.y - v1.y });
-        for (size_t i : selectedShips) {
+        for (size_t i = 0; i < S; i++) {
             vec2 dv{ randf(), randf() };
             normalize(dv.x, dv.y, radius);
-            targetPositions.push_back(vec2{ v1.x + dv.x, v1.y + dv.y });
+            targetPositions[i] = vec2{ v1.x + dv.x, v1.y + dv.y };
         }
     }break;
     }
-
-    if (targetPositions.size() != S) {
-        printf("ERROR: Selected ships (%zu) were assigned %zu target positions. They should've been equal.", S, targetPositions.size());
-        return nullptr;
-    }
-
+    
     size = sizeof(enet_uint32) + (sizeof(enet_uint32) + sizeof(vec2)) * S;
     void* const data = malloc(size);
     char* dat = (char*)data;
     *(enet_uint32*)dat = S; // store amount
-    printf("prep send data: stored size=%zu\n", *(enet_uint32*)dat);
+    printf("SendSelected: moving data to memory block before sending\n");
     
     dat += sizeof(enet_uint32);
-    memcpy(dat, &selectedShips[0], sizeof(enet_uint32) * S);// ids
+    memcpy(dat, &selectedShips[0], sizeof(enet_uint32) * S); // IDs
     dat += sizeof(enet_uint32) * selectedShips.size();
-    memcpy(dat, &targetPositions[0], sizeof(vec2) * targetPositions.size());//vecs
+    memcpy(dat, &targetPositions[0], sizeof(vec2) * S); // new coordinates (as vecs) for the ship with corresponding ID
 
     return data;
 }
