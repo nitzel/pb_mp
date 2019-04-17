@@ -2,6 +2,7 @@
 #define __GAME__
 
 #include "inc.hpp"
+#include <enet/types.h>
 
 #include <cmath>
 #include <cstdlib>
@@ -12,9 +13,9 @@
 class Game {
 public:
     struct GameConfig {
-        size_t numPlanets;
-        size_t numShips;
-        size_t numShots;
+        enet_uint32 numPlanets;
+        enet_uint32 numShips;
+        enet_uint32 numShots;
         vec2 map;
         float money[2];
     };
@@ -31,7 +32,7 @@ public:
     size_t treeH = 0;
     sSquare* mTree = nullptr;
 
-    std::vector<size_t> selectedShips;
+    std::vector<enet_uint32> selectedShips;
 private:
     void GameCtor(GameConfig cfg);
     GameConfig config;
@@ -107,9 +108,9 @@ private:
 
 
     /// un/packing gameData
-    void* packChangedShips(Party party, size_t& size);
+    void* packChangedShips(Party party, enet_uint32& size);
     void unpackChangedShips(Party party, void* const data, const double dt);
-    void* packChangedShots(Party party, size_t& size);
+    void* packChangedShots(Party party, enet_uint32& size);
     void unpackChangedShots(Party party, void* const data, const double dt);
 };
 

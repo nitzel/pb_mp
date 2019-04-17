@@ -1,4 +1,4 @@
-#include "net.hpp";
+#include "net.hpp"
 
 /// creates an enet packet with a packetType added in the beginning
 ENetPacket* enet_packet_create(const void* data, size_t 	dataLength, enet_uint32 	flags, PacketType packetType) {

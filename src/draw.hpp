@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <GLFW/glfw3.h>
+#include <enet/types.h>
 
 enum TextureID { TEX_FONT = 0, TEX_PLANET, TEX_SHIP, TEX_SHIP_MARKER, TEX_AMOUNT };
 extern const char* textureNames[];
@@ -31,7 +32,7 @@ void drawTree(sSquare* tree, const size_t W, const size_t H, const float dX, con
 // draw game content
 void drawPlanets(const saPlanet& sPlanets, const float dX, const float dY);
 void drawShips(const saShip* ships, const float dX, const float dY);
-void drawShipMarkers(const sShip* const ships, std::vector<size_t>& selectedShips, const float dX, const float dY);
+void drawShipMarkers(const sShip* const ships, std::vector<enet_uint32>& selectedShips, const float dX, const float dY);
 void drawShots(const saShot* shots, const float dX, const float dY);
 
 void drawRectangle(vec2 v1, vec2 v2, const float dX, const float dY);

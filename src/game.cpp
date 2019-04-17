@@ -21,7 +21,7 @@ Game::GameConfig Game::createConfig(size_t const NUM_PLANETS, size_t const NUM_S
     return cfg;
 }
 
-void Game::GameCtor(GameConfig cfg) {
+Game::Game(GameConfig cfg) {
     config = cfg;
     mMoney[PA] = config.money[PA];
     mMoney[PB] = config.money[PB];
@@ -36,11 +36,8 @@ void Game::GameCtor(GameConfig cfg) {
     initShots(mShots[PA], config.numShots);
     initShots(mShots[PB], config.numShots);
 }
-Game::Game(GameConfig cfg) {
-    GameCtor(cfg);
-}
-Game::Game(vec2 map, const size_t MAX_SHIPS, const size_t NUM_PLANETS) {
-    GameCtor(Game::createConfig(NUM_PLANETS, MAX_SHIPS, vec2{ 2000,2000 }));
+
+Game::Game(vec2 map, const size_t MAX_SHIPS, const size_t NUM_PLANETS) : Game(Game::createConfig(NUM_PLANETS, MAX_SHIPS, vec2{ 2000,2000 })) {
 }
 
 Game::~Game() {
@@ -201,22 +198,22 @@ void* Game::packData(size_t & size, double time) {
 
     size_t memPlanets = sizeof(sPlanet) * mPlanets.size;
 
-    size_t memOther = sizeof(double) + sizeof(float) * 2 + sizeof(size_t) * 3; // time, 2mMoney, memoryUsage of ship/shot/planets
+    size_t memOther = sizeof(double) + sizeof(float) * 2 + sizeof(enet_uint32) * 3; // time, 2mMoney, memoryUsage of ship/shot/planets
 
     size = memOther + memPlanets + memShips * 2 + memShots * 2;
     void* const data = calloc(1, size);
 
     char* dat = (char*)data; // temp pointer
-    *(double*)dat = time;                       dat += sizeof(double);
-    memcpy(dat, mMoney, 2 * sizeof(float));        dat += 2 * sizeof(float);
-    *(size_t*)dat = memPlanets;           dat += sizeof(size_t);
-    *(size_t*)dat = memShips;             dat += sizeof(size_t);
-    *(size_t*)dat = memShots;             dat += sizeof(size_t);
+    *(double*)dat = time;                      dat += sizeof(double);
+    memcpy(dat, mMoney, 2 * sizeof(float));    dat += 2 * sizeof(float);
+    *(enet_uint32*)dat = memPlanets;           dat += sizeof(enet_uint32);
+    *(enet_uint32*)dat = memShips;             dat += sizeof(enet_uint32);
+    *(enet_uint32*)dat = memShots;             dat += sizeof(enet_uint32);
     memcpy(dat, mPlanets.planets, memPlanets); dat += memPlanets;
-    memcpy(dat, mShips[0].ships, memShips);   dat += memShips;
-    memcpy(dat, mShots[0].shots, memShots);   dat += memShots;
-    memcpy(dat, mShips[1].ships, memShips);   dat += memShips;
-    memcpy(dat, mShots[1].shots, memShots);   dat += memShots;
+    memcpy(dat, mShips[0].ships, memShips);    dat += memShips;
+    memcpy(dat, mShots[0].shots, memShots);    dat += memShots;
+    memcpy(dat, mShips[1].ships, memShips);    dat += memShips;
+    memcpy(dat, mShots[1].shots, memShots);    dat += memShots;
     return data;
 }
 double Game::unpackData(void* const data, size_t size, const double time) {
@@ -225,14 +222,14 @@ double Game::unpackData(void* const data, size_t size, const double time) {
     char* dat = (char*)data; // temp pointer
     double dt = time - *(double*)dat; dat += sizeof(double);
     memcpy(mMoney, dat, 2 * sizeof(float));        dat += 2 * sizeof(float);
-    memPlanets = *(size_t*)dat;           dat += sizeof(size_t);
-    memShips = *(size_t*)dat;           dat += sizeof(size_t);
-    memShots = *(size_t*)dat;           dat += sizeof(size_t);
+    memPlanets = *(enet_uint32*)dat;           dat += sizeof(enet_uint32);
+    memShips = *(enet_uint32*)dat;             dat += sizeof(enet_uint32);
+    memShots = *(enet_uint32*)dat;             dat += sizeof(enet_uint32);
     memcpy(mPlanets.planets, dat, memPlanets); dat += memPlanets;
-    memcpy(mShips[0].ships, dat, memShips);   dat += memShips;
-    memcpy(mShots[0].shots, dat, memShots);   dat += memShots;
-    memcpy(mShips[1].ships, dat, memShips);   dat += memShips;
-    memcpy(mShots[1].shots, dat, memShots);   dat += memShots;
+    memcpy(mShips[0].ships, dat, memShips);    dat += memShips;
+    memcpy(mShots[0].shots, dat, memShots);    dat += memShots;
+    memcpy(mShips[1].ships, dat, memShips);    dat += memShips;
+    memcpy(mShots[1].shots, dat, memShots);    dat += memShots;
 
     return dt;
 }
@@ -247,11 +244,11 @@ returned buffer:
   size_t[] deadShipIds, changedShipIds
   sShip[] changedShips
 */
-void* Game::packChangedShips(Party party, size_t & size) {
+void* Game::packChangedShips(Party party, enet_uint32 & size) {
     sShip* ships = mShips[party].ships;
     const size_t S = mShips[party].changed.size();
     std::sort(mShips[party].changed.begin(), mShips[party].changed.end()); // sort vector to easily ignore dublicates
-    size_t pC = 0, pD = 0; // pointer=amount changed and dead ships
+    enet_uint32 pC = 0, pD = 0; // pointer=amount changed and dead ships
     size_t *data = new size_t[S];
     if (!mShips[party].changed.empty()) { // only if changed is not empty
         size_t lastId = mShips[party].changed[0] + 1; // this way the first ID cannot be ignored because it cannot equal the "last one"
@@ -271,13 +268,14 @@ void* Game::packChangedShips(Party party, size_t & size) {
             lastId = curId;
         }
     }
-    size = (pC + pD + 2) * sizeof(size_t) + pC * sizeof(sShip); // +2 because of pC and pD
+    // 2x for pC and pD, (pC+pD)*enet_uint32 for an id per ship, pC*sShip for changed ships
+    size = (pC + pD + 2) * sizeof(enet_uint32) + pC * sizeof(sShip); // +2 because of pC and pD
     void* const rdata = calloc(1, size);
     char* dat = (char*)rdata;
-    *(size_t*)dat = pD; dat += sizeof(size_t);
-    *(size_t*)dat = pC; dat += sizeof(size_t);
-    memcpy(dat, data + S - pD, pD * sizeof(size_t));   dat += pD * sizeof(size_t); // ids of dead ships
-    memcpy(dat, data, pC * sizeof(size_t));   dat += pC * sizeof(size_t); // ids of changed ships
+    *(enet_uint32*)dat = pD; dat += sizeof(enet_uint32);
+    *(enet_uint32*)dat = pC; dat += sizeof(enet_uint32);
+    memcpy(dat, data + S - pD, pD * sizeof(enet_uint32));   dat += pD * sizeof(enet_uint32); // ids of dead ships
+    memcpy(dat, data, pC * sizeof(enet_uint32));   dat += pC * sizeof(enet_uint32); // ids of changed ships
     for (size_t i = 0; i < pC; i++) { // copy changed ships to buffer
         sShip* ship = &ships[data[i]];
         memcpy(dat, ship, sizeof(sShip));
@@ -288,16 +286,17 @@ void* Game::packChangedShips(Party party, size_t & size) {
     // return stuff
     return rdata;
 }
-void    Game::unpackChangedShips(Party party, void* const data, const double dt) {
+
+void Game::unpackChangedShips(Party party, void* const data, const double dt) {
     char* dat = (char*)data;
     // get numbers
-    const size_t deadShips = *(size_t*)dat;  dat += sizeof(size_t);
-    const size_t changedShips = *(size_t*)dat;  dat += sizeof(size_t);
+    const enet_uint32 deadShips = *(enet_uint32*)dat;    dat += sizeof(enet_uint32);
+    const enet_uint32 changedShips = *(enet_uint32*)dat; dat += sizeof(enet_uint32);
     // get pointer to ID-arrays
-    size_t* dead = (size_t*)dat;           dat += sizeof(size_t) * deadShips;
-    size_t* changed = (size_t*)dat;           dat += sizeof(size_t) * changedShips;
+    enet_uint32* dead = (enet_uint32*)dat;               dat += sizeof(enet_uint32) * deadShips;
+    enet_uint32* changed = (enet_uint32*)dat;            dat += sizeof(enet_uint32) * changedShips;
     // get pointer to ship-data arrays
-    sShip* ships = (sShip*)dat;                dat += sizeof(sShip) * changedShips;
+    sShip* ships = (sShip*)dat;                          dat += sizeof(sShip) * changedShips;
 
     // make dead ships dead :)
     for (size_t i = 0; i < deadShips; i++) {
@@ -315,18 +314,18 @@ returned buffer:
   size_t startID, amount of shots
   sShot... shotdata
 */
-void* Game::packChangedShots(Party party, size_t & size) {
+void* Game::packChangedShots(Party party, enet_uint32 & size) {
     const size_t S = mShots[party].size;
-    size_t pStart = mShots[party].changedPos;
-    size_t pEnd = mShots[party].insertPos;
-    size_t pLen = (pEnd - pStart + S) % S; // amount of shots
+    enet_uint32 pStart = mShots[party].changedPos;
+    enet_uint32 pEnd = mShots[party].insertPos;
+    enet_uint32 pLen = (pEnd - pStart + S) % S; // amount of shots
 
-    size = 2 * sizeof(size_t) + pLen * sizeof(sShot); // 2 because of pStart and pLen
+    size = 2 * sizeof(enet_uint32) + pLen * sizeof(sShot); // 2 because of pStart and pLen
 
     void* const rdata = calloc(1, size);
     char* dat = (char*)rdata;
-    *(size_t*)dat = pStart;  dat += sizeof(size_t);
-    *(size_t*)dat = pLen;    dat += sizeof(size_t);
+    *(enet_uint32*)dat = pStart;  dat += sizeof(enet_uint32);
+    *(enet_uint32*)dat = pLen;    dat += sizeof(enet_uint32);
     if (pStart + pLen < S) { // consecutive data
         memcpy(dat, mShots[party].shots + pStart, pLen * sizeof(sShot)); dat += pLen * sizeof(sShot);
     }
@@ -341,8 +340,8 @@ void    Game::unpackChangedShots(Party party, void* const data, const double dt)
     const size_t S = mShots[party].size;
 
     char* dat = (char*)data;
-    const size_t pStart = *(size_t*)dat;  dat += sizeof(size_t);
-    const size_t pLen = *(size_t*)dat;  dat += sizeof(size_t);
+    const enet_uint32 pStart = *(enet_uint32*)dat;  dat += sizeof(enet_uint32);
+    const enet_uint32 pLen = *(enet_uint32*)dat;  dat += sizeof(enet_uint32);
     if (pStart + pLen < S) { // consecutive data
         memcpy(mShots[party].shots + pStart, dat, pLen * sizeof(sShot)); dat += pLen * sizeof(sShot);
     }
@@ -366,10 +365,10 @@ returned buffer
   bufferShots PB
 */
 void* Game::packUpdateData(size_t & size, double time) {
-    const size_t memPlanets = sizeof(sPlanet) * mPlanets.size; // memory usage for planets
-    size = sizeof(double) + 2 * sizeof(float) + 5 * sizeof(size_t) + memPlanets; // memory usage for ...
+    const enet_uint32 memPlanets = sizeof(sPlanet) * mPlanets.size; // memory usage for planets
+    size = sizeof(double) + 2 * sizeof(float) + 5 * sizeof(enet_uint32) + memPlanets; // memory usage for ...
     void* data[4];  // pointers to the update-buffers of ships/shots, each per party. shipA/shotA/shipB/shotB
-    size_t sizes[4]; // memory usage of ships/shots to update, each per party
+    enet_uint32 sizes[4]; // memory usage of ships/shots to update, each per party
     for (size_t party = PA; party < PN; party++) {
         data[2 * party + 0] = packChangedShips((Party)party, sizes[2 * party + 0]);
         data[2 * party + 1] = packChangedShots((Party)party, sizes[2 * party + 1]);
@@ -378,11 +377,11 @@ void* Game::packUpdateData(size_t & size, double time) {
 
     void* rdata = calloc(1, size);
     char* dat = (char*)rdata;
-    *(double*)dat = time;                       dat += sizeof(double);    // time
-    memcpy(dat, mMoney, 2 * sizeof(float));        dat += 2 * sizeof(float);   // 2x mMoney
-    *(size_t*)dat = memPlanets;                 dat += sizeof(size_t);    // 1x memory for planets
-    memcpy(dat, sizes, 4 * sizeof(size_t));       dat += 4 * sizeof(size_t);  // 4x memory for ship/shot updates
-    memcpy(dat, mPlanets.planets, memPlanets); dat += memPlanets;
+    *(double*)dat = time;                        dat += sizeof(double);    // time
+    memcpy(dat, mMoney, 2 * sizeof(float));      dat += 2 * sizeof(float);   // 2x mMoney
+    *(enet_uint32*)dat = memPlanets;             dat += sizeof(enet_uint32);    // 1x memory for planets
+    memcpy(dat, sizes, 4 * sizeof(enet_uint32)); dat += 4 * sizeof(enet_uint32);  // 4x memory for ship/shot updates
+    memcpy(dat, mPlanets.planets, memPlanets);   dat += memPlanets;
     for (size_t i = 0; i < 4; i++) { // copy ships and shots
         memcpy(dat, data[i], sizes[i]);
         dat += sizes[i];
@@ -392,15 +391,15 @@ void* Game::packUpdateData(size_t & size, double time) {
     return rdata;
 }
 double  Game::unpackUpdateData(void* const data, size_t size, const double time) {
-    size_t memPlanets;
-    size_t sizes[4];
+    enet_uint32 memPlanets;
+    enet_uint32 sizes[4];
 
     char* dat = (char*)data; // temp pointer
     const double dt = time - *(double*)dat; dat += sizeof(double);
     memcpy(mMoney, dat, 2 * sizeof(float));        dat += 2 * sizeof(float); // mMoney
     //get memory usages
-    memPlanets = *(size_t*)dat;           dat += sizeof(size_t);
-    memcpy(sizes, dat, 4 * sizeof(size_t));        dat += 4 * sizeof(size_t); // sizes of shipsa/b, shotsa/b
+    memPlanets = *(enet_uint32*)dat;               dat += sizeof(enet_uint32);
+    memcpy(sizes, dat, 4 * sizeof(enet_uint32));   dat += 4 * sizeof(enet_uint32); // sizes of shipsa/b, shotsa/b
     // copy actual data
     memcpy(mPlanets.planets, dat, memPlanets); dat += memPlanets;
     // unpack ships and shots (shipsA,shotsA,shipsB,shotsB)
@@ -647,7 +646,7 @@ void Game::updatePlanets(const  double dt) {
           // generate mMoney for the player
             mMoney[planets[i].party] += (planets[i].level[ECONOMY] + 1) * MONEY_GEN * dt;
             // build ships if queue is not empty and production time is over
-            if (planets[i].shipQueue) { // ships in queue
+            if (planets[i].shipQueue > 0) { // ships in queue
                 planets[i].timeToBuild -= dt;      // subtract time
                 if (planets[i].timeToBuild < 0) { // send a new ship out
                   // create new ship 
@@ -658,17 +657,17 @@ void Game::updatePlanets(const  double dt) {
                     dy = dy * SEND_SHIP_RAND_RADIUS / len;
                     // add it
                     if (!addShip((Party)planets[i].party, planets[i].x, planets[i].y, planets[i].tx + dx, planets[i].ty + dy)) {
-                        fprintf(stderr, "ship insert failed\n"); // todo think of sth better than restoring mMoney
+                        fprintf(stderr, "ship insert failed\n"); // todo think of sth better than to wait until possible ?!
                         // restore mMoney to player
-                        mMoney[planets[i].party] += SHIP_COSTS * planets[i].shipQueue;
-                        planets[i].shipQueue = 0;
+                        // mMoney[planets[i].party] += SHIP_COSTS * planets[i].shipQueue;
+                        // planets[i].shipQueue = 0;
                     }
                     else {
                         planets[i].shipQueue--; // decrement build list
-                    }
 
-                    // reset timeToBuild 
-                    planets[i].timeToBuild += SHIP_PROD_TIME * (1 - (planets[i].level[PRODUCTION] + 1) / UPGRADE_MAX_LVL);
+                        // reset timeToBuild 
+                        planets[i].timeToBuild += SHIP_PROD_TIME * (1 - (planets[i].level[PRODUCTION] + 1) / UPGRADE_MAX_LVL);
+                    }
                 }
             }
             // use power if shield if active
@@ -771,7 +770,7 @@ void Game::updateShips(const double dt) {
 
 void Game::initGame(saPlanet & planets, saShip * ships, saShot * shots, const size_t MAX_SHIPS) {
     initPlanets(planets, 6);
-    const size_t MAX_SHOTS = MAX_SHIPS * (float)SHOT_LIFETIME / (float)SHIP_SHOOT_DELAY + 1000; // + 1000 just to be sure
+    const size_t MAX_SHOTS = (size_t)(MAX_SHIPS * (float)SHOT_LIFETIME / (float)SHIP_SHOOT_DELAY) + 1000; // + 1000 just to be sure
     initShots(shots[PA], MAX_SHOTS);
     initShots(shots[PB], MAX_SHOTS);
     initShips(ships[PA], MAX_SHIPS);
@@ -854,7 +853,7 @@ void Game::select(Party party, vec2 v1, vec2 v2) {
         }
     }
 
-    printf("selected %llu ships\n", selectedShips.size());
+    printf("selected %zu ships\n", selectedShips.size());
 }
 
 
@@ -874,16 +873,16 @@ void* Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation,
     // remove dead ships
     selectedShips.erase(std::remove_if(selectedShips.begin(), selectedShips.end(), [&](size_t i) {return !(mShips[party].ships[i].health > 0); }), selectedShips.end());
 
-    if (selectedShips.size() == 0)
+    const size_t S = selectedShips.size();
+    if (S == 0)
         return nullptr;
 
-    printf("prep send data: size=%llu\n", selectedShips.size());
+    printf("prep send data: size=%zu\n", S);
     std::vector<vec2> targetPositions; //todo init with same size as selectedShips
 
     switch (formation) {
     case 0: // square
     {
-        const size_t S = selectedShips.size();
         const vec2 mouseVec = vec2{ v2.x - v1.x, v2.y - v1.y };
         const float mouseDelta = vecLen(vec2{ mouseVec.x, mouseVec.y });
         const float offset = std::max(mouseDelta / 10, (float)SHIP_RADIUS); // min-offset of SHIP_RADIUS
@@ -934,7 +933,6 @@ void* Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation,
         else
             scale = mouseDelta / 100;// 100pix=keep scale
           // find middle coords of formation
-        const size_t S = selectedShips.size();
         vec2 middle{ 0,0 };
         for (size_t i : selectedShips) {
             middle.x += mShips[party].ships[i].x;
@@ -954,7 +952,6 @@ void* Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation,
     }break;
     case 1: // line
     {
-        const size_t S = selectedShips.size();
         const vec2 lineVec = vec2{ v2.x - v1.x, v2.y - v1.y };
         vec2 lineDelta = vec2{ lineVec.x / S, lineVec.y / S };
         if (vecLen(lineDelta) < SHIP_RADIUS) { // minimum offset of SHIP_RADIUS todo tweak
@@ -979,17 +976,22 @@ void* Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation,
     }break;
     }
 
-    size = sizeof(size_t) + (sizeof(size_t) + sizeof(vec2)) * selectedShips.size();
-    void* const data = calloc(size, 1);
-    char* dat = (char*)data;
-    *(size_t*)dat = selectedShips.size(); // store amount
-    printf("prep send data: stored size=%llu\n", *(size_t*)dat);
-    if (selectedShips.size() != 0) {
-        dat += sizeof(size_t);
-        memcpy(dat, &selectedShips[0], sizeof(size_t) * selectedShips.size());// ids
-        dat += sizeof(size_t) * selectedShips.size();
-        memcpy(dat, &targetPositions[0], sizeof(vec2) * targetPositions.size());//vecs
+    if (targetPositions.size() != S) {
+        printf("ERROR: Selected ships (%zu) were assigned %zu target positions. They should've been equal.", S, targetPositions.size());
+        return nullptr;
     }
+
+    size = sizeof(enet_uint32) + (sizeof(enet_uint32) + sizeof(vec2)) * S;
+    void* const data = malloc(size);
+    char* dat = (char*)data;
+    *(enet_uint32*)dat = S; // store amount
+    printf("prep send data: stored size=%zu\n", *(enet_uint32*)dat);
+    
+    dat += sizeof(enet_uint32);
+    memcpy(dat, &selectedShips[0], sizeof(enet_uint32) * S);// ids
+    dat += sizeof(enet_uint32) * selectedShips.size();
+    memcpy(dat, &targetPositions[0], sizeof(vec2) * targetPositions.size());//vecs
+
     return data;
 }
 
@@ -998,9 +1000,9 @@ void* Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation,
 */
 void Game::sendShips(Party party, void* const data) {
     char* const dat = (char*)data;
-    const size_t S = *(size_t*)dat;
-    size_t* ids = (size_t*)(dat + sizeof(size_t));
-    vec2 * vecs = (vec2*)(dat + sizeof(size_t) + sizeof(size_t) * S);
+    const enet_uint32 S = *(enet_uint32*)dat;
+    enet_uint32* ids = (enet_uint32*)(dat + sizeof(enet_uint32));
+    vec2 * vecs = (vec2*)(dat + sizeof(enet_uint32) + sizeof(enet_uint32) * S);
     for (size_t i = 0; i < S; i++) {
         flyToTarget(party, ids[i], vecs[i].x, vecs[i].y);
     }

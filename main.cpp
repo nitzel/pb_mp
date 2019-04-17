@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
 
 
     if (!strcmp(argv[1], "-s")) {
-        int maxShips = argc == 3 ? std::stoi(argv[2]) : 1000;
+        size_t maxShips = argc == 3 ? std::stoi(argv[2]) : 1000;
         return server(maxShips);
     }
     

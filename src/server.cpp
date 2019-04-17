@@ -216,7 +216,7 @@ int server(size_t shipAmount) {
                 break;
             case ENET_EVENT_TYPE_DISCONNECT:
             {
-                printf("client party=%u disconnected.\n", (size_t)((ClientData*)event.peer->data)->party);
+                printf("client party=%zd disconnected.\n", (size_t)((ClientData*)event.peer->data)->party);
 
                 bool formerReadyState = allClientsReady(clientData, PN);
                 /* Reset the peer's client information. */

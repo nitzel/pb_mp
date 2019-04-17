@@ -161,7 +161,7 @@ void drawShips(const saShip * sShips, const float dX, const float dY) {
     glEnd();
     glDisable(GL_TEXTURE_2D);
 }
-void drawShipMarkers(const sShip * const ships, std::vector<size_t> & selectedShips, const float dX, const float dY) {
+void drawShipMarkers(const sShip * const ships, std::vector<enet_uint32> & selectedShips, const float dX, const float dY) {
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, info.textures[TEX_SHIP_MARKER].id);
     glBegin(GL_QUADS);
