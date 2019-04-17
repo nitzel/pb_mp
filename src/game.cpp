@@ -63,7 +63,7 @@ void Game::update(const double dt, const bool bUpdatePlanets) {
 void Game::shootAndCollide() {
     generateTree();
     letShoot();
-    letCollide();
+    letCollide(true);
 }
 
 void Game::generateTree() {
@@ -143,7 +143,7 @@ void Game::letShoot() {
     }
 }
 
-void Game::letCollide() {
+void Game::letCollide(bool dealDamage) {
     /////////////////
     // CollisionTesting
     ////////////////
@@ -159,7 +159,8 @@ void Game::letCollide() {
                     if (target.health && distanceSQ(shots[i].x, shots[i].y, target.x, target.y) < SHIP_RADIUS * SHIP_RADIUS) {
                         // collision!!!
                         shots[i].timeToLive = -1;
-                        takeDamage(target);
+                        if (dealDamage)
+                            takeDamage(target);
                         break;
                     }
                 }
@@ -171,7 +172,8 @@ void Game::letCollide() {
                         if (planets[j].party != party && distanceSQ(shots[i].x, shots[i].y, planets[j].x, planets[j].y) < PLANET_RADIUS * PLANET_RADIUS) {
                             // collision!!!
                             shots[i].timeToLive = -1;
-                            takeDamage(planets[j], party);
+                            if (dealDamage)
+                                takeDamage(planets[j], party);
                             break;
                         }
                     }
@@ -768,14 +770,6 @@ void Game::updateShips(const double dt) {
     }
 }
 
-void Game::initGame(saPlanet & planets, saShip * ships, saShot * shots, const size_t MAX_SHIPS) {
-    initPlanets(planets, 6);
-    const size_t MAX_SHOTS = (size_t)(MAX_SHIPS * (float)SHOT_LIFETIME / (float)SHIP_SHOOT_DELAY) + 1000; // + 1000 just to be sure
-    initShots(shots[PA], MAX_SHOTS);
-    initShots(shots[PB], MAX_SHOTS);
-    initShips(ships[PA], MAX_SHIPS);
-    initShips(ships[PB], MAX_SHIPS);
-}
 void Game::initPlanets(saPlanet & planets, const size_t size) {
     planets.size = size;
     planets.planets = new sPlanet[planets.size];

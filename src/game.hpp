@@ -9,7 +9,6 @@
 #include <cstring>
 #include <cstdio>
 
-
 class Game {
 public:
     struct GameConfig {
@@ -62,11 +61,11 @@ public:
 
     void generateTree();
     void letShoot();
-    void letCollide();
+    /* dealDamage=false: Shots don't deal any damage but vanish (use on client) */
+    void letCollide(bool dealDamage);
 
 private:
     /// init list of game objects
-    void initGame(saPlanet& planets, saShip* ships, saShot* shots, const size_t MAX_SHIPS);
     void initPlanets(saPlanet& planets, const size_t size);
     void initShips(saShip& ships, const size_t size);
     void initShots(saShot& shots, const size_t size);

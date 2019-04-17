@@ -154,7 +154,7 @@ int client(std::string hostname) {
             game->clearChanged();
             game->update(dt + vdt, false); // dont update planets as client
             game->generateTree();
-            //game->letCollide(); // todo activate later :)
+            game->letCollide(false); // todo activate later :) shots shouldn't make damage but vanish when hitting sth
             vdt = 0;
         }
 
