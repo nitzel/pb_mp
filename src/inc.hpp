@@ -32,71 +32,71 @@
 
 #define GRID_SIZE            100    // for space-partitioning
 
-enum Party{PA=0,PB,PN};
-enum Upgrade{ECONOMY=0,DEFENSE,PRODUCTION};
+enum Party { PA = 0, PB, PN };
+enum Upgrade { ECONOMY = 0, DEFENSE, PRODUCTION };
 
 struct vec2 { // for rectangles and coordinates etc
-  union {float x, w;};
-  union {float y, h;};
+    union { float x, w; };
+    union { float y, h; };
 };
 extern struct vec2 map, screen, view, mouseR, mouseV;
 
 struct sShip {
-  double timeToShoot;      // when we can fire the next
-  float x,y;   // position
-  float dx, dy;  // deltaXY to get to target
-  float tx, ty;// target coordinate
-  signed char health; // health, zero is dead, below zero is marked for deletion
+    double timeToShoot;      // when we can fire the next
+    float x, y;   // position
+    float dx, dy;  // deltaXY to get to target
+    float tx, ty;// target coordinate
+    signed char health; // health, zero is dead, below zero is marked for deletion
 };
 
-struct sShot {              
-  double timeToLive;        // dead after max-age
-  float x,y;       // position
-  float dx,dy;// deltaXY, moving direction
+struct sShot {
+    double timeToLive;        // dead after max-age
+    float x, y;       // position
+    float dx, dy;// deltaXY, moving direction
 };
 
 struct sPlanet {
-  double timeToBuild;
-  double timeToShoot;
-  float x,y;
-  float tx,ty;   // pos to send new shipsProduction
-  signed char level[3]; // level Economy, Resistance, 
-  unsigned char party;    // PlayerA/B/Neutral
-  unsigned short shipQueue; // number of ships in queue
-  float health;
-  float power;
-  unsigned char shieldActive;
+    double timeToBuild;
+    double timeToShoot;
+    float x, y;
+    float tx, ty;   // pos to send new shipsProduction
+    signed char level[3]; // level Economy, Resistance, 
+    unsigned char party;    // PlayerA/B/Neutral
+    unsigned short shipQueue; // number of ships in queue
+    float health;
+    float power;
+    unsigned char shieldActive;
 };
 
 struct saShip {
-  size_t freePush;// where to save index in free-array
-  size_t freePop; // where to take index in free-array
-  size_t size;
-  sShip * ships;
-  // how it works
-  // In the ships array all ships are stored. To know where to
-  // insert a new ship, we store the free indices in the free array.
-  // Taking an indice from the free array at freePop gives you an 
-  // unused place in ships, while you can insert indices of unused
-  // ships at freePush.
-  size_t * free; // free positions in the ships array
-  // (newly created ships, dead ships) = changed ships
-  std::vector<size_t> changed;
+    size_t freePush;// where to save index in free-array
+    size_t freePop; // where to take index in free-array
+    size_t size;
+    sShip* ships;
+    // how it works
+    // In the ships array all ships are stored. To know where to
+    // insert a new ship, we store the free indices in the free array.
+    // Taking an indice from the free array at freePop gives you an 
+    // unused place in ships, while you can insert indices of unused
+    // ships at freePush.
+    size_t* free; // free positions in the ships array
+    // (newly created ships, dead ships) = changed ships
+    std::vector<size_t> changed;
 };
 struct saPlanet {
-  size_t size;
-  sPlanet * planets;
+    size_t size;
+    sPlanet* planets;
 };
 struct saShot {
-  size_t insertPos;
-  size_t size;
-  size_t changedPos; // from here till insertPos the shots are new/changed and need to be transmitted
-  sShot * shots;
+    size_t insertPos;
+    size_t size;
+    size_t changedPos; // from here till insertPos the shots are new/changed and need to be transmitted
+    sShot* shots;
 };
 // to partition the map
 struct sSquare {
-  size_t size;
-  std::vector<size_t> shiplist; 
+    size_t size;
+    std::vector<size_t> shiplist;
 };
 
 /// random numbers

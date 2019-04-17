@@ -1,5 +1,4 @@
-EXECLIENT=game
-EXESERVER=server
+EXE=pb_gnu
 # -Wno-comment // or /* within a comment
 CFLAGS=-c -Wall -std=c++11 -Wno-comment -g -Os -D__NO_INLINE_HYPOTF__
 #for optimization add -Os -D__NO_INLINE_HYPOTF__
@@ -18,44 +17,40 @@ CC=clang++
 LDFLAGS += -stdlib=libc++ -framework Cocoa -framework OpenGL -framework IOKit
 else ifeq ($(UNAME), Linux)
 LDFLAGS += -lGL
-else 
-#RM=del -f
-EXECLIENT = client.exe
-EXESERVER = server.exe
+# Windows
+else
+RM=del
+EXE = pb_gnu.exe
 LDFLAGS += -lopengl32 -lgdi32 -lws2_32 -lwinmm -static-libgcc -static-libstdc++
 endif
 
-all: $(EXECLIENT) $(EXESERVER)
-client: $(EXECLIENT)
-server: $(EXESERVER)
+all: $(EXE)
 
-#client
-$(EXECLIENT): client.o inc.o draw.o game.o stb_image.o makefile
-	$(CC) client.o inc.o draw.o game.o stb_image.o -o $(EXECLIENT) $(LDFLAGS)
-#server
-$(EXESERVER): server.o inc.o draw.o game.o stb_image.o makefile
-	$(CC) server.o inc.o draw.o game.o stb_image.o -o $(EXESERVER) $(LDFLAGS)
-  
-server.o: server.cpp draw.hpp game.hpp net.hpp makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) server.cpp
+# executable
+$(EXE): main.o server.o client.o inc.o draw.o game.o net.o makefile
+	$(CC) main.o server.o client.o inc.o draw.o game.o net.o -o $(EXE) $(LDFLAGS)
 
-client.o: client.cpp draw.hpp game.hpp net.hpp makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) client.cpp
-  
-draw.o: draw.cpp draw.hpp makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) draw.cpp
-  
-game.o: game.cpp game.hpp makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) game.cpp
-  
-inc.o: inc.cpp inc.hpp makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) inc.cpp
-  
-stb_image.o: include/stb_image.h include/stb_image.c makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) include/stb_image.c
+main.o: main.cpp src/server.hpp src/client.hpp makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) main.cpp
 
-#lodepng.o: lodepng.cpp lodepng.h
-#	$(CC) $(CFLAGS) $(LDFLAGS) lodepng.cpp
+server.o: src/server.cpp src/server.hpp src/draw.hpp src/game.hpp src/net.hpp makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) src/server.cpp
+
+client.o: src/client.cpp src/client.hpp src/draw.hpp src/game.hpp src/net.hpp makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) src/client.cpp
+  
+draw.o: src/draw.cpp src/draw.hpp src/include/stb_image.h makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) src/draw.cpp
+  
+game.o: src/game.cpp src/game.hpp makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) src/game.cpp
+  
+inc.o: src/inc.cpp src/inc.hpp makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) src/inc.cpp
+  
+net.o: src/net.cpp src/net.hpp makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) src/net.cpp
 
 clean:
-	$(RM) *.o $(EXECLIENT) $(EXESERVER)
+	$(RM) *.o
+	$(RM) $(EXE)
