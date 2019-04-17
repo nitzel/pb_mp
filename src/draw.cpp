@@ -3,6 +3,7 @@
 #define STBI_NO_HDR
 #define STB_IMAGE_IMPLEMENTATION
 #include "include/stb_image.h"
+#include <cstdint>
 
 struct sInfo info;
 
@@ -42,7 +43,7 @@ void initGfx() {
     loadTextures();
 
     // make a cursor
-    size_t pixels[15][15];
+    uint32_t pixels[15][15];
     memset(pixels, 0x00, sizeof(pixels));
     for (size_t i = 0; i < 15; i++) {
         pixels[0][i] = 0xffffffff;        // vert1
