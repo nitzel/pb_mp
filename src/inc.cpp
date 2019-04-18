@@ -6,9 +6,10 @@ struct vec2 screen, view, mouseR, mouseV;
 //// random number generation
 /////////////////////////////
 
-unsigned long xorshf962(void) {          //period 2^96-1
-// Marsaglia's xorshf generator
-//http://stackoverflow.com/questions/1640258/need-a-fast-random-generator-for-c
+/// Marsaglia's xorshf generator
+/// period 2^96-1
+/// http://stackoverflow.com/questions/1640258/need-a-fast-random-generator-for-c
+unsigned long xorshf96(void) {
     static unsigned long x = 123456789, y = 362436069, z = 521288629;
     unsigned long t;
     x ^= x << 16;
@@ -24,7 +25,7 @@ unsigned long xorshf962(void) {          //period 2^96-1
 }
 
 size_t rand(size_t max) {
-    return xorshf962() % max;
+    return xorshf96() % max;
 }
 int rand(int min, int max) {
     return ((signed int)rand(max - min) + min);

@@ -1,7 +1,6 @@
 #ifndef __NET__
 #define __NET__
 
-#include <cstring>
 #include <enet/enet.h>
 
 #define __PTYPE enet_uint8

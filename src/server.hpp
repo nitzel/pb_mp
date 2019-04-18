@@ -1,11 +1,8 @@
 #ifndef __SERVER__
 #define __SERVER__
 
-#include "game.hpp"
-#include "draw.hpp"
-#include "net.hpp"
-#include <iostream>
+#include <cstdlib> // for std::size_t
 
-int server(size_t shipAmount);
+int server(std::size_t shipAmount);
 
 #endif

@@ -1,5 +1,11 @@
 #include "client.hpp"
 
+#include "game.hpp"
+#include "draw.hpp"
+#include "net.hpp"
+
+#include <iostream>
+
 // just about mouseclicks/releases!
 #include <string>
 int mouseChanged[8]{ -1,-1,-1,-1,-1,-1,-1,-1 };  // -1 nothing, GLFW_PRESS or GLFW_RELEASE

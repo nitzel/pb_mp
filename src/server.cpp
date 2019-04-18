@@ -1,5 +1,11 @@
 #include "server.hpp"
 
+#include "game.hpp"
+#include "draw.hpp"
+#include "net.hpp"
+
+#include <iostream>
+
 struct ClientData {
     Party party;
     ENetPeer* peer;

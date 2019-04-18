@@ -2,12 +2,8 @@
 #define __GAME__
 
 #include "inc.hpp"
-#include <enet/types.h>
 
-#include <cmath>
-#include <cstdlib>
-#include <cstring>
-#include <cstdio>
+#include <enet/types.h>
 
 class Game {
 public:
@@ -33,7 +29,6 @@ public:
 
     std::vector<enet_uint32> selectedShips;
 private:
-    void GameCtor(GameConfig cfg);
     GameConfig config;
 public:
     Game(vec2 map, const size_t MAX_SHIPS, const size_t NUM_PLANETS);

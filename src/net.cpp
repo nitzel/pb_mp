@@ -1,10 +1,12 @@
 #include "net.hpp"
 
+#include <cstring> // std::memcpy
+
 /// creates an enet packet with a packetType added in the beginning
 ENetPacket* enet_packet_create(const void* data, size_t 	dataLength, enet_uint32 	flags, PacketType packetType) {
     ENetPacket* packet = enet_packet_create(nullptr, sizeof(__PTYPE) + dataLength, flags);
     *(__PTYPE*)packet->data = (__PTYPE)packetType;
-    memcpy(packet->data + sizeof(__PTYPE), data, dataLength);
+    std::memcpy(packet->data + sizeof(__PTYPE), data, dataLength);
     return packet;
 }
 /// gets the packettype from an enentpacket

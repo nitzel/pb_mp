@@ -1,6 +1,10 @@
+#include "game.hpp"
+
 #include <algorithm>
 #include <iostream>
-#include "game.hpp"
+#include <cmath> // std::isnan
+#include <cstring> // std::memset
+
 #define TREE(X,Y,Z)  mTree[(X*treeW+Y)*treeH+Z] // from XYZ to [x][y][z]
 #define TREE1(X)  &mTree[X*treeW*treeH] // from XYZ to [x][y][z]
 
@@ -422,7 +426,7 @@ void Game::clearChanged() {
 
 /// get length of vector
 inline double Game::vecLen(const vec2 v) {
-    return sqrt(v.x * v.x + v.y * v.y);
+    return std::sqrt(v.x * v.x + v.y * v.y);
 }
 
 /// set dx, dy relative to vector (xy)->(tx,ty)
@@ -431,7 +435,7 @@ inline void Game::delta(const float x, const float y, const float tx, const floa
     dy = ty - y;
 }
 inline void Game::normalize(float& x, float& y, const float LEN) {
-    const float normFac = LEN / sqrt(x * x + y * y);
+    const float normFac = LEN / std::sqrt(x * x + y * y);
     x = normFac * x;
     y = normFac * y;
     // because of division by 0 we may have some NaNs
@@ -654,7 +658,7 @@ void Game::updatePlanets(const  double dt) {
                   // create new ship 
                   // put ship in a random circle around tx/ty
                     float dx = rand(-50, 50), dy = rand(-50, 50);
-                    float len = sqrt(dx * dx + dy * dy);
+                    float len = std::sqrt(dx * dx + dy * dy);
                     dx = dx * SEND_SHIP_RAND_RADIUS / len;
                     dy = dy * SEND_SHIP_RAND_RADIUS / len;
                     // add it
@@ -773,7 +777,7 @@ void Game::updateShips(const double dt) {
 void Game::initPlanets(saPlanet & planets, const size_t size) {
     planets.size = size;
     planets.planets = new sPlanet[planets.size];
-    //memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
+    //std::memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
 
     planets.planets[0] = sPlanet{ 0,0,100,100,400,125,0,9,0, PA,3000,80,5,true };
     planets.planets[1] = sPlanet{ 0,0,100,250,400,275,0,9,0, PA,3000,80,5,true };
@@ -787,13 +791,13 @@ void Game::initShots(saShot & shots, const size_t size) {
     shots.insertPos = 0;
     shots.changedPos = 0;
     shots.shots = new sShot[shots.size];
-    memset(shots.shots, 0, sizeof(sShot) * size); // clear data
+    std::memset(shots.shots, 0, sizeof(sShot) * size); // clear data
 }
 void Game::initShips(saShip & ships, const size_t size) {
     ships.size = size;
     ships.ships = new sShip[ships.size];
 
-    memset(ships.ships, 0, sizeof(sShip) * size); // clear
+    std::memset(ships.ships, 0, sizeof(sShip) * size); // clear
     ships.freePush = 0;
     ships.freePop = 0;
     ships.free = new size_t[ships.size];

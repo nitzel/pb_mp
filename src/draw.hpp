@@ -3,10 +3,9 @@
 
 #include "inc.hpp"
 
-#include <cstring>
-#include <cstdlib>
 #include <GLFW/glfw3.h>
 #include <enet/types.h>
+#include <vector>
 
 enum TextureID { TEX_FONT = 0, TEX_PLANET, TEX_SHIP, TEX_SHIP_MARKER, TEX_AMOUNT };
 extern const char* textureNames[];

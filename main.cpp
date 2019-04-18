@@ -1,6 +1,8 @@
 #include "src/server.hpp"
 #include "src/client.hpp"
+
 #include <iostream>
+#include <cstring> // std::strcmp
 
 int main(int argc, char** argv) {
     std::cout << "Args: " << argc << std::endl;
@@ -24,13 +26,13 @@ int main(int argc, char** argv) {
     }
 
 
-    if (!strcmp(argv[1], "-s")) {
+    if (!std::strcmp(argv[1], "-s")) {
         size_t maxShips = argc == 3 ? std::stoi(argv[2]) : 1000;
         return server(maxShips);
     }
     
     std::string hostname = "localhost";
-    if (argc == 2 && strcmp(argv[1], "-c"))
+    if (argc == 2 && std::strcmp(argv[1], "-c"))
         hostname = std::string(argv[1]);
     else if (argc == 3)
         hostname = std::string(argv[2]);
