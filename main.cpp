@@ -1,5 +1,6 @@
 #include "src/server.hpp"
 #include "src/client.hpp"
+#include "src/configuration.hpp"
 
 #include <iostream>
 #include <cstring> // std::strcmp
@@ -10,6 +11,11 @@ int main(int argc, char** argv) {
         std::cout << i << ' ' << argv[i] << std::endl;
     }
     std::cout << std::endl;
+    
+    // todo 20190419nitzel Forward to and use the settings in the game etc, to replace the #defines in 
+    CConfiguration config("settings.ini");
+    std::cout << "Config=" << config << std::endl;
+    
 
     if (argc == 1) {
         // ask user

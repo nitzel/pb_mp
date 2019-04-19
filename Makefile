@@ -1,6 +1,6 @@
 EXE=pb_gnu
 # -Wno-comment // or /* within a comment
-CFLAGS=-c -Wall -std=c++11 -Wno-comment -g
+CFLAGS=-c -Wall -std=c++11 -Wno-comment -Os -D__NO_INLINE_HYPOTF__
 #for optimization add -Os -D__NO_INLINE_HYPOTF__
 #optimization gave a speed bonus from 40 to 65fps at 2x20.000 ships
 LDFLAGS=-lglfw3  -lenet
@@ -27,8 +27,8 @@ endif
 all: $(EXE)
 
 # executable
-$(EXE): main.o server.o client.o inc.o draw.o game.o net.o makefile
-	$(CC) main.o server.o client.o inc.o draw.o game.o net.o -o $(EXE) $(LDFLAGS)
+$(EXE): main.o server.o client.o inc.o draw.o game.o net.o configuration.o inih.o inihreader.o makefile
+	$(CC) main.o server.o client.o inc.o draw.o game.o net.o configuration.o inih.o inihreader.o -o $(EXE) $(LDFLAGS)
 
 main.o: main.cpp src/server.hpp src/client.hpp makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) main.cpp
@@ -50,6 +50,14 @@ inc.o: src/inc.cpp src/inc.hpp makefile
   
 net.o: src/net.cpp src/net.hpp makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) src/net.cpp
+
+configuration.o: src/configuration.cpp src/configuration.hpp src/include/inih/INIReader.hpp makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) src/configuration.cpp
+
+inih.o: src/include/inih/ini.c src/include/inih/ini.h makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) src/include/inih/ini.c -o inih.o
+inihreader.o: src/include/inih/ini.c src/include/inih/INIReader.hpp src/include/inih/INIReader.cpp makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) src/include/inih/INIReader.cpp -o inihreader.o
 
 clean:
 	$(RM) *.o

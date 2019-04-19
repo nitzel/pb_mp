@@ -21,9 +21,12 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\client.cpp" />
+    <ClCompile Include="src\configuration.cpp" />
     <ClCompile Include="src\draw.cpp" />
     <ClCompile Include="src\game.cpp" />
     <ClCompile Include="src\inc.cpp" />
+    <ClCompile Include="src\include\inih\ini.c" />
+    <ClCompile Include="src\include\inih\INIReader.cpp" />
     <ClCompile Include="src\net.cpp" />
     <ClCompile Include="src\server.cpp" />
   </ItemGroup>
@@ -31,10 +34,18 @@
     <ClInclude Include="src\client.hpp" />
     <ClInclude Include="src\draw.hpp" />
     <ClInclude Include="src\game.hpp" />
+    <ClInclude Include="src\configuration.hpp" />
     <ClInclude Include="src\inc.hpp" />
+    <ClInclude Include="src\include\inih\ini.h" />
+    <ClInclude Include="src\include\inih\INIReader.hpp" />
     <ClInclude Include="src\include\stb_image.h" />
     <ClInclude Include="src\net.hpp" />
     <ClInclude Include="src\server.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Makefile" />
+    <None Include="README.md" />
+    <None Include="settings.ini" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -109,6 +120,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -124,6 +136,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,6 +150,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -153,6 +167,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
