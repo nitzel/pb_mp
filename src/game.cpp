@@ -12,7 +12,7 @@ Game::GameConfig Game::createConfig(size_t const NUM_PLANETS, size_t const NUM_S
     GameConfig cfg;
     cfg.numPlanets = NUM_PLANETS;
     cfg.numShips = NUM_SHIPS;
-    cfg.numShots = cfg.numShips * (float)SHOT_LIFETIME / (float)SHIP_SHOOT_DELAY + cfg.numPlanets * 50; // + 50/planet just to be sure - that means, a planet can shoot 50 shots within the lifespan of one shot  and we can still store all shots. Also all planets (and they are all captured by one party) fire at the same time and all ships ... will probably not happen, but just to be sure :D
+    cfg.numShots = (enet_uint32)(cfg.numShips * (float)SHOT_LIFETIME / (float)SHIP_SHOOT_DELAY + cfg.numPlanets * 50); // + 50/planet just to be sure - that means, a planet can shoot 50 shots within the lifespan of one shot  and we can still store all shots. Also all planets (and they are all captured by one party) fire at the same time and all ships ... will probably not happen, but just to be sure :D
     if (map.x > 0 && map.y > 0)
         cfg.map = map;
     else {
@@ -198,13 +198,13 @@ void* Game::packData(size_t & size, double time) {
     shotsA
     shotsB
     */
-    size_t memShips = sizeof(sShip) * mShips[0].size;
+    enet_uint32 memShips = sizeof(sShip) * mShips[0].size;
 
-    size_t memShots = sizeof(sShot) * mShots[0].size;
+    enet_uint32 memShots = sizeof(sShot) * mShots[0].size;
 
-    size_t memPlanets = sizeof(sPlanet) * mPlanets.size;
+    enet_uint32 memPlanets = sizeof(sPlanet) * mPlanets.size;
 
-    size_t memOther = sizeof(double) + sizeof(float) * 2 + sizeof(enet_uint32) * 3; // time, 2mMoney, memoryUsage of ship/shot/planets
+    enet_uint32 memOther = sizeof(double) + sizeof(float) * 2 + sizeof(enet_uint32) * 3; // time, 2mMoney, memoryUsage of ship/shot/planets
 
     size = memOther + memPlanets + memShips * 2 + memShots * 2;
     void* const data = calloc(1, size);
@@ -223,7 +223,7 @@ void* Game::packData(size_t & size, double time) {
     return data;
 }
 double Game::unpackData(void* const data, size_t size, const double time) {
-    size_t memShips, memShots, memPlanets;
+    enet_uint32 memShips, memShots, memPlanets;
 
     char* dat = (char*)data; // temp pointer
     double dt = time - *(double*)dat; dat += sizeof(double);
@@ -255,7 +255,7 @@ void* Game::packChangedShips(Party party, enet_uint32 & size) {
     const size_t S = mShips[party].changed.size();
     std::sort(mShips[party].changed.begin(), mShips[party].changed.end()); // sort vector to easily ignore dublicates
     enet_uint32 pC = 0, pD = 0; // pointer=amount changed and dead ships
-    size_t *data = new size_t[S];
+    enet_uint32 *data = new enet_uint32[S];
     if (!mShips[party].changed.empty()) { // only if changed is not empty
         size_t lastId = mShips[party].changed[0] + 1; // this way the first ID cannot be ignored because it cannot equal the "last one"
         for (size_t i = 0; i < S; i++) {
