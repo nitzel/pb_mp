@@ -774,17 +774,17 @@ void Game::updateShips(const double dt) {
     }
 }
 
+// Generates 'size' a planet for now. Todo this data should come from a map file.
 void Game::initPlanets(saPlanet & planets, const size_t size) {
     planets.size = size;
     planets.planets = new sPlanet[planets.size];
-    //std::memset(planets.planets, 0, sizeof(sPlanet)*size); // clear
-
-    planets.planets[0] = sPlanet{ 0,0,100,100,400,125,0,9,0, PA,3000,80,5,true };
-    planets.planets[1] = sPlanet{ 0,0,100,250,400,275,0,9,0, PA,3000,80,5,true };
-    planets.planets[2] = sPlanet{ 0,0,100,400,400,425,0,9,0, PA,3000,80,5,true };
-    planets.planets[3] = sPlanet{ 0,0,700,100,400, 75,0,9,0, PB,3000,80,5,true };
-    planets.planets[4] = sPlanet{ 0,0,700,250,400,225,0,9,0, PB,3000,80,5,true };
-    planets.planets[5] = sPlanet{ 0,0,700,400,400,375,0,9,0, PB,3000,80,5,false };
+    
+    for (unsigned int i = 0; i < size; i++) {
+        const float x = i % 2 ? 700.f : 100.f;
+        const float y = 100.f + 75 * i;
+        const Party party = i % 2 ? PA : PB;
+        planets.planets[i] = sPlanet{ 0, 0, x, y, 400.f, 125.f + 75 * i, 0, 9, 0, (unsigned char)party, 3000, 80, 5, true };
+    }
 }
 void Game::initShots(saShot & shots, const size_t size) {
     shots.size = size;
@@ -807,8 +807,6 @@ void Game::initShips(saShip & ships, const size_t size) {
 }
 
 Game::GameConfig Game::getConfig() {
-
-
     return config;
 }
 
@@ -818,6 +816,7 @@ void Game::select(Party party, vec2 v) {
     v = { v.x + SHIP_RADIUS, v.y + SHIP_RADIUS };
     select(party, u, v); // right now it's indirectly just deselecting
 }
+
 /** selects ships within the rectangle formed by the two points v1, v2
 the selected ships can be found in the list Game::selectedShips
 */
@@ -830,9 +829,14 @@ void Game::select(Party party, vec2 v1, vec2 v2) {
     vec2 va{ std::min(v1.x, v2.x), std::min(v1.y, v2.y) }; // upper left
     vec2 vb{ std::max(v1.x, v2.x), std::max(v1.y, v2.y) }; // lower right
 
+
     // positions in space partitioning tree: 
-    vec2 const gridA{ (float)((int)va.x / GRID_SIZE),(float)((int)va.y / GRID_SIZE) };
-    vec2 const gridB{ (float)((int)vb.x / GRID_SIZE),(float)((int)vb.y / GRID_SIZE) };
+    vec2 const gridAPre{ (float)((int)va.x / GRID_SIZE),(float)((int)va.y / GRID_SIZE) };
+    vec2 const gridBPre{ (float)((int)vb.x / GRID_SIZE),(float)((int)vb.y / GRID_SIZE) };
+
+    vec2 const gridA{ (float)std::max(0, (int)gridAPre.x), (float)std::max(0, (int)gridAPre.y) };
+    vec2 const gridB{ (float)std::min(treeW - 1, (size_t)gridBPre.x), (float)std::min(treeH - 1, (size_t)gridBPre.y) };
+
     printf("selecting[ %f/%f %f/%f\n", v1.x, v1.y, v2.x, v2.y);
     printf("selecting- %f/%f %f/%f\n", va.x, va.y, vb.x, vb.y);
     printf("selecting] %f/%f %f/%f\n", gridA.x, gridA.y, gridB.x, gridB.y);
