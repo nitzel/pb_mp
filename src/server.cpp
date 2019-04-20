@@ -12,7 +12,8 @@ struct ClientData {
     ENetPeer* peer;
     bool isReady;
 };
-static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
+static void callback_mouseMove(GLFWwindow* window, double xpos, double ypos);
+static void updateMouseOnMapPosition(const vec2 mouseRelativeToWindow, const vec2 viewPosition);
 bool allClientsReady(ClientData* clientData, const size_t size);
 void broadcastIfReadystateChanged(ENetHost* host, const bool formerReadyState, const bool newReadyState);
 
@@ -77,7 +78,7 @@ int server(const CConfiguration &config) {
     initGlfw("PB-MP-SERVER", (int)screen.x, (int)screen.y, config.graphics.fullscreen);
     initGfx();
     // add input listeners
-    glfwSetCursorPosCallback(info.window, cursor_pos_callback);
+    glfwSetCursorPosCallback(info.window, callback_mouseMove);
 
 
     double timeToBroadcast = 0;
@@ -250,11 +251,15 @@ int server(const CConfiguration &config) {
     return 0;
 }
 
-static void cursor_pos_callback(GLFWwindow * window, double xpos, double ypos) {
+
+static void updateMouseOnMapPosition(const vec2 mouseRelativeToWindow, const vec2 viewPosition) {
+    mouseV = mouseRelativeToWindow + viewPosition;
+}
+
+static void callback_mouseMove(GLFWwindow* window, double xpos, double ypos) {
     mouseR.x = (float)xpos;
     mouseR.y = (float)ypos;
-    mouseV.x = mouseR.x + view.x;
-    mouseV.y = mouseR.y + view.y;
+    updateMouseOnMapPosition(mouseR, view);
 }
 
 /**

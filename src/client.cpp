@@ -13,6 +13,7 @@ int mouseChanged[8]{ -1,-1,-1,-1,-1,-1,-1,-1 };  // -1 nothing, GLFW_PRESS or GL
 vec2 mouseStates[8][4]; // mousebutton 0-7, posDown(R), posUp(R), posDown(Virtual), posUp
 
 static void callback_mouseMove(GLFWwindow* window, double xpos, double ypos);
+static void updateMouseOnMapPosition(const vec2 mouseRelativeToWindow, const vec2 viewPosition);
 static void callback_mouseButton(GLFWwindow* window, int button, int action, int mods);
 static void callback_mouseScroll(GLFWwindow* window, double dx, double dy);
 
@@ -151,10 +152,13 @@ int client(const CConfiguration& config) {
             if (mouseR.y > screen.h - 80) dy = mouseR.y - (screen.h - 80);
             view.x += dx / 80.f * 20;
             view.y += dy / 80.f * 20;
-            if (view.x < 0) view.x = 0;
-            if (view.y < 0) view.y = 0;
-            if (view.x > game->mMap.w - screen.w) view.x = game->mMap.w - screen.w;
-            if (view.y > game->mMap.h - screen.h) view.y = game->mMap.h - screen.h;
+            if (dx != 0 || dy != 0) {
+                if (view.x < 0) view.x = 0;
+                if (view.y < 0) view.y = 0;
+                if (view.x > game->mMap.w - screen.w) view.x = game->mMap.w - screen.w;
+                if (view.y > game->mMap.h - screen.h) view.y = game->mMap.h - screen.h;
+                updateMouseOnMapPosition(mouseR, view);
+            }
         }
         // process game content
         if (!paused && game) {
@@ -326,11 +330,14 @@ int client(const CConfiguration& config) {
     return 0;
 }
 
+static void updateMouseOnMapPosition(const vec2 mouseRelativeToWindow, const vec2 viewPosition) {
+    mouseV = mouseRelativeToWindow + viewPosition;
+}
+
 static void callback_mouseMove(GLFWwindow * window, double xpos, double ypos) {
     mouseR.x = (float)xpos;
     mouseR.y = (float)ypos;
-    mouseV.x = mouseR.x + view.x;
-    mouseV.y = mouseR.y + view.y;
+    updateMouseOnMapPosition(mouseR, view);
 }
 
 static void callback_mouseButton(GLFWwindow * window, int button, int action, int mods) {

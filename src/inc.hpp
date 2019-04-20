@@ -38,6 +38,14 @@ enum Upgrade { ECONOMY = 0, DEFENSE, PRODUCTION };
 struct vec2 { // for rectangles and coordinates etc
     union { float x, w; };
     union { float y, h; };
+    friend vec2 operator+ (const vec2& rhd, const vec2& lhd) {
+        return vec2{ rhd.x + lhd.x, rhd.y + lhd.y };
+    }
+    friend vec2& operator+= (vec2& rhd, const vec2& lhd) {
+        rhd.x += lhd.x;
+        rhd.y += rhd.y;
+        return rhd;
+    }
 };
 extern struct vec2 map, screen, view, mouseR, mouseV;
 
