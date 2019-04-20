@@ -11,14 +11,16 @@ struct sInfo info;
 
 const char* textureNames[] = { "res/mFont.png","res/planet.png","res/ship.png","res/ship_marker.png" };
 
-void initGlfw(const char* title, const int screenW, const int screenH) {
+void initGlfw(const char* title, const int screenW, const int screenH, bool fullscreen) {
     if (!glfwInit())
         exit("Failed at glfwInit()\n", EXIT_FAILURE);
     atexit(glfwTerminate);
     glfwSetErrorCallback(cb_error);
     //struct sInfo & info = *getInfo(); // todo decide if necessary
 
-    info.window = glfwCreateWindow(screenW, screenH, title, NULL, NULL);
+    GLFWmonitor *monitorForFullscreen = fullscreen ? glfwGetPrimaryMonitor() : nullptr; // nullptr = windowed
+
+    info.window = glfwCreateWindow(screenW, screenH, title, monitorForFullscreen, nullptr);
     if (!info.window) {
         exit("Failed at glfwCreateWindow()", EXIT_FAILURE);
     }

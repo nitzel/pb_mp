@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
     CConfiguration config("settings.ini");
     std::cout << "Config=" << config << std::endl;
     
-
+    // no args: ask user for client/server
     if (argc == 1) {
         // ask user
         char clientOrServer;
@@ -25,22 +25,16 @@ int main(int argc, char** argv) {
 
         switch (clientOrServer) {
         case 'c': 
-            return client("localhost");
+            return client(config);
         default:
-            return server(1000);
+            return server(config);
         }
     }
 
-
+    // arg -s to start a server, otherwise client
     if (!std::strcmp(argv[1], "-s")) {
-        size_t maxShips = argc == 3 ? std::stoi(argv[2]) : 1000;
-        return server(maxShips);
+        return server(config);
     }
     
-    std::string hostname = "localhost";
-    if (argc == 2 && std::strcmp(argv[1], "-c"))
-        hostname = std::string(argv[1]);
-    else if (argc == 3)
-        hostname = std::string(argv[2]);
-    return client(hostname);
+    return client(config);
 }

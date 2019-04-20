@@ -3,6 +3,7 @@
 #include "game.hpp"
 #include "draw.hpp"
 #include "net.hpp"
+#include "configuration.hpp"
 
 #include <iostream>
 
@@ -15,8 +16,8 @@ static void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
 bool allClientsReady(ClientData* clientData, const size_t size);
 void broadcastIfReadystateChanged(ENetHost* host, const bool formerReadyState, const bool newReadyState);
 
-int server(size_t shipAmount) {
-    std::cout << "Server" << ", maximum number of ships is " << shipAmount << std::endl;
+int server(const CConfiguration &config) {
+    std::cout << "Server" << ", maximum number of ships is " << config.game.maxShipsPerPlayer << ". Port: " << config.server.port << std::endl;
     //freopen("stderr_client.txt", "w", stderr);
     
     //////////
@@ -36,7 +37,7 @@ int server(size_t shipAmount) {
     // server
     printf("Server\n");
     address.host = ENET_HOST_ANY;
-    address.port = 12345;
+    address.port = config.server.port;
     host = enet_host_create(&address, 2, 3, 0, 0); // 2 connections, 3 channels
 
     if (host == NULL) {
@@ -62,18 +63,18 @@ int server(size_t shipAmount) {
 
     mouseR = { 0,0 };
     mouseV = { 0,0 };
-    screen = { 640,480 }; // {640, 480};//
+    screen = { (float)config.graphics.width, (float)config.graphics.height };
     view = { 0,0 };
     ////////////////
     // GAME VARS
     ////////////////
 
-    Game game(vec2{ 2000,2000 }, shipAmount, 6);
+    Game game(vec2{ 2000,2000 }, config.game.maxShipsPerPlayer, 6);
 
     ///////////////////////////////
     // init GLFW
     /////////////////////////////////s
-    initGlfw("PB-MP-SERVER", (int)screen.x, (int)screen.y);
+    initGlfw("PB-MP-SERVER", (int)screen.x, (int)screen.y, config.graphics.fullscreen);
     initGfx();
     // add input listeners
     glfwSetCursorPosCallback(info.window, cursor_pos_callback);

@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\lib">
+      <UniqueIdentifier>{19c8148e-13a7-48e3-92e4-efd882582352}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\lib">
+      <UniqueIdentifier>{ab656d3f-e6e7-4310-837b-99befdbc7f77}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\client.cpp">
@@ -36,14 +42,14 @@
     <ClCompile Include="src\net.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\include\inih\ini.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\include\inih\INIReader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\configuration.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\include\inih\ini.c">
+      <Filter>Source Files\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\include\inih\INIReader.cpp">
+      <Filter>Source Files\lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -65,17 +71,17 @@
     <ClInclude Include="src\server.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\include\stb_image.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\include\inih\ini.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\configuration.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\include\stb_image.h">
+      <Filter>Header Files\lib</Filter>
+    </ClInclude>
     <ClInclude Include="src\include\inih\INIReader.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\include\inih\ini.h">
+      <Filter>Header Files\lib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

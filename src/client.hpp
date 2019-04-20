@@ -1,8 +1,8 @@
 #ifndef __CLIENT__
 #define __CLIENT__
 
-#include <string>
+#include "configuration.hpp"
 
-int client(std::string hostname);
+int client(const CConfiguration& config);
 
 #endif

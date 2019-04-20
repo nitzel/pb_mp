@@ -3,6 +3,7 @@
 #include "game.hpp"
 #include "draw.hpp"
 #include "net.hpp"
+#include "configuration.hpp"
 
 #include <iostream>
 
@@ -18,9 +19,8 @@ static void callback_mouseScroll(GLFWwindow* window, double dx, double dy);
 
 #define TIME_TO_SYNC_TIME 0.5f
 #define GAMESTATE_OLD 100.f // dont care about age! 0.5f // gamestates older than this will be discarded
-int client(std::string hostname) {
-    std::cout << "Client" << ", server at " << hostname << std::endl;
-    //freopen("stderr_client.txt", "w", stderr);
+int client(const CConfiguration& config) {
+    std::cout << "Client" << ", server at " << config.client.host << ":" << config.client.port << std::endl;
 
     if (enet_initialize() != 0)
     {
@@ -41,8 +41,8 @@ int client(std::string hostname) {
         exit(EXIT_FAILURE);
     }
     enet_host_bandwidth_throttle(host);
-    enet_address_set_host(&address, hostname.c_str());
-    address.port = 12345;
+    enet_address_set_host(&address, config.client.host.c_str());
+    address.port = config.client.port;
 
     peer = enet_host_connect(host, &address, 3, 0); // 3 channels
 
@@ -55,19 +55,20 @@ int client(std::string hostname) {
         printf("Connection to host succeeded\n");
     else {
         enet_peer_reset(peer);
-        printf("connection to host failed\n");
+        printf("Connection to host failed\n");
+        exit(EXIT_FAILURE); // todo try reconnect
     }
     enet_host_flush(host);
 
     mouseR = { 0,0 };
     mouseV = { 0,0 };
-    screen = { 640, 480 }; // {800, 600};//
+    screen = { (float)config.graphics.width, (float)config.graphics.height };
     view = { 0,0 };
     Game* game = nullptr;
     ///////////////////////////////
     // init GLFW
     /////////////////////////////////s
-    initGlfw("PB-MP-Client", (int)screen.x, (int)screen.y);
+    initGlfw("PB-MP-Client", (int)screen.x, (int)screen.y, config.graphics.fullscreen);
     initGfx();
     // add input listeners
     glfwSetCursorPosCallback(info.window, callback_mouseMove);

@@ -22,7 +22,7 @@ extern struct sInfo info;
 
 //////////
 // init
-void initGlfw(const char* title, const int screenW, const int screenH);
+void initGlfw(const char* title, const int screenW, const int screenH, bool fullscreen);
 void initGfx();
 
 
