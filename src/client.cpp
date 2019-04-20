@@ -135,7 +135,7 @@ int client(const CConfiguration& config) {
                 size_t size = 0;
                 void* data = game->sendSelectedGetData(party, vp, vr, formation, size);
                 if (data != nullptr) {
-                    game->sendShips(party, data);
+                    // game->sendShips(party, data); // todo see Issue#16 improve/leave/remove
                     ENetPacket* packet = enet_packet_create(data, size, ENET_PACKET_FLAG_RELIABLE, PTYPE_SHIPS_MOVE);
                     enet_peer_send(peer, 1, packet);
                     free(data);

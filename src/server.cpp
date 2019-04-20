@@ -97,10 +97,13 @@ int server(const CConfiguration &config) {
             if (mouseR.y > screen.h - 80) dy = mouseR.y - (screen.h - 80);
             view.x += dx / 80.f * 20;
             view.y += dy / 80.f * 20;
-            if (view.x < 0) view.x = 0;
-            if (view.y < 0) view.y = 0;
-            if (view.x > game.mMap.w - screen.w) view.x = game.mMap.w - screen.w;
-            if (view.y > game.mMap.h - screen.h) view.y = game.mMap.h - screen.h;
+            if (dx != 0 || dy != 0) {
+                if (view.x < 0) view.x = 0;
+                if (view.y < 0) view.y = 0;
+                if (view.x > game.mMap.w - screen.w) view.x = game.mMap.w - screen.w;
+                if (view.y > game.mMap.h - screen.h) view.y = game.mMap.h - screen.h;
+                updateMouseOnMapPosition(mouseR, view);
+            }
         }
         // clear screen
         glClear(GL_COLOR_BUFFER_BIT);
@@ -142,6 +145,7 @@ int server(const CConfiguration &config) {
             game.clearChanged();
         }
 
+        bool hasReceivedMove = false;
         while (enet_host_service(host, &event, 0) > 0)
         {
             switch (event.type)
@@ -199,6 +203,7 @@ int server(const CConfiguration &config) {
                     printf("received shipmove event\n");
                     Party commandingParty = ((ClientData*)event.peer->data)->party;
                     game.sendShips(commandingParty, enet_packet_data(event.packet));
+                    hasReceivedMove = true; // issue #16 ?
                 } break;
                 case PTYPE_PLANET_ACTION:
                 {
@@ -241,6 +246,17 @@ int server(const CConfiguration &config) {
                 break;
             default:;
             }
+        }
+        if (hasReceivedMove) { // immediately broadcast effects of received move commands to clients issue#16 - can/should probably be improved 
+            timeToBroadcast = 0.1; /// 2x per sec
+            size_t size;
+            void* d = game.packUpdateData(size, glfwGetTime());
+            ENetPacket* packet = enet_packet_create(d, size, 0, PTYPE_UPDATE);// ENET_PACKET_FLAG_RELIABLE
+
+            enet_host_broadcast(host, 1, packet);
+            enet_host_flush(host);
+            free(d);
+            game.clearChanged();
         }
     }
 
