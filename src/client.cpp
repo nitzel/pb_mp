@@ -245,7 +245,7 @@ int client(const CConfiguration& config) {
                             fprintf(stderr, "future updatepacket received from t=%.2f at %.2f\n", t, glfwGetTime());
                         }
                         // todo: discard old updates or not? they are still important...
-                        game->unpackUpdateData(enet_packet_data(event.packet), enet_packet_size(event.packet), glfwGetTime());
+                        game->unpackUpdateData(enet_packet_data(event.packet), enet_packet_size(event.packet), glfwGetTime(), party);
 
                     } break;
                 case PTYPE_GAME_CONFIG:

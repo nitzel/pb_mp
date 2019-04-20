@@ -293,7 +293,7 @@ void* Game::packChangedShips(Party party, enet_uint32 & size) {
     return rdata;
 }
 
-void Game::unpackChangedShips(Party party, void* const data, const double dt) {
+void Game::unpackChangedShips(Party party, void* const data, const double dt, Party myParty) {
     char* dat = (char*)data;
     // get numbers
     const enet_uint32 deadShips = *(enet_uint32*)dat;    dat += sizeof(enet_uint32);
@@ -308,6 +308,12 @@ void Game::unpackChangedShips(Party party, void* const data, const double dt) {
     for (size_t i = 0; i < deadShips; i++) {
         mShips[party].ships[dead[i]].health = 0;
     }
+
+    // remove dead ships from selection if this is the current player (Issue#14)
+    if (party == myParty) {
+        selectedShips.erase(std::remove_if(selectedShips.begin(), selectedShips.end(), [&](size_t i) {return !(mShips[party].ships[i].health > 0); }), selectedShips.end());
+    }
+
     // overwrite changed ships and update them to "now"
     for (size_t i = 0; i < changedShips; i++) {
         mShips[party].ships[changed[i]] = ships[i]; // overwrite
@@ -396,7 +402,7 @@ void* Game::packUpdateData(size_t & size, double time) {
 
     return rdata;
 }
-double  Game::unpackUpdateData(void* const data, size_t size, const double time) {
+double  Game::unpackUpdateData(void* const data, size_t size, const double time, Party myParty) {
     enet_uint32 memPlanets;
     enet_uint32 sizes[4];
 
@@ -410,7 +416,7 @@ double  Game::unpackUpdateData(void* const data, size_t size, const double time)
     memcpy(mPlanets.planets, dat, memPlanets); dat += memPlanets;
     // unpack ships and shots (shipsA,shotsA,shipsB,shotsB)
     for (size_t party = PA; party < PN; party++) {
-        unpackChangedShips((Party)party, dat, dt);
+        unpackChangedShips((Party)party, dat, dt, myParty);
         unpackChangedShots((Party)party, dat + sizes[2 * party + 0], dt);
         dat += sizes[2 * party + 0] + sizes[2 * party + 1]; // += memShipsX + memShotsX
     }
@@ -871,9 +877,6 @@ vec2[] newPositions
 */
 void* Game::sendSelectedGetData(Party party, vec2 v1, vec2 v2, size_t formation, size_t & size) {
     std::sort(selectedShips.begin(), selectedShips.end()); // todo necessary?
-
-    // remove dead ships
-    selectedShips.erase(std::remove_if(selectedShips.begin(), selectedShips.end(), [&](size_t i) {return !(mShips[party].ships[i].health > 0); }), selectedShips.end());
 
     const size_t S = selectedShips.size();
     if (S == 0)

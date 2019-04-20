@@ -44,7 +44,7 @@ public:
     double unpackData(void* const data, size_t size, const double time); // returns timeDelta
 
     void* packUpdateData(size_t& size, double time); // 
-    double unpackUpdateData(void* const data, size_t size, const double time); // returns timeDelta
+    double unpackUpdateData(void* const data, size_t size, const double time, Party myParty); // returns timeDelta
 
     void select(Party party, vec2 v);
     void select(Party party, vec2 v1, vec2 v2);
@@ -103,7 +103,7 @@ private:
 
     /// un/packing gameData
     void* packChangedShips(Party party, enet_uint32& size);
-    void unpackChangedShips(Party party, void* const data, const double dt);
+    void unpackChangedShips(Party party, void* const data, const double dt, Party myParty);
     void* packChangedShots(Party party, enet_uint32& size);
     void unpackChangedShots(Party party, void* const data, const double dt);
 };
